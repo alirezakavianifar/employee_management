@@ -1,0 +1,27 @@
+{
+  "display": {
+    "fullscreen": true,
+    "refreshInterval": 30,
+    "theme": "dark",
+    "fontSize": 14,
+    "language": "fa"
+  },
+  "data": {
+    "syncInterval": 30,
+    "autoBackup": true,
+    "backupRetentionDays": 30,
+    "dataPath": "Data"
+  },
+  "charts": {
+    "chartTheme": "default",
+    "persianFonts": true,
+    "chartQuality": "high",
+    "autoRefresh": true
+  },
+  "ui": {
+    "rtlLayout": true,
+    "persianNumbers": true,
+    "showTooltips": true,
+    "animationSpeed": "normal"
+  }
+}

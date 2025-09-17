@@ -1,0 +1,33 @@
+{
+  "date": "2025-09-03",
+  "employees": [],
+  "managers": [],
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 5,
+      "assigned_employees": []
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 5,
+      "assigned_employees": []
+    }
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "tasks": {},
+    "next_task_id": 1
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "data"
+  },
+  "last_modified": "2025-09-03T21:57:39.455196"
+}

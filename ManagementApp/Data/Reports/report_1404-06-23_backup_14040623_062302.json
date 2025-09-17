@@ -1,0 +1,38 @@
+﻿{
+  "date": "1404-06-23",
+  "employees": [
+    "{\r\n  \"EmployeeId\": \"EMP_001\",\r\n  \"FirstName\": \"احمد\",\r\n  \"LastName\": \"محمدی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_002\",\r\n  \"FirstName\": \"فاطمه\",\r\n  \"LastName\": \"احمدی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_003\",\r\n  \"FirstName\": \"علی\",\r\n  \"LastName\": \"حسینی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_004\",\r\n  \"FirstName\": \"مریم\",\r\n  \"LastName\": \"کریمی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_005\",\r\n  \"FirstName\": \"حسن\",\r\n  \"LastName\": \"رضایی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_006\",\r\n  \"FirstName\": \"زهرا\",\r\n  \"LastName\": \"موسوی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"C:\\\\Users\\\\Administrator\\\\Downloads\\\\2.png\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"2025-09-14T06:22:38.4433541+03:30\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_007\",\r\n  \"FirstName\": \"محمد\",\r\n  \"LastName\": \"نوری\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_008\",\r\n  \"FirstName\": \"نرگس\",\r\n  \"LastName\": \"صادقی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_009\",\r\n  \"FirstName\": \"رضا\",\r\n  \"LastName\": \"جعفری\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}",
+    "{\r\n  \"EmployeeId\": \"EMP_010\",\r\n  \"FirstName\": \"سارا\",\r\n  \"LastName\": \"کاظمی\",\r\n  \"Role\": \"کارگر\",\r\n  \"PhotoPath\": \"\",\r\n  \"CreatedAt\": \"1404-06-23T06:22:18\",\r\n  \"UpdatedAt\": \"1404-06-23T06:22:18\"\r\n}"
+  ],
+  "managers": [],
+  "shifts": {
+    "MorningShift": "{\r\n  \"ShiftType\": \"\",\r\n  \"Capacity\": 10,\r\n  \"AssignedEmployeeIds\": [\r\n    null,\r\n    \"EMP_006\",\r\n    \"EMP_010\",\r\n    \"EMP_011\",\r\n    \"EMP_004\",\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null\r\n  ],\r\n  \"CreatedAt\": \"2025-09-14T06:22:18.5192871+03:30\",\r\n  \"UpdatedAt\": \"2025-09-14T06:22:54.9745251+03:30\"\r\n}",
+    "EveningShift": "{\r\n  \"ShiftType\": \"\",\r\n  \"Capacity\": 10,\r\n  \"AssignedEmployeeIds\": [\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null\r\n  ],\r\n  \"CreatedAt\": \"2025-09-14T06:22:18.5193465+03:30\",\r\n  \"UpdatedAt\": \"2025-09-14T06:22:25.5920854+03:30\"\r\n}",
+    "Capacity": 10
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "Tasks": {},
+    "NextTaskId": 1
+  },
+  "settings": {
+    "shift_capacity": 10,
+    "morning_capacity": 10,
+    "evening_capacity": 10,
+    "shared_folder_path": "Data",
+    "managers": []
+  },
+  "last_modified": "1404-06-23T06:22:54"
+}

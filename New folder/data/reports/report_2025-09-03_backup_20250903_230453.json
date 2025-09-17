@@ -1,0 +1,70 @@
+{
+  "date": "2025-09-03",
+  "employees": [
+    {
+      "employee_id": "emp_0_1756924713",
+      "first_name": "دونالد",
+      "last_name": "ترامک",
+      "role": "کارشناس",
+      "photo_path": "D:\\projects\\workshop_project\\management_app\\data\\images\\staff\\EMP_1756924712.png",
+      "created_at": "2025-09-03T22:08:33.792561",
+      "updated_at": "2025-09-03T22:08:33.792561"
+    },
+    {
+      "employee_id": "emp_1_1756926291",
+      "first_name": "علی",
+      "last_name": "احمدی",
+      "role": "مهندس ارشد",
+      "photo_path": "D:\\projects\\workshop_project\\management_app\\data\\images\\staff\\EMP_1756926290.png",
+      "created_at": "2025-09-03T22:34:51.910877",
+      "updated_at": "2025-09-03T22:34:51.910877"
+    }
+  ],
+  "managers": [],
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 5,
+      "assigned_employees": [
+        "emp_0_1756924713",
+        "emp_1_1756926291",
+        null,
+        null,
+        null
+      ],
+      "created_at": "2025-09-03T22:08:33.824644",
+      "updated_at": "2025-09-03T23:00:23.050050"
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 5,
+      "assigned_employees": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "created_at": "2025-09-03T22:08:33.825641",
+      "updated_at": "2025-09-03T23:00:23.051049"
+    },
+    "capacity": 5
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "tasks": {},
+    "next_task_id": 1
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "data",
+    "managers": []
+  },
+  "last_modified": "2025-09-03T23:04:23.078124"
+}

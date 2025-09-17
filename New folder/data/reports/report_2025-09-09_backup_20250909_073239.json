@@ -1,0 +1,238 @@
+{
+  "date": "2025-09-09",
+  "employees": [
+    {
+      "employee_id": "EMP001",
+      "first_name": "علی",
+      "last_name": "احمدی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP001.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP002",
+      "first_name": "فاطمه",
+      "last_name": "محمدی",
+      "role": "سرپرست",
+      "photo_path": "images/staff/EMP002.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP003",
+      "first_name": "حسن",
+      "last_name": "رضایی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP003.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP004",
+      "first_name": "سارا",
+      "last_name": "کریمی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP004.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP005",
+      "first_name": "مهدی",
+      "last_name": "نوری",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP005.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP006",
+      "first_name": "نیلوفر",
+      "last_name": "صادقی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP006.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP007",
+      "first_name": "پژمان",
+      "last_name": "فرهادی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP007.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP008",
+      "first_name": "الهام",
+      "last_name": "طاهری",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP008.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP009",
+      "first_name": "امین",
+      "last_name": "جعفری",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP009.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "EMP010",
+      "first_name": "زهرا",
+      "last_name": "موسوی",
+      "role": "کارگر",
+      "photo_path": "images/staff/EMP010.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    }
+  ],
+  "managers": [
+    {
+      "employee_id": "MGR001",
+      "first_name": "احمد",
+      "last_name": "محمدی",
+      "role": "مدیر کل",
+      "photo_path": "images/staff/MGR001.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "MGR002",
+      "first_name": "فاطمه",
+      "last_name": "احمدی",
+      "role": "مدیر عملیات",
+      "photo_path": "images/staff/MGR002.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    },
+    {
+      "employee_id": "MGR003",
+      "first_name": "علی",
+      "last_name": "رضایی",
+      "role": "مدیر منابع انسانی",
+      "photo_path": "images/staff/MGR003.jpg",
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:00:00.000000"
+    }
+  ],
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 5,
+      "assigned_employees": [
+        "EMP001",
+        "EMP004",
+        null,
+        "EMP003",
+        null
+      ],
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:20:58.458856"
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 5,
+      "assigned_employees": [
+        "EMP002",
+        null,
+        null,
+        null,
+        null
+      ],
+      "created_at": "2025-09-09T07:00:00.000000",
+      "updated_at": "2025-09-09T07:20:15.274565"
+    },
+    "capacity": 5
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "tasks": {
+      "TASK_001": {
+        "task_id": "TASK_001",
+        "title": "توسعه فیچر جدید",
+        "description": "",
+        "priority": "متوسط",
+        "estimated_hours": 15.0,
+        "target_date": "2025-09-16",
+        "status": "در انتظار",
+        "assigned_employees": [],
+        "start_date": null,
+        "completion_date": null,
+        "actual_hours": 0.0,
+        "notes": "",
+        "created_at": "2025-09-09T07:32:15.422685",
+        "updated_at": "2025-09-09T07:32:15.422685"
+      },
+      "TASK_002": {
+        "task_id": "TASK_002",
+        "title": "پروژه بزرگ",
+        "description": "",
+        "priority": "متوسط",
+        "estimated_hours": 25.0,
+        "target_date": "2025-09-23",
+        "status": "در انتظار",
+        "assigned_employees": [],
+        "start_date": null,
+        "completion_date": null,
+        "actual_hours": 0.0,
+        "notes": "",
+        "created_at": "2025-09-09T07:32:15.422685",
+        "updated_at": "2025-09-09T07:32:15.422685"
+      },
+      "TASK_003": {
+        "task_id": "TASK_003",
+        "title": "کار تکمیل شده",
+        "description": "",
+        "priority": "متوسط",
+        "estimated_hours": 8.0,
+        "target_date": "2025-09-09",
+        "status": "تکمیل شده",
+        "assigned_employees": [],
+        "start_date": null,
+        "completion_date": "2025-09-09T07:29:11.266926",
+        "actual_hours": 7.5,
+        "notes": "",
+        "created_at": "2025-09-09T07:32:15.422685",
+        "updated_at": "2025-09-09T07:32:15.422685"
+      }
+    },
+    "next_task_id": 4
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "data",
+    "managers": [
+      {
+        "employee_id": "MGR001",
+        "first_name": "احمد",
+        "last_name": "محمدی",
+        "role": "مدیر کل"
+      },
+      {
+        "employee_id": "MGR002",
+        "first_name": "فاطمه",
+        "last_name": "احمدی",
+        "role": "مدیر عملیات"
+      },
+      {
+        "employee_id": "MGR003",
+        "first_name": "علی",
+        "last_name": "رضایی",
+        "role": "مدیر منابع انسانی"
+      }
+    ]
+  },
+  "last_modified": "2025-09-09T07:32:16.382400"
+}

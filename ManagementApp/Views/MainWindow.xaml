@@ -1,0 +1,445 @@
+<Window x:Class="ManagementApp.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ManagementApp.Views"
+        xmlns:controls="clr-namespace:ManagementApp.Controls"
+        mc:Ignorable="d"
+        Title="سیستم مدیریت شیفت کارمندان" 
+        WindowState="Maximized"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <!-- Remove problematic style references for now -->
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2E3440" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="سیستم مدیریت شیفت کارمندان" 
+                          FontFamily="Tahoma" 
+                          FontSize="18" 
+                          FontWeight="Bold" 
+                          Foreground="White" 
+                          VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding CurrentDate}" 
+                          FontFamily="Tahoma" 
+                          FontSize="14" 
+                          Foreground="LightGray" 
+                          VerticalAlignment="Center" 
+                          Margin="20,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" Margin="10">
+            <TabItem Header="مدیریت کارمندان">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Employee List -->
+                    <GroupBox Grid.Column="0" Header="لیست کارمندان" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Search Box -->
+                            <TextBox Grid.Row="0" 
+                                    x:Name="EmployeeSearchBox"
+                                    Text="جستجو..." 
+                                    Foreground="Gray"
+                                    Margin="5"/>
+                            
+                            <!-- Employee List -->
+                            <ListBox Grid.Row="1" 
+                                    x:Name="EmployeeListBox"
+                                    DisplayMemberPath="FullName"
+                                    SelectionChanged="EmployeeListBox_SelectionChanged"
+                                    Margin="5"/>
+
+                            <!-- Employee Actions -->
+                            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
+                                <Button Content="افزودن کارمند" Click="AddEmployee_Click" Margin="2"/>
+                                <Button Content="ویرایش کارمند" Click="EditEmployee_Click" Margin="2"/>
+                                <Button Content="حذف کارمند" Click="DeleteEmployee_Click" Margin="2"/>
+                                <Button Content="وارد کردن از CSV" Click="ImportCSV_Click" Margin="2"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Employee Details -->
+                    <GroupBox Grid.Column="1" Header="جزئیات کارمند" Margin="5">
+                        <Grid x:Name="EmployeeDetailsGrid" Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="نام:"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="FirstNameTextBox" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="نام خانوادگی:"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="LastNameTextBox" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="سمت:"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="RoleTextBox" Margin="5"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="عکس:"/>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                <Button Content="انتخاب عکس" Click="SelectPhoto_Click" Margin="0,0,5,0"/>
+                                <Button Content="ذخیره تغییرات" Click="SaveEmployeeChanges_Click"/>
+                            </StackPanel>
+
+                            <!-- Employee Photo -->
+                            <Image Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                                  x:Name="EmployeePhoto" 
+                                  Width="200" Height="200" 
+                                  Stretch="Uniform"
+                                  Margin="10"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Absence Management -->
+                    <GroupBox Grid.Column="2" Header="مدیریت غیبت" Margin="5">
+                        <StackPanel Margin="10">
+                            <Label Content="نوع غیبت:"/>
+                            <ComboBox x:Name="AbsenceTypeComboBox" Margin="0,5">
+                                <ComboBoxItem Content="مرخصی"/>
+                                <ComboBoxItem Content="بیمار"/>
+                                <ComboBoxItem Content="غایب"/>
+                            </ComboBox>
+
+                            <Label Content="تاریخ غیبت:" Margin="0,10,0,5"/>
+                            <controls:ShamsiDatePicker x:Name="AbsenceDatePicker" Margin="0,0,0,10"/>
+
+                            <Label Content="توضیحات:" Margin="0,10,0,5"/>
+                            <TextBox x:Name="AbsenceNotesTextBox" 
+                                    Height="60" 
+                                    TextWrapping="Wrap" 
+                                    AcceptsReturn="True"
+                                    Margin="0,0,0,10"/>
+
+                            <Button Content="ثبت غیبت" Click="MarkAbsent_Click" Margin="0,5"/>
+                            <Button Content="حذف غیبت" Click="RemoveAbsence_Click" Margin="0,5"/>
+
+                            <!-- Absence List -->
+                            <Label Content="لیست غیبت‌ها:" Margin="0,20,0,5"/>
+                            <ListBox x:Name="AbsenceListBox" 
+                                    Height="150" 
+                                    Margin="0,5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding CategoryDisplay}" Width="80" Margin="5,0"/>
+                                            <TextBlock Text="{Binding DateDisplay}" Width="120" Margin="5,0"/>
+                                            <TextBlock Text="{Binding Notes}" Width="100" Margin="5,0" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="مدیریت شیفت">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Employee List for Shift Assignment -->
+                    <GroupBox Grid.Column="0" Header="کارمندان" Margin="5">
+                        <ListBox x:Name="ShiftEmployeeListBox" 
+                                DisplayMemberPath="FullName"
+                                AllowDrop="True"
+                                DragOver="Employee_DragOver"
+                                Margin="5"/>
+                    </GroupBox>
+
+                    <!-- Shift Assignment -->
+                    <GroupBox Grid.Column="1" Header="تخصیص شیفت" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Shift Controls -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                                <Label Content="ظرفیت شیفت:"/>
+                                <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="15" Margin="5,0"/>
+                                <Button Content="تغییر ظرفیت" Click="ChangeCapacity_Click" Margin="5,0"/>
+                                <Button Content="پاک کردن شیفت صبح" Click="ClearMorningShift_Click" Margin="5,0"/>
+                                <Button Content="پاک کردن شیفت عصر" Click="ClearEveningShift_Click" Margin="5,0"/>
+                            </StackPanel>
+
+                            <!-- Shift Slots -->
+                            <Grid Grid.Row="1" Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Morning Shift -->
+                                <GroupBox Grid.Column="0" Header="شیفت صبح" Margin="5">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel x:Name="MorningShiftPanel" Margin="5"/>
+                                    </ScrollViewer>
+                                </GroupBox>
+
+                                <!-- Evening Shift -->
+                                <GroupBox Grid.Column="1" Header="شیفت عصر" Margin="5">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel x:Name="EveningShiftPanel" Margin="5"/>
+                                    </ScrollViewer>
+                                </GroupBox>
+                            </Grid>
+
+                            <!-- Shift Statistics -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
+                                <Label Content="شیفت صبح:"/>
+                                <TextBlock x:Name="MorningShiftStats" Text="0/15" Margin="5,0"/>
+                                <Label Content="شیفت عصر:"/>
+                                <TextBlock x:Name="EveningShiftStats" Text="0/15" Margin="5,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Absence List -->
+                    <GroupBox Grid.Column="2" Header="کارمندان غایب" Margin="5">
+                        <ListBox x:Name="AbsentEmployeeListBox" 
+                                DisplayMemberPath="FullName"
+                                Margin="5"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="مدیریت وظایف">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Task List -->
+                    <GroupBox Grid.Column="0" Header="لیست وظایف" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Task Filter -->
+                            <ComboBox Grid.Row="0" x:Name="TaskFilterComboBox" Margin="5">
+                                <ComboBoxItem Content="همه وظایف"/>
+                                <ComboBoxItem Content="در انتظار"/>
+                                <ComboBoxItem Content="در حال انجام"/>
+                                <ComboBoxItem Content="تکمیل شده"/>
+                            </ComboBox>
+
+                            <!-- Task List -->
+                            <ListBox Grid.Row="1" 
+                                    x:Name="TaskListBox"
+                                    DisplayMemberPath="Title"
+                                    SelectionChanged="TaskListBox_SelectionChanged"
+                                    Margin="5"/>
+
+                            <!-- Task Actions -->
+                            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
+                                <Button Content="افزودن وظیفه" Click="AddTask_Click" Margin="2"/>
+                                <Button Content="ویرایش وظیفه" Click="EditTask_Click" Margin="2"/>
+                                <Button Content="حذف وظیفه" Click="DeleteTask_Click" Margin="2"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Task Details -->
+                    <GroupBox Grid.Column="1" Header="جزئیات وظیفه" Margin="5">
+                        <Grid x:Name="TaskDetailsGrid" Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="عنوان:"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="TaskTitleTextBox" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="توضیحات:"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TaskDescriptionTextBox" 
+                                    Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="اولویت:"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="TaskPriorityComboBox" Margin="5">
+                                <ComboBoxItem Content="کم"/>
+                                <ComboBoxItem Content="متوسط" IsSelected="True"/>
+                                <ComboBoxItem Content="زیاد"/>
+                                <ComboBoxItem Content="فوری"/>
+                            </ComboBox>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="ساعت تخمینی:"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="1.0" Margin="5"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="تاریخ هدف:"/>
+                            <controls:ShamsiDatePicker Grid.Row="4" Grid.Column="1" x:Name="TaskTargetDatePicker" Margin="5"/>
+
+                            <Label Grid.Row="5" Grid.Column="0" Content="وضعیت:"/>
+                            <ComboBox Grid.Row="5" Grid.Column="1" x:Name="TaskStatusComboBox" Margin="5">
+                                <ComboBoxItem Content="در انتظار"/>
+                                <ComboBoxItem Content="در حال انجام"/>
+                                <ComboBoxItem Content="تکمیل شده"/>
+                            </ComboBox>
+
+                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" 
+                                       Orientation="Horizontal" Margin="5">
+                                <Button Content="ذخیره تغییرات" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
+                                <Button Content="شروع وظیفه" Click="StartTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="تکمیل وظیفه" Click="CompleteTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="تخصیص کارمند" Click="AssignTaskToEmployee_Click"/>
+                            </StackPanel>
+
+                            <!-- Task Assignment -->
+                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="تخصیص کارمند" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="کارمندان تخصیص داده شده:"/>
+                                    <ListBox Grid.Row="1" Grid.Column="0" x:Name="AssignedEmployeesListBox" 
+                                            Height="80" Margin="0,5,5,0">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding}" Width="200" Margin="5,0"/>
+                                                    <Button Content="حذف" Width="50" Height="20" FontSize="10"
+                                                            Click="RemoveEmployeeFromTask_Click" Tag="{Binding}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="5,5,0,0">
+                                        <Button Content="افزودن کارمند" Click="AddEmployeeToTask_Click" 
+                                                Width="120" Height="30" Margin="0,0,0,5"/>
+                                        <Button Content="مشاهده وظایف کارمند" Click="ViewEmployeeTasks_Click" 
+                                                Width="120" Height="30"/>
+                                    </StackPanel>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- Task Progress -->
+                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="پیشرفت وظیفه" Margin="5">
+                                <StackPanel Margin="10">
+                                    <Label Content="ساعات واقعی:"/>
+                                    <TextBox x:Name="TaskActualHoursTextBox" Margin="0,5"/>
+                                    <Label Content="یادداشت‌ها:"/>
+                                    <TextBox x:Name="TaskNotesTextBox" 
+                                            Height="60" 
+                                            TextWrapping="Wrap" 
+                                            AcceptsReturn="True"
+                                            Margin="0,5"/>
+                                </StackPanel>
+                            </GroupBox>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="گزارش‌گیری">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Report Options -->
+                    <GroupBox Grid.Column="0" Header="گزینه‌های گزارش" Margin="5">
+                        <StackPanel Margin="10">
+                            <Label Content="نوع گزارش:"/>
+                            <ComboBox x:Name="ReportTypeComboBox" Margin="0,5">
+                                <ComboBoxItem Content="گزارش روزانه"/>
+                                <ComboBoxItem Content="گزارش هفتگی"/>
+                                <ComboBoxItem Content="گزارش ماهانه"/>
+                            </ComboBox>
+
+                            <Label Content="تاریخ شروع:" Margin="0,10,0,5"/>
+                            <DatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
+
+                            <Label Content="تاریخ پایان:" Margin="0,0,0,5"/>
+                            <DatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
+
+                            <Button Content="تولید گزارش" Click="GenerateReport_Click" Margin="0,10"/>
+                            <Button Content="صادر کردن" Click="ExportReport_Click" Margin="0,5"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Report Preview -->
+                    <GroupBox Grid.Column="1" Header="پیش‌نمایش گزارش" Margin="5">
+                        <ScrollViewer>
+                            <TextBlock x:Name="ReportPreviewTextBlock" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="12" 
+                                      TextWrapping="Wrap" 
+                                      Margin="10"/>
+                        </ScrollViewer>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2" Background="#ECEFF4">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusTextBlock" Text="آماده" FontFamily="Tahoma"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding CurrentTime}" FontFamily="Tahoma"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

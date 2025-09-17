@@ -1,0 +1,37 @@
+﻿{
+  "date": "1404-06-26",
+  "employees": [
+    {
+      "employee_id": "emp_0_1758088948",
+      "first_name": "er",
+      "last_name": "errr",
+      "role": "",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\2.png",
+      "created_at": "0783-04-05T09:32:28",
+      "updated_at": "1404-06-26T09:35:22"
+    }
+  ],
+  "managers": [],
+  "shifts": {
+    "MorningShift": "{\r\n  \"ShiftType\": \"\",\r\n  \"Capacity\": 15,\r\n  \"AssignedEmployeeIds\": [\r\n    \"emp_0_1758088948\",\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null\r\n  ],\r\n  \"CreatedAt\": \"2025-09-17T09:28:38.9186606+03:30\",\r\n  \"UpdatedAt\": \"2025-09-17T09:32:32.934625+03:30\"\r\n}",
+    "EveningShift": "{\r\n  \"ShiftType\": \"\",\r\n  \"Capacity\": 15,\r\n  \"AssignedEmployeeIds\": [\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null,\r\n    null\r\n  ],\r\n  \"CreatedAt\": \"2025-09-17T09:28:38.9187181+03:30\",\r\n  \"UpdatedAt\": \"2025-09-17T09:28:38.9195076+03:30\"\r\n}",
+    "Capacity": 15
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "Tasks": {},
+    "NextTaskId": 1
+  },
+  "settings": {
+    "shift_capacity": 15,
+    "morning_capacity": 15,
+    "evening_capacity": 15,
+    "shared_folder_path": "D:\\projects\\New folder (8)\\ManagementApp\\bin\\Debug\\net8.0-windows\\Data",
+    "managers": []
+  },
+  "last_modified": "1404-06-26T09:35:22"
+}

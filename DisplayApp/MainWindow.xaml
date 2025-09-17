@@ -1,0 +1,184 @@
+﻿<Window x:Class="DisplayApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        Title="Display App" Height="800" Width="1200"
+        WindowState="Maximized" WindowStyle="None"
+        Background="#1a1a1a">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2d2d2d" Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" Text="سیستم مدیریت کارکنان" 
+                          Style="{StaticResource TitleTextStyle}" 
+                          HorizontalAlignment="Right"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0">
+                    <Button x:Name="ExitFullscreenButton" Content="خروج از تمام صفحه" 
+                           Style="{StaticResource SecondaryButtonStyle}"
+                           Click="ExitFullscreenButton_Click" Margin="5"/>
+                    <Button x:Name="CloseButton" Content="بستن" 
+                           Style="{StaticResource DangerButtonStyle}"
+                           Click="CloseButton_Click" Margin="5"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock x:Name="LastUpdateText" Text="آخرین بروزرسانی: --:--:--" 
+                              Style="{StaticResource BodyTextStyle}" Margin="10,0"/>
+                    <TextBlock x:Name="CountdownText" Text="بروزرسانی بعدی: 30" 
+                              Style="{StaticResource BodyTextStyle}" Margin="10,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+             <!-- Managers Section -->
+             <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,20">
+                 <StackPanel>
+                     <TextBlock Text="مدیران" Style="{StaticResource SubtitleTextStyle}"/>
+                     <Grid x:Name="ManagersGrid" Height="60">
+                         <Grid.ColumnDefinitions>
+                             <ColumnDefinition Width="*"/>
+                             <ColumnDefinition Width="*"/>
+                             <ColumnDefinition Width="*"/>
+                         </Grid.ColumnDefinitions>
+                     </Grid>
+                 </StackPanel>
+             </Border>
+            
+            <!-- Shifts Section -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                 <!-- Morning Shift -->
+                 <Border Grid.Column="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,10,0">
+                     <Grid>
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="*"/>
+                         </Grid.RowDefinitions>
+                         <TextBlock Grid.Row="0" Text="شیفت صبح" Style="{StaticResource SubtitleTextStyle}" 
+                                   Foreground="{StaticResource MorningShiftText}"/>
+                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                             <ItemsControl x:Name="MorningShiftPanel">
+                                 <ItemsControl.ItemsPanel>
+                                     <ItemsPanelTemplate>
+                                         <UniformGrid Columns="5"/>
+                                     </ItemsPanelTemplate>
+                                 </ItemsControl.ItemsPanel>
+                             </ItemsControl>
+                         </ScrollViewer>
+                     </Grid>
+                 </Border>
+                 
+                 <!-- Evening Shift -->
+                 <Border Grid.Column="1" Style="{StaticResource MainPanelStyle}" Margin="10,0,0,0">
+                     <Grid>
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="*"/>
+                         </Grid.RowDefinitions>
+                         <TextBlock Grid.Row="0" Text="شیفت عصر" Style="{StaticResource SubtitleTextStyle}" 
+                                   Foreground="{StaticResource EveningShiftText}"/>
+                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                             <ItemsControl x:Name="EveningShiftPanel">
+                                 <ItemsControl.ItemsPanel>
+                                     <ItemsPanelTemplate>
+                                         <UniformGrid Columns="5"/>
+                                     </ItemsPanelTemplate>
+                                 </ItemsControl.ItemsPanel>
+                             </ItemsControl>
+                         </ScrollViewer>
+                     </Grid>
+                 </Border>
+            </Grid>
+            
+            <!-- Bottom Section -->
+            <Grid Grid.Row="2" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Absence Counts -->
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="آمار غیبت" Style="{StaticResource SubtitleTextStyle}"/>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="مرخصی:" Style="{StaticResource BodyTextStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LeaveCount" Text="0" Style="{StaticResource CountTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="بیمار:" Style="{StaticResource BodyTextStyle}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="SickCount" Text="0" Style="{StaticResource CountTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="غایب:" Style="{StaticResource BodyTextStyle}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AbsentCount" Text="0" Style="{StaticResource CountTextStyle}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <!-- AI Recommendation -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="5,0">
+                    <StackPanel>
+                        <TextBlock Text="توصیه هوش مصنوعی" Style="{StaticResource SubtitleTextStyle}"/>
+                        <TextBlock x:Name="AIRecommendation" Text="در حال بارگذاری..." 
+                                  Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Chart -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock x:Name="ChartTitle" Text="نمودار عملکرد" Style="{StaticResource SubtitleTextStyle}"/>
+                        <lvc:CartesianChart x:Name="PerformanceChart" Series="{Binding SeriesCollection}" 
+                                           Height="120" Margin="0,10,0,0">
+                            <lvc:CartesianChart.AxisX>
+                                <lvc:Axis Labels="{Binding Labels}"/>
+                            </lvc:CartesianChart.AxisX>
+                        </lvc:CartesianChart>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#2d2d2d" Padding="20,10">
+            <TextBlock x:Name="StatusText" Text="آماده" Style="{StaticResource BodyTextStyle}" 
+                      HorizontalAlignment="Center"/>
+        </Border>
+    </Grid>
+</Window>
