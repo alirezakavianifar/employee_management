@@ -424,12 +424,86 @@ namespace ManagementApp.Controllers
         {
             try
             {
-                var tasksJson = JsonConvert.SerializeObject(tasksData);
-                TaskManager = TaskManager.FromJson(tasksJson);
+                _logger.LogInformation("LoadTasksFromData: Starting to load tasks from data, type: {Type}", 
+                    tasksData?.GetType().Name ?? "null");
+                
+                Dictionary<string, object> tasksDict = null;
+                
+                // Handle different data types
+                if (tasksData is Dictionary<string, object> dict)
+                {
+                    tasksDict = dict;
+                }
+                else if (tasksData is Newtonsoft.Json.Linq.JObject jObject)
+                {
+                    // Convert JObject to Dictionary
+                    tasksDict = jObject.ToObject<Dictionary<string, object>>();
+                    _logger.LogInformation("LoadTasksFromData: Converted JObject to Dictionary");
+                }
+                
+                if (tasksDict != null)
+                {
+                    _logger.LogInformation("LoadTasksFromData: Tasks data is Dictionary with {Count} keys: {Keys}", 
+                        tasksDict.Count, string.Join(", ", tasksDict.Keys));
+                    
+                    // Create a new TaskManager
+                    TaskManager = new TaskManager();
+                    
+                    // Load NextTaskId if available
+                    if (tasksDict.TryGetValue("NextTaskId", out var nextTaskIdObj))
+                    {
+                        if (int.TryParse(nextTaskIdObj.ToString(), out int nextTaskId))
+                        {
+                            TaskManager.NextTaskId = nextTaskId;
+                            _logger.LogInformation("LoadTasksFromData: Set NextTaskId to {NextTaskId}", nextTaskId);
+                        }
+                    }
+                    
+                    // Load individual tasks
+                    foreach (var kvp in tasksDict)
+                    {
+                        if (kvp.Key == "NextTaskId") continue; // Skip NextTaskId, we already handled it
+                        
+                        var taskId = kvp.Key;
+                        var taskJson = kvp.Value?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(taskJson))
+                        {
+                            try
+                            {
+                                var task = Shared.Models.Task.FromJson(taskJson);
+                                TaskManager.Tasks[taskId] = task;
+                                _logger.LogInformation("LoadTasksFromData: Successfully loaded task {TaskId}: {Title}", 
+                                    taskId, task.Title);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "LoadTasksFromData: Error loading task {TaskId}: {TaskJson}", 
+                                    taskId, taskJson);
+                            }
+                        }
+                    }
+                    
+                    _logger.LogInformation("LoadTasksFromData: Successfully loaded {Count} tasks", TaskManager.Tasks.Count);
+                }
+                else
+                {
+                    _logger.LogWarning("LoadTasksFromData: Tasks data is not a Dictionary or JObject, type: {Type}", 
+                        tasksData?.GetType().Name ?? "null");
+                    
+                    // Fallback: try to deserialize as JSON string
+                    var tasksJson = JsonConvert.SerializeObject(tasksData);
+                    TaskManager = TaskManager.FromJson(tasksJson);
+                }
+                
+                TasksUpdated?.Invoke();
+                _logger.LogInformation("LoadTasksFromData: TasksUpdated event invoked");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading tasks");
+                // Create a new TaskManager if loading fails
+                TaskManager = new TaskManager();
             }
         }
 

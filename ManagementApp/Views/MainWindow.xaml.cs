@@ -1104,12 +1104,38 @@ namespace ManagementApp.Views
         {
             try
             {
+                _logger.LogInformation("LoadTasks: Starting to load tasks from controller");
+                
                 var tasks = _controller.GetAllTasks();
-                TaskListBox.ItemsSource = tasks;
+                _logger.LogInformation("LoadTasks: Controller returned {Count} tasks", tasks.Count);
+                
+                if (tasks.Count > 0)
+                {
+                    _logger.LogInformation("LoadTasks: First task: {TaskTitle} (ID: {TaskId})", tasks[0].Title, tasks[0].TaskId);
+                    _logger.LogInformation("LoadTasks: All task titles: {TaskTitles}", 
+                        string.Join(", ", tasks.Select(t => t.Title)));
+                }
+                else
+                {
+                    _logger.LogWarning("LoadTasks: No tasks found in controller");
+                }
+                
+                // Force UI thread update
+                Dispatcher.Invoke(() =>
+                {
+                    _logger.LogInformation("LoadTasks: Setting TaskListBox.ItemsSource to {Count} tasks on UI thread", tasks.Count);
+                    TaskListBox.ItemsSource = null;
+                    TaskListBox.ItemsSource = tasks;
+                    TaskListBox.UpdateLayout();
+                    
+                    // Verify the UI was updated
+                    var actualCount = TaskListBox.Items.Count;
+                    _logger.LogInformation("LoadTasks: TaskListBox.Items.Count is now {Count}", actualCount);
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading tasks");
+                _logger.LogError(ex, "Error loading tasks: {Message}", ex.Message);
             }
         }
 

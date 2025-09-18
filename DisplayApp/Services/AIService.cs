@@ -27,18 +27,18 @@ namespace DisplayApp.Services
                     return shiftRecommendation;
                 }
 
+                // Analyze task workload (higher priority than absence patterns)
+                var taskRecommendation = AnalyzeTaskWorkload(reportData);
+                if (!string.IsNullOrEmpty(taskRecommendation))
+                {
+                    return taskRecommendation;
+                }
+
                 // Analyze absence patterns
                 var absenceRecommendation = AnalyzeAbsencePatterns(reportData);
                 if (!string.IsNullOrEmpty(absenceRecommendation))
                 {
                     return absenceRecommendation;
-                }
-
-                // Analyze task workload
-                var taskRecommendation = AnalyzeTaskWorkload(reportData);
-                if (!string.IsNullOrEmpty(taskRecommendation))
-                {
-                    return taskRecommendation;
                 }
 
                 // Default recommendation
@@ -135,55 +135,112 @@ namespace DisplayApp.Services
         {
             try
             {
-                if (reportData.TryGetValue("tasks", out var tasksObj) && tasksObj is Dictionary<string, object> tasks)
+                if (reportData.TryGetValue("tasks", out var tasksObj))
                 {
-                    if (tasks.TryGetValue("tasks", out var taskListObj) && taskListObj is Dictionary<string, object> taskDict)
-                    {
-                        var totalTasks = taskDict.Count;
-                        var completedTasks = 0;
-                        var inProgressTasks = 0;
-                        var pendingTasks = 0;
+                    var totalTasks = 0;
+                    var completedTasks = 0;
+                    var inProgressTasks = 0;
+                    var pendingTasks = 0;
 
-                        foreach (var task in taskDict.Values)
+                    // Handle both Dictionary and JObject
+                    if (tasksObj is Dictionary<string, object> tasks)
+                    {
+                        foreach (var kvp in tasks)
                         {
-                            if (task is Dictionary<string, object> taskData)
+                            // Skip NextTaskId
+                            if (kvp.Key == "NextTaskId") continue;
+                            
+                            totalTasks++;
+                            
+                            // Parse the task JSON string
+                            if (kvp.Value is string taskJson)
                             {
-                                if (taskData.TryGetValue("status", out var statusObj))
+                                try
                                 {
-                                    var status = statusObj.ToString();
-                                    switch (status)
+                                    var taskData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(taskJson);
+                                    if (taskData != null && taskData.TryGetValue("Status", out var statusObj))
                                     {
-                                        case "تکمیل شده":
-                                            completedTasks++;
-                                            break;
-                                        case "در حال انجام":
-                                            inProgressTasks++;
-                                            break;
-                                        case "در انتظار":
-                                            pendingTasks++;
-                                            break;
+                                        var status = statusObj.ToString();
+                                        switch (status)
+                                        {
+                                            case "تکمیل شده":
+                                                completedTasks++;
+                                                break;
+                                            case "در حال انجام":
+                                                inProgressTasks++;
+                                                break;
+                                            case "در انتظار":
+                                                pendingTasks++;
+                                                break;
+                                        }
                                     }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Error parsing task JSON: {TaskJson}", taskJson);
                                 }
                             }
                         }
-
-                        // High workload
-                        if (pendingTasks > completedTasks)
+                    }
+                    else if (tasksObj is Newtonsoft.Json.Linq.JObject jTasks)
+                    {
+                        foreach (var prop in jTasks.Properties())
                         {
-                            return "بار کاری بالا است. استخدام نیروی اضافی توصیه می‌شود";
+                            // Skip NextTaskId
+                            if (prop.Name == "NextTaskId") continue;
+                            
+                            totalTasks++;
+                            
+                            // Parse the task JSON string
+                            if (prop.Value is Newtonsoft.Json.Linq.JValue jValue && jValue.Value is string taskJson)
+                            {
+                                try
+                                {
+                                    var taskData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(taskJson);
+                                    if (taskData != null && taskData.TryGetValue("Status", out var statusObj))
+                                    {
+                                        var status = statusObj.ToString();
+                                        switch (status)
+                                        {
+                                            case "تکمیل شده":
+                                                completedTasks++;
+                                                break;
+                                            case "در حال انجام":
+                                                inProgressTasks++;
+                                                break;
+                                            case "در انتظار":
+                                                pendingTasks++;
+                                                break;
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Error parsing task JSON: {TaskJson}", taskJson);
+                                }
+                            }
                         }
+                    }
 
-                        // Good progress
-                        if (completedTasks > pendingTasks && completedTasks > inProgressTasks)
-                        {
-                            return "پیشرفت کارها عالی است";
-                        }
+                    _logger.LogInformation("Task analysis: Total={TotalTasks}, Completed={CompletedTasks}, InProgress={InProgressTasks}, Pending={PendingTasks}", 
+                        totalTasks, completedTasks, inProgressTasks, pendingTasks);
 
-                        // Many in-progress tasks
-                        if (inProgressTasks > totalTasks * 0.6)
-                        {
-                            return "تعداد زیادی کار در حال انجام است. اولویت‌بندی مجدد ضروری است";
-                        }
+                    // High workload
+                    if (pendingTasks > completedTasks)
+                    {
+                        return "بار کاری بالا است. استخدام نیروی اضافی توصیه می‌شود";
+                    }
+
+                    // Good progress
+                    if (completedTasks > pendingTasks && completedTasks > inProgressTasks)
+                    {
+                        return "پیشرفت کارها عالی است";
+                    }
+
+                    // Many in-progress tasks
+                    if (inProgressTasks > totalTasks * 0.6)
+                    {
+                        return "تعداد زیادی کار در حال انجام است. اولویت‌بندی مجدد ضروری است";
                     }
                 }
 
@@ -279,42 +336,96 @@ namespace DisplayApp.Services
                 }
 
                 // Task insights
-                if (reportData.TryGetValue("tasks", out var tasksObj) && tasksObj is Dictionary<string, object> tasks)
+                if (reportData.TryGetValue("tasks", out var tasksObj))
                 {
-                    if (tasks.TryGetValue("tasks", out var taskListObj) && taskListObj is Dictionary<string, object> taskDict)
-                    {
-                        var totalTasks = taskDict.Count;
-                        var completedTasks = 0;
-                        var inProgressTasks = 0;
-                        var pendingTasks = 0;
+                    var totalTasks = 0;
+                    var completedTasks = 0;
+                    var inProgressTasks = 0;
+                    var pendingTasks = 0;
 
-                        foreach (var task in taskDict.Values)
+                    // Handle both Dictionary and JObject
+                    if (tasksObj is Dictionary<string, object> tasks)
+                    {
+                        foreach (var kvp in tasks)
                         {
-                            if (task is Dictionary<string, object> taskData)
+                            // Skip NextTaskId
+                            if (kvp.Key == "NextTaskId") continue;
+                            
+                            totalTasks++;
+                            
+                            // Parse the task JSON string
+                            if (kvp.Value is string taskJson)
                             {
-                                if (taskData.TryGetValue("status", out var statusObj))
+                                try
                                 {
-                                    var status = statusObj.ToString();
-                                    switch (status)
+                                    var taskData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(taskJson);
+                                    if (taskData != null && taskData.TryGetValue("Status", out var statusObj))
                                     {
-                                        case "تکمیل شده":
-                                            completedTasks++;
-                                            break;
-                                        case "در حال انجام":
-                                            inProgressTasks++;
-                                            break;
-                                        case "در انتظار":
-                                            pendingTasks++;
-                                            break;
+                                        var status = statusObj.ToString();
+                                        switch (status)
+                                        {
+                                            case "تکمیل شده":
+                                                completedTasks++;
+                                                break;
+                                            case "در حال انجام":
+                                                inProgressTasks++;
+                                                break;
+                                            case "در انتظار":
+                                                pendingTasks++;
+                                                break;
+                                        }
                                     }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Error parsing task JSON in insights: {TaskJson}", taskJson);
                                 }
                             }
                         }
-
-                        insights["total_tasks"] = totalTasks;
-                        insights["completion_rate"] = totalTasks > 0 ? (double)completedTasks / totalTasks * 100 : 0;
-                        insights["pending_tasks"] = pendingTasks;
                     }
+                    else if (tasksObj is Newtonsoft.Json.Linq.JObject jTasks)
+                    {
+                        foreach (var prop in jTasks.Properties())
+                        {
+                            // Skip NextTaskId
+                            if (prop.Name == "NextTaskId") continue;
+                            
+                            totalTasks++;
+                            
+                            // Parse the task JSON string
+                            if (prop.Value is Newtonsoft.Json.Linq.JValue jValue && jValue.Value is string taskJson)
+                            {
+                                try
+                                {
+                                    var taskData = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(taskJson);
+                                    if (taskData != null && taskData.TryGetValue("Status", out var statusObj))
+                                    {
+                                        var status = statusObj.ToString();
+                                        switch (status)
+                                        {
+                                            case "تکمیل شده":
+                                                completedTasks++;
+                                                break;
+                                            case "در حال انجام":
+                                                inProgressTasks++;
+                                                break;
+                                            case "در انتظار":
+                                                pendingTasks++;
+                                                break;
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning(ex, "Error parsing task JSON in insights: {TaskJson}", taskJson);
+                                }
+                            }
+                        }
+                    }
+
+                    insights["total_tasks"] = totalTasks;
+                    insights["completion_rate"] = totalTasks > 0 ? (double)completedTasks / totalTasks * 100 : 0;
+                    insights["pending_tasks"] = pendingTasks;
                 }
 
                 _logger.LogInformation("Generated insights for report data");

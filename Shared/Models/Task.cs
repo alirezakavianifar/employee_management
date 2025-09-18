@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Shared.Utils;
@@ -213,10 +214,16 @@ namespace Shared.Models
             public string TaskId { get; set; } = string.Empty;
             public string Title { get; set; } = string.Empty;
             public string Description { get; set; } = string.Empty;
+            
+            [JsonConverter(typeof(PersianEnumConverter<TaskPriority>))]
             public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+            
             public double EstimatedHours { get; set; } = 1.0;
             public string TargetDate { get; set; } = string.Empty;
+            
+            [JsonConverter(typeof(PersianEnumConverter<TaskStatus>))]
             public TaskStatus Status { get; set; } = TaskStatus.Pending;
+            
             public List<string> AssignedEmployees { get; set; } = new();
             public string? StartDate { get; set; }
             public string? CompletionDate { get; set; }
@@ -224,6 +231,46 @@ namespace Shared.Models
             public string Notes { get; set; } = string.Empty;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
+        }
+
+        private class PersianEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+        {
+            public override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
+            {
+                var field = typeof(T).GetField(value.ToString());
+                var attribute = field?.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
+                    .FirstOrDefault() as JsonPropertyAttribute;
+                
+                writer.WriteValue(attribute?.PropertyName ?? value.ToString());
+            }
+
+            public override T ReadJson(JsonReader reader, Type objectType, T existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                if (reader.TokenType == JsonToken.Null)
+                    return default(T);
+
+                var value = reader.Value?.ToString();
+                if (string.IsNullOrEmpty(value))
+                    return default(T);
+
+                // Try to find enum value by JsonProperty attribute
+                foreach (var field in typeof(T).GetFields())
+                {
+                    var attribute = field.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
+                        .FirstOrDefault() as JsonPropertyAttribute;
+                    
+                    if (attribute?.PropertyName == value)
+                    {
+                        return (T)field.GetValue(null);
+                    }
+                }
+
+                // Fallback to direct enum parsing
+                if (Enum.TryParse<T>(value, out T result))
+                    return result;
+
+                return default(T);
+            }
         }
     }
 
