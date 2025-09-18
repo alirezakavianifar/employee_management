@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using ManagementApp.Controllers;
 using ManagementApp.Extensions;
+using ManagementApp.Services;
 using Shared.Models;
 using Shared.Services;
 using Shared.Utils;
@@ -25,6 +26,7 @@ namespace ManagementApp.Views
         private readonly MainController _controller;
         private readonly ILogger<MainWindow> _logger;
         private readonly DispatcherTimer _timer;
+        private readonly PdfReportService _pdfService;
         private Employee? _selectedEmployee;
         private Shared.Models.Task? _selectedTask;
 
@@ -34,6 +36,7 @@ namespace ManagementApp.Views
             
             _controller = new MainController(@"D:\projects\New folder (8)\SharedData");
             _logger = LoggingService.CreateLogger<MainWindow>();
+            _pdfService = new PdfReportService();
             
             // Setup timer for status updates
             _timer = new DispatcherTimer
@@ -73,6 +76,9 @@ namespace ManagementApp.Views
                 // Initialize report dates
                 ReportStartDatePicker.SelectedDate = ShamsiDateHelper.GetCurrentShamsiDate();
                 ReportEndDatePicker.SelectedDate = ShamsiDateHelper.GetCurrentShamsiDate();
+                
+                // Initialize assigned person ComboBox
+                InitializeAssignedPersonComboBox();
 
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
@@ -106,6 +112,36 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing UI");
+            }
+        }
+
+        private void InitializeAssignedPersonComboBox()
+        {
+            try
+            {
+                // Add common management positions
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر کل" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر منابع انسانی" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "سرپرست شیفت" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "کارشناس منابع انسانی" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر عملیات" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "معاون مدیر" });
+                
+                // Add current employees
+                var employees = _controller.GetAllEmployees();
+                foreach (var employee in employees)
+                {
+                    ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = employee.FullName });
+                }
+                
+                // Set default selection
+                ReportAssignedToComboBox.SelectedIndex = 0;
+                
+                _logger.LogInformation("Assigned person ComboBox initialized with {Count} items", ReportAssignedToComboBox.Items.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error initializing assigned person ComboBox");
             }
         }
 
@@ -1916,15 +1952,76 @@ namespace ManagementApp.Views
             {
                 var saveFileDialog = new SaveFileDialog
                 {
-                    Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                    Filter = "PDF files (*.pdf)|*.pdf|Text files (*.txt)|*.txt|All files (*.*)|*.*",
                     Title = "ذخیره گزارش",
-                    DefaultExt = "txt"
+                    DefaultExt = "pdf"
                 };
+
+                // Get current report details for default filename
+                var reportType = ReportTypeComboBox.SelectedItem?.ToString() ?? "گزارش";
+                var startDate = ReportStartDatePicker.SelectedDate?.ToString() ?? "";
+                var endDate = ReportEndDatePicker.SelectedDate?.ToString() ?? "";
+                
+                if (!string.IsNullOrEmpty(startDate) && !string.IsNullOrEmpty(endDate))
+                {
+                    var defaultFileName = _pdfService.GetDefaultFileName(reportType, startDate, endDate);
+                    saveFileDialog.FileName = defaultFileName;
+                }
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    File.WriteAllText(saveFileDialog.FileName, ReportPreviewTextBlock.Text, System.Text.Encoding.UTF8);
-                    UpdateStatus("گزارش صادر شد");
+                    var filePath = saveFileDialog.FileName;
+                    var fileExtension = Path.GetExtension(filePath).ToLower();
+
+                    if (fileExtension == ".pdf")
+                    {
+                        // Export as PDF
+                        var reportTypeText = "گزارش";
+                        if (ReportTypeComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedReportType)
+                        {
+                            reportTypeText = selectedReportType.Content?.ToString() ?? "گزارش";
+                        }
+                        var reportTitle = $"{reportTypeText} - {startDate} تا {endDate}";
+                        
+                        var assignedTo = "";
+                        if (ReportAssignedToComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedAssignedTo)
+                        {
+                            assignedTo = selectedAssignedTo.Content?.ToString() ?? "";
+                        }
+                        else if (ReportAssignedToComboBox.SelectedItem is string assignedToString)
+                        {
+                            assignedTo = assignedToString;
+                        }
+                        
+                        _logger.LogInformation("Starting PDF export to: {FilePath}", filePath);
+                        _logger.LogInformation("Report title: {ReportTitle}", reportTitle);
+                        _logger.LogInformation("Report content length: {Length}", ReportPreviewTextBlock.Text?.Length ?? 0);
+                        _logger.LogInformation("Assigned to: {AssignedTo}", assignedTo);
+                        
+                        var success = _pdfService.ExportReportToPdf(ReportPreviewTextBlock.Text, filePath, reportTitle, assignedTo);
+                        
+                        if (success)
+                        {
+                            _logger.LogInformation("PDF export completed successfully");
+                            UpdateStatus("گزارش PDF صادر شد");
+                            MessageBox.Show("گزارش با موفقیت به فرمت PDF صادر شد.", "موفقیت", 
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            _logger.LogError("PDF export failed");
+                            MessageBox.Show("خطا در صادر کردن گزارش PDF.", "خطا", 
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    else
+                    {
+                        // Export as text file
+                        File.WriteAllText(filePath, ReportPreviewTextBlock.Text, System.Text.Encoding.UTF8);
+                        UpdateStatus("گزارش متنی صادر شد");
+                        MessageBox.Show("گزارش با موفقیت به فرمت متنی صادر شد.", "موفقیت", 
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
             }
             catch (Exception ex)
