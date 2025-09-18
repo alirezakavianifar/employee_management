@@ -1260,6 +1260,32 @@ namespace ManagementApp.Controllers
             }
         }
 
+        // Historical data access methods for reporting
+        public List<string> GetAllReportFiles()
+        {
+            return _jsonHandler.GetAllReports();
+        }
+
+        public Dictionary<string, object>? ReadHistoricalReport(string dateStr)
+        {
+            try
+            {
+                var filename = $"report_{dateStr}.json";
+                var filepath = Path.Combine(_dataDir, "Reports", filename);
+                return _jsonHandler.ReadJson(filepath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reading historical report for date {Date}", dateStr);
+                return null;
+            }
+        }
+
+        public string GetDataDirectory()
+        {
+            return _dataDir;
+        }
+
         // Debug method to help identify persistence issues
         public void DebugDataPersistence()
         {

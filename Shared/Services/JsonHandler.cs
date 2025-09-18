@@ -79,7 +79,16 @@ namespace Shared.Services
                 }
 
                 var json = File.ReadAllText(filepath, System.Text.Encoding.UTF8);
-                var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+                var jObject = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(json);
+                
+                if (jObject == null)
+                {
+                    _logger.LogWarning("Failed to deserialize JSON file: {FilePath}", filepath);
+                    return null;
+                }
+                
+                // Convert JObject to Dictionary<string, object> recursively
+                var data = ConvertJObjectToDictionary(jObject);
                 
                 _logger.LogInformation("Successfully read JSON file: {FilePath}", filepath);
                 return data;
@@ -617,6 +626,41 @@ namespace Shared.Services
             {
                 _logger.LogError(ex, "Failed to save photo for employee {EmployeeId}", employeeId);
                 return false;
+            }
+        }
+
+        private Dictionary<string, object> ConvertJObjectToDictionary(Newtonsoft.Json.Linq.JObject jObject)
+        {
+            var result = new Dictionary<string, object>();
+            
+            foreach (var property in jObject.Properties())
+            {
+                result[property.Name] = ConvertJTokenToObject(property.Value);
+            }
+            
+            return result;
+        }
+
+        private object ConvertJTokenToObject(Newtonsoft.Json.Linq.JToken token)
+        {
+            switch (token.Type)
+            {
+                case Newtonsoft.Json.Linq.JTokenType.Object:
+                    return ConvertJObjectToDictionary((Newtonsoft.Json.Linq.JObject)token);
+                case Newtonsoft.Json.Linq.JTokenType.Array:
+                    return ((Newtonsoft.Json.Linq.JArray)token).Select(ConvertJTokenToObject).ToList();
+                case Newtonsoft.Json.Linq.JTokenType.String:
+                    return token.ToString();
+                case Newtonsoft.Json.Linq.JTokenType.Integer:
+                    return token.ToObject<int>();
+                case Newtonsoft.Json.Linq.JTokenType.Float:
+                    return token.ToObject<double>();
+                case Newtonsoft.Json.Linq.JTokenType.Boolean:
+                    return token.ToObject<bool>();
+                case Newtonsoft.Json.Linq.JTokenType.Null:
+                    return null;
+                default:
+                    return token.ToString();
             }
         }
     }
