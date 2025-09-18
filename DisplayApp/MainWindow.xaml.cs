@@ -264,8 +264,10 @@ namespace DisplayApp
             {
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
-                Margin = new Thickness(5)
+                Padding = new Thickness(8),
+                Margin = new Thickness(3),
+                Width = 80,
+                Height = 100
             };
             
             var stackPanel = new StackPanel
@@ -304,11 +306,11 @@ namespace DisplayApp
             {
                 Text = $"{managerData.GetValueOrDefault("first_name", "")} {managerData.GetValueOrDefault("last_name", "")}".Trim(),
                 Foreground = Brushes.White,
-                FontSize = 12,
+                FontSize = 10,
                 FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 5, 0, 0)
+                Margin = new Thickness(0, 3, 0, 0)
             };
             
             // Manager role
@@ -316,7 +318,7 @@ namespace DisplayApp
             {
                 Text = managerData.GetValueOrDefault("role", "مدیر").ToString(),
                 Foreground = Brushes.LightGray,
-                FontSize = 10,
+                FontSize = 8,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextWrapping = TextWrapping.Wrap
             };

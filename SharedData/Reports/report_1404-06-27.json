@@ -167,11 +167,11 @@
       "employee_id": "EMP_007",
       "first_name": "محمد",
       "last_name": "نوری",
-      "role": "کارگر",
+      "role": "مدیر",
       "photo_path": "C:\\Users\\Administrator\\Downloads\\4444.png",
       "is_manager": true,
       "created_at": "1404-06-27T07:10:16",
-      "updated_at": "2025-09-18T16:12:03"
+      "updated_at": "2025-09-18T17:12:04"
     },
     {
       "employee_id": "EMP_001",
@@ -187,11 +187,11 @@
       "employee_id": "EMP_002",
       "first_name": "فاطمه",
       "last_name": "احمدی",
-      "role": "کارگر",
+      "role": "مدیر",
       "photo_path": "",
       "is_manager": true,
       "created_at": "1404-06-27T07:10:16",
-      "updated_at": "1404-06-27T07:10:16"
+      "updated_at": "2025-09-18T17:11:36"
     },
     {
       "employee_id": "EMP_004",
@@ -207,7 +207,7 @@
   "shifts": {
     "morning": {
       "shift_type": "morning",
-      "capacity": 15,
+      "capacity": 5,
       "assigned_employees": [
         {
           "employee_id": "emp_22_1758179011",
@@ -253,7 +253,7 @@
     },
     "evening": {
       "shift_type": "evening",
-      "capacity": 15,
+      "capacity": 5,
       "assigned_employees": [
         {
           "employee_id": "emp_16_1758178941",
@@ -312,11 +312,11 @@
     "NextTaskId": 1
   },
   "settings": {
-    "shift_capacity": 15,
-    "morning_capacity": 15,
-    "evening_capacity": 15,
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
     "shared_folder_path": "D:\\projects\\New folder (8)\\SharedData",
     "managers": []
   },
-  "last_modified": "1404-06-27T16:12:03"
+  "last_modified": "1404-06-27T17:13:00"
 }

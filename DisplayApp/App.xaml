@@ -101,8 +101,8 @@
                 <Setter Property="BorderBrush" Value="#404040"/>
                 <Setter Property="BorderThickness" Value="2"/>
                 <Setter Property="CornerRadius" Value="8"/>
-                <Setter Property="Margin" Value="10"/>
-                <Setter Property="Padding" Value="15"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Padding" Value="8"/>
             </Style>
             
             <Style x:Key="CardStyle" TargetType="Border">
@@ -110,8 +110,8 @@
                 <Setter Property="BorderBrush" Value="#555555"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="5"/>
-                <Setter Property="Padding" Value="10"/>
-                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Padding" Value="6"/>
+                <Setter Property="Margin" Value="3"/>
             </Style>
             
             <!-- Color Resources -->
