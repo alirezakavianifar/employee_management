@@ -402,7 +402,17 @@ namespace ManagementApp.Controllers
             try
             {
                 var absencesJson = JsonConvert.SerializeObject(absencesData);
-                AbsenceManager = AbsenceManager.FromJson(absencesJson, Employees);
+                var loadedAbsenceManager = AbsenceManager.FromJson(absencesJson, Employees);
+                
+                // Ensure the loaded manager is valid, otherwise keep the existing one
+                if (loadedAbsenceManager != null && loadedAbsenceManager.Absences != null)
+                {
+                    AbsenceManager = loadedAbsenceManager;
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to load absences from data, keeping existing AbsenceManager");
+                }
             }
             catch (Exception ex)
             {
@@ -619,32 +629,46 @@ namespace ManagementApp.Controllers
         {
             try
             {
+                _logger.LogInformation("Starting employee deletion for ID: {EmployeeId}", employeeId);
+                
                 if (!Employees.ContainsKey(employeeId))
+                {
+                    _logger.LogWarning("Employee {EmployeeId} not found in Employees dictionary", employeeId);
                     return false;
+                }
 
                 var employee = Employees[employeeId];
+                _logger.LogInformation("Found employee: {FullName}", employee.FullName);
 
                 // Remove from shifts
+                _logger.LogInformation("Removing employee from morning shift");
                 ShiftManager.RemoveEmployeeFromShift(employee, "morning");
+                
+                _logger.LogInformation("Removing employee from evening shift");
                 ShiftManager.RemoveEmployeeFromShift(employee, "evening");
 
                 // Remove absences
+                _logger.LogInformation("Removing employee absences");
                 AbsenceManager.RemoveEmployeeAbsences(employee);
 
                 // Remove employee
+                _logger.LogInformation("Removing employee from Employees dictionary");
                 Employees.Remove(employeeId);
 
+                _logger.LogInformation("Invoking update events");
                 EmployeesUpdated?.Invoke();
                 ShiftsUpdated?.Invoke();
                 AbsencesUpdated?.Invoke();
+                
+                _logger.LogInformation("Saving data");
                 SaveData();
 
-                _logger.LogInformation("Employee deleted: {FullName}", employee.FullName);
+                _logger.LogInformation("Employee deleted successfully: {FullName}", employee.FullName);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting employee");
+                _logger.LogError(ex, "Error deleting employee {EmployeeId}: {Message}", employeeId, ex.Message);
                 ShowErrorDialog("خطا در حذف کارمند", ex.Message);
                 return false;
             }

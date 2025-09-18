@@ -206,11 +206,25 @@ namespace Shared.Models
 
         public void RemoveEmployeeAbsences(Employee employee)
         {
+            if (Absences == null)
+            {
+                Absences = new Dictionary<string, List<Absence>>
+                {
+                    { "مرخصی", new List<Absence>() },
+                    { "بیمار", new List<Absence>() },
+                    { "غایب", new List<Absence>() }
+                };
+                return;
+            }
+
             foreach (var category in Absences.Keys.ToList())
             {
-                Absences[category] = Absences[category]
-                    .Where(absence => absence.Employee != employee)
-                    .ToList();
+                if (Absences[category] != null)
+                {
+                    Absences[category] = Absences[category]
+                        .Where(absence => absence?.Employee != employee)
+                        .ToList();
+                }
             }
         }
 
@@ -248,31 +262,39 @@ namespace Shared.Models
 
         public static AbsenceManager FromJson(string json, Dictionary<string, Employee> employeesDict)
         {
-            var managerData = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(json);
-            if (managerData == null)
-                return new AbsenceManager();
-
-            var manager = new AbsenceManager();
-
-            foreach (var kvp in managerData)
+            try
             {
-                var category = kvp.Key;
-                var absenceJsonList = kvp.Value;
+                var managerData = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(json);
+                if (managerData == null)
+                    return new AbsenceManager();
 
-                if (manager.Absences.ContainsKey(category))
+                var manager = new AbsenceManager();
+
+                foreach (var kvp in managerData)
                 {
-                    foreach (var absenceJson in absenceJsonList)
+                    var category = kvp.Key;
+                    var absenceJsonList = kvp.Value;
+
+                    if (manager.Absences != null && manager.Absences.ContainsKey(category) && absenceJsonList != null)
                     {
-                        var absence = Absence.FromJson(absenceJson, employeesDict);
-                        if (absence != null)
+                        foreach (var absenceJson in absenceJsonList)
                         {
-                            manager.Absences[category].Add(absence);
+                            var absence = Absence.FromJson(absenceJson, employeesDict);
+                            if (absence != null)
+                            {
+                                manager.Absences[category].Add(absence);
+                            }
                         }
                     }
                 }
-            }
 
-            return manager;
+                return manager;
+            }
+            catch (Exception)
+            {
+                // Return a new valid AbsenceManager if deserialization fails
+                return new AbsenceManager();
+            }
         }
 
         public string ToJson()

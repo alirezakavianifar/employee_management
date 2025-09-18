@@ -113,16 +113,37 @@ namespace Shared.Models
 
         public bool RemoveEmployee(Employee employee)
         {
-            for (int i = 0; i < AssignedEmployees.Count; i++)
+            try
             {
-                if (AssignedEmployees[i] == employee)
+                System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: employee={employee?.FullName}, AssignedEmployees={AssignedEmployees?.Count ?? -1}");
+                
+                // Ensure AssignedEmployees is properly initialized
+                if (AssignedEmployees == null || AssignedEmployees.Count == 0)
                 {
-                    AssignedEmployees[i] = null;
-                    UpdatedAt = DateTime.Now;
-                    return true;
+                    System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: Initializing AssignedEmployees with capacity {Capacity}");
+                    AssignedEmployees = new List<Employee?>(new Employee?[Capacity]);
+                    return false;
                 }
+
+                for (int i = 0; i < AssignedEmployees.Count; i++)
+                {
+                    if (AssignedEmployees[i] == employee)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: Found employee at index {i}, removing");
+                        AssignedEmployees[i] = null;
+                        UpdatedAt = DateTime.Now;
+                        return true;
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: Employee not found in shift");
+                return false;
             }
-            return false;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: Exception - {ex.Message}");
+                throw;
+            }
         }
 
         public void ClearShift()
@@ -133,11 +154,25 @@ namespace Shared.Models
 
         public Employee? GetEmployeeById(string employeeId)
         {
+            // Ensure AssignedEmployees is properly initialized
+            if (AssignedEmployees == null || AssignedEmployees.Count == 0)
+            {
+                AssignedEmployees = new List<Employee?>(new Employee?[Capacity]);
+                return null;
+            }
+
             return AssignedEmployees.FirstOrDefault(emp => emp?.EmployeeId == employeeId);
         }
 
         public bool IsEmployeeAssigned(Employee employee)
         {
+            // Ensure AssignedEmployees is properly initialized
+            if (AssignedEmployees == null || AssignedEmployees.Count == 0)
+            {
+                AssignedEmployees = new List<Employee?>(new Employee?[Capacity]);
+                return false;
+            }
+
             return AssignedEmployees.Contains(employee);
         }
 
@@ -182,6 +217,12 @@ namespace Shared.Models
                 {
                     var shift = new Shift(shiftData.ShiftType, shiftData.Capacity);
                     
+                    // Ensure AssignedEmployees is properly initialized
+                    if (shift.AssignedEmployees == null || shift.AssignedEmployees.Count == 0)
+                    {
+                        shift.AssignedEmployees = new List<Employee?>(new Employee?[shift.Capacity]);
+                    }
+                    
                     // Restore employee assignments
                     for (int i = 0; i < shiftData.AssignedEmployeeIds.Count && i < shift.Capacity; i++)
                     {
@@ -215,6 +256,12 @@ namespace Shared.Models
                 }
 
                 var shift = new Shift(shiftType, capacity);
+                
+                // Ensure AssignedEmployees is properly initialized
+                if (shift.AssignedEmployees == null || shift.AssignedEmployees.Count == 0)
+                {
+                    shift.AssignedEmployees = new List<Employee?>(new Employee?[shift.Capacity]);
+                }
                 
                 // Load assigned employees
                 if (shiftDict.ContainsKey("assigned_employees"))
@@ -256,7 +303,13 @@ namespace Shared.Models
             }
 
             // If all else fails, return a new shift
-            return new Shift();
+            var fallbackShift = new Shift();
+            // Ensure AssignedEmployees is properly initialized
+            if (fallbackShift.AssignedEmployees == null || fallbackShift.AssignedEmployees.Count == 0)
+            {
+                fallbackShift.AssignedEmployees = new List<Employee?>(new Employee?[fallbackShift.Capacity]);
+            }
+            return fallbackShift;
         }
 
         public string ToJson()
@@ -347,8 +400,25 @@ namespace Shared.Models
 
         public bool RemoveEmployeeFromShift(Employee employee, string shiftType)
         {
-            var shift = GetShift(shiftType);
-            return shift?.RemoveEmployee(employee) ?? false;
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"RemoveEmployeeFromShift: employee={employee?.FullName}, shiftType={shiftType}");
+                
+                var shift = GetShift(shiftType);
+                if (shift == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"RemoveEmployeeFromShift: shift is null for type {shiftType}");
+                    return false;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"RemoveEmployeeFromShift: found shift, calling RemoveEmployee");
+                return shift.RemoveEmployee(employee);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RemoveEmployeeFromShift: Exception - {ex.Message}");
+                throw;
+            }
         }
 
         public List<string> GetEmployeeShifts(Employee employee)

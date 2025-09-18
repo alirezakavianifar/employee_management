@@ -170,28 +170,58 @@ namespace ManagementApp.Views
         {
             try
             {
+                _logger.LogInformation("LoadEmployees: Starting to load employees");
+                
+                if (_controller == null)
+                {
+                    _logger.LogError("LoadEmployees: Controller is null!");
+                    return;
+                }
+                
                 var employees = _controller.GetAllEmployees();
+                _logger.LogInformation("LoadEmployees: Retrieved {Count} employees from controller", employees?.Count ?? 0);
+                
+                if (employees == null)
+                {
+                    _logger.LogWarning("LoadEmployees: Employees list is null, using empty list");
+                    employees = new List<Employee>();
+                }
+                
                 EmployeeListBox.ItemsSource = employees;
                 
                 // Filter out absent employees for shift assignment
                 var todayShamsi = ShamsiDateHelper.GetCurrentShamsiDate();
-                var availableEmployees = employees.Where(emp => 
-                    !_controller.AbsenceManager.HasAbsenceForEmployee(emp, todayShamsi)).ToList();
+                var availableEmployees = new List<Employee>();
+                
+                if (_controller.AbsenceManager != null)
+                {
+                    availableEmployees = employees.Where(emp => 
+                        emp != null && !_controller.AbsenceManager.HasAbsenceForEmployee(emp, todayShamsi)).ToList();
+                }
+                else
+                {
+                    _logger.LogWarning("LoadEmployees: AbsenceManager is null, using all employees");
+                    availableEmployees = employees.Where(emp => emp != null).ToList();
+                }
+                
+                _logger.LogInformation("LoadEmployees: {AvailableCount} employees available for shift assignment", availableEmployees.Count);
                 ShiftEmployeeListBox.ItemsSource = availableEmployees;
                 
                 // Set up drag functionality for each employee item
                 foreach (var employee in availableEmployees)
                 {
-                    if (ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromItem(employee) is ListBoxItem item)
+                    if (employee != null && ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromItem(employee) is ListBoxItem item)
                     {
                         item.PreviewMouseLeftButtonDown += (s, e) => Employee_PreviewMouseLeftButtonDown(s, e, employee);
                         item.MouseMove += (s, e) => Employee_MouseMove(s, e, employee);
                     }
                 }
+                
+                _logger.LogInformation("LoadEmployees: Completed successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading employees");
+                _logger.LogError(ex, "Error loading employees: {Message}", ex.Message);
             }
         }
 
@@ -318,29 +348,60 @@ namespace ManagementApp.Views
         {
             try
             {
+                _logger.LogInformation("DeleteEmployee_Click: Starting employee deletion");
+                
                 if (_selectedEmployee == null)
                 {
+                    _logger.LogWarning("DeleteEmployee_Click: No employee selected");
                     MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
+
+                _logger.LogInformation("DeleteEmployee_Click: Selected employee: {FullName} (ID: {EmployeeId})", 
+                    _selectedEmployee.FullName, _selectedEmployee.EmployeeId);
 
                 var result = MessageBox.Show($"آیا از حذف کارمند {_selectedEmployee.FullName} اطمینان دارید؟", 
                     "تأیید حذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    var success = _controller.DeleteEmployee(_selectedEmployee.EmployeeId);
+                    _logger.LogInformation("DeleteEmployee_Click: User confirmed deletion, calling controller");
+                    
+                    if (_controller == null)
+                    {
+                        _logger.LogError("DeleteEmployee_Click: Controller is null!");
+                        MessageBox.Show("خطا در کنترلر", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
+                    // Store employee name before deletion to avoid null reference
+                    var employeeName = _selectedEmployee.FullName;
+                    var employeeId = _selectedEmployee.EmployeeId;
+                    
+                    var success = _controller.DeleteEmployee(employeeId);
                     if (success)
                     {
-                        LoadEmployees();
-                        UpdateStatus($"کارمند {_selectedEmployee.FullName} حذف شد");
+                        _logger.LogInformation("DeleteEmployee_Click: Employee deleted successfully, refreshing UI");
+                        
+                        // Clear selected employee before refreshing UI
                         _selectedEmployee = null;
+                        
+                        LoadEmployees();
+                        UpdateStatus($"کارمند {employeeName} حذف شد");
                     }
+                    else
+                    {
+                        _logger.LogWarning("DeleteEmployee_Click: Controller returned false for deletion");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("DeleteEmployee_Click: User cancelled deletion");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting employee");
+                _logger.LogError(ex, "Error deleting employee in UI: {Message}", ex.Message);
                 MessageBox.Show($"خطا در حذف کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

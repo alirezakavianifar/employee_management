@@ -1,0 +1,8 @@
+{
+  "data_directory": "./SharedData",
+  "reports_directory": "./SharedData/Reports",
+  "images_directory": "./SharedData/Images",
+  "logs_directory": "./SharedData/Logs",
+  "sync_enabled": true,
+  "sync_interval_seconds": 30
+}
