@@ -100,13 +100,13 @@ namespace ManagementApp.Controls
             Grid.SetRow(yearComboBox, 1);
             Grid.SetColumn(yearComboBox, 1);
 
-            var currentYear = DateTime.Now.Year;
-            var persianYear = ShamsiDateHelper.FromShamsiString(SelectedDate).Year;
-            for (int year = persianYear - 5; year <= persianYear + 5; year++)
+            // Extract Shamsi year directly from the date string
+            var shamsiYear = GetShamsiYearFromString(SelectedDate);
+            for (int year = shamsiYear - 5; year <= shamsiYear + 5; year++)
             {
                 yearComboBox.Items.Add(year);
             }
-            yearComboBox.SelectedItem = persianYear;
+            yearComboBox.SelectedItem = shamsiYear;
             grid.Children.Add(yearComboBox);
 
             // Month selection
@@ -129,7 +129,7 @@ namespace ManagementApp.Controls
                 monthComboBox.Items.Add($"{i + 1:00} - {monthNames[i]}");
             }
 
-            var currentMonth = ShamsiDateHelper.FromShamsiString(SelectedDate).Month;
+            var currentMonth = GetShamsiMonthFromString(SelectedDate);
             monthComboBox.SelectedIndex = currentMonth - 1;
             grid.Children.Add(monthComboBox);
 
@@ -147,8 +147,8 @@ namespace ManagementApp.Controls
             Grid.SetRow(dayComboBox, 3);
             Grid.SetColumn(dayComboBox, 1);
 
-            UpdateDayComboBox(dayComboBox, persianYear, currentMonth);
-            var currentDay = ShamsiDateHelper.FromShamsiString(SelectedDate).Day;
+            UpdateDayComboBox(dayComboBox, shamsiYear, currentMonth);
+            var currentDay = GetShamsiDayFromString(SelectedDate);
             dayComboBox.SelectedItem = currentDay;
             grid.Children.Add(dayComboBox);
 
@@ -197,6 +197,84 @@ namespace ManagementApp.Controls
 
             dialog.Content = grid;
             dialog.ShowDialog();
+        }
+
+        private int GetShamsiYearFromString(string shamsiDate)
+        {
+            if (string.IsNullOrEmpty(shamsiDate))
+                return GetCurrentShamsiYear();
+
+            var normalizedDate = shamsiDate.Replace("-", "/");
+            var parts = normalizedDate.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[0], out int year))
+            {
+                return year; // This is the Shamsi year from the string
+            }
+
+            return GetCurrentShamsiYear();
+        }
+
+        private int GetShamsiMonthFromString(string shamsiDate)
+        {
+            if (string.IsNullOrEmpty(shamsiDate))
+                return GetCurrentShamsiMonth();
+
+            var normalizedDate = shamsiDate.Replace("-", "/");
+            var parts = normalizedDate.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[1], out int month))
+            {
+                return month; // This is the Shamsi month from the string
+            }
+
+            return GetCurrentShamsiMonth();
+        }
+
+        private int GetShamsiDayFromString(string shamsiDate)
+        {
+            if (string.IsNullOrEmpty(shamsiDate))
+                return GetCurrentShamsiDay();
+
+            var normalizedDate = shamsiDate.Replace("-", "/");
+            var parts = normalizedDate.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int day))
+            {
+                return day; // This is the Shamsi day from the string
+            }
+
+            return GetCurrentShamsiDay();
+        }
+
+        private int GetCurrentShamsiYear()
+        {
+            var currentShamsi = ShamsiDateHelper.GetCurrentShamsiDate();
+            var parts = currentShamsi.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[0], out int year))
+            {
+                return year;
+            }
+            return 1403; // Default fallback
+        }
+
+        private int GetCurrentShamsiMonth()
+        {
+            var currentShamsi = ShamsiDateHelper.GetCurrentShamsiDate();
+            var parts = currentShamsi.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[1], out int month))
+            {
+                return month;
+            }
+            return 1; // Default fallback
+        }
+
+        private int GetCurrentShamsiDay()
+        {
+            var currentShamsi = ShamsiDateHelper.GetCurrentShamsiDate();
+            var parts = currentShamsi.Split('/');
+            if (parts.Length == 3 && int.TryParse(parts[2], out int day))
+            {
+                return day;
+            }
+            return 1; // Default fallback
         }
 
         private void UpdateDayComboBox(ComboBox dayComboBox, int year, int month)

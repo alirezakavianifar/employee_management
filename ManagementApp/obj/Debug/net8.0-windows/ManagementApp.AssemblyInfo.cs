@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ManagementApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c7cfd70c8ca9981f810f404fee222873098b2d6f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b89d8a67d8c03e7e20ca2781eb19e4f20cbc238e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ManagementApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Employee Shift Management System")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

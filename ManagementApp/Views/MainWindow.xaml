@@ -412,10 +412,10 @@
                             </ComboBox>
 
                             <Label Content="تاریخ شروع:" Margin="0,10,0,5"/>
-                            <DatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
+                            <controls:ShamsiDatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
 
                             <Label Content="تاریخ پایان:" Margin="0,0,0,5"/>
-                            <DatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
+                            <controls:ShamsiDatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
 
                             <Button Content="تولید گزارش" Click="GenerateReport_Click" Margin="0,10"/>
                             <Button Content="صادر کردن" Click="ExportReport_Click" Margin="0,5"/>

@@ -71,8 +71,8 @@ namespace ManagementApp.Views
                 TaskTargetDatePicker.SelectedDate = ShamsiDateHelper.GetCurrentShamsiDate();
                 
                 // Initialize report dates
-                ReportStartDatePicker.SelectedDate = DateTime.Today;
-                ReportEndDatePicker.SelectedDate = DateTime.Today;
+                ReportStartDatePicker.SelectedDate = ShamsiDateHelper.GetCurrentShamsiDate();
+                ReportEndDatePicker.SelectedDate = ShamsiDateHelper.GetCurrentShamsiDate();
 
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
@@ -1580,16 +1580,16 @@ namespace ManagementApp.Views
             try
             {
                 var reportType = ((ComboBoxItem)ReportTypeComboBox.SelectedItem)?.Content?.ToString();
-                var startDate = ReportStartDatePicker.SelectedDate;
-                var endDate = ReportEndDatePicker.SelectedDate;
+                var startDateShamsi = ReportStartDatePicker.SelectedDate;
+                var endDateShamsi = ReportEndDatePicker.SelectedDate;
 
-                if (startDate == null || endDate == null)
+                if (string.IsNullOrEmpty(startDateShamsi) || string.IsNullOrEmpty(endDateShamsi))
                 {
                     MessageBox.Show("لطفاً تاریخ شروع و پایان را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                var report = GenerateReport(reportType, startDate.Value, endDate.Value);
+                var report = GenerateReport(reportType, startDateShamsi, endDateShamsi);
                 ReportPreviewTextBlock.Text = report;
                 UpdateStatus("گزارش تولید شد");
             }
@@ -1600,13 +1600,13 @@ namespace ManagementApp.Views
             }
         }
 
-        private string GenerateReport(string? reportType, DateTime startDate, DateTime endDate)
+        private string GenerateReport(string? reportType, string startDateShamsi, string endDateShamsi)
         {
             try
             {
                 var report = $"گزارش {reportType}\n";
-                report += $"تاریخ شروع: {startDate:yyyy/MM/dd}\n";
-                report += $"تاریخ پایان: {endDate:yyyy/MM/dd}\n\n";
+                report += $"تاریخ شروع: {ShamsiDateHelper.FormatForDisplay(startDateShamsi)}\n";
+                report += $"تاریخ پایان: {ShamsiDateHelper.FormatForDisplay(endDateShamsi)}\n\n";
 
                 // Employee statistics
                 var totalEmployees = _controller.GetAllEmployees().Count;
