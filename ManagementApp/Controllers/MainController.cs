@@ -499,8 +499,9 @@ namespace ManagementApp.Controllers
                 var managersToDisplay = new List<object>();
 
                 // First, check if user has selected specific managers in settings
-                if (Settings.ContainsKey("managers") && Settings["managers"] is List<object> managers)
+                if (Settings.ContainsKey("managers") && Settings["managers"] is List<object> managers && managers.Count > 0)
                 {
+                    _logger.LogInformation("Using specific managers from settings: {Count} managers", managers.Count);
                     foreach (var managerObj in managers)
                     {
                         var managerDict = managerObj as Dictionary<string, object>;
@@ -516,9 +517,19 @@ namespace ManagementApp.Controllers
                 }
                 else
                 {
-                    // Fallback to auto-categorized managers based on role
-                    managersToDisplay = Employees.Values
+                    // Fallback to auto-categorized managers based on IsManager property and role
+                    var managersByProperty = Employees.Values.Where(emp => emp.IsManager).ToList();
+                    var managersByRole = Employees.Values
                         .Where(emp => emp.Role.ToLower().StartsWith("مدیر") || emp.Role.ToLower().StartsWith("manager"))
+                        .ToList();
+                    
+                    // Combine both approaches and remove duplicates
+                    var allManagers = managersByProperty.Union(managersByRole).Distinct().ToList();
+                    
+                    _logger.LogInformation("Auto-categorized managers: {Count} by IsManager property, {Count} by role, {Count} total", 
+                        managersByProperty.Count, managersByRole.Count, allManagers.Count);
+                    
+                    managersToDisplay = allManagers
                         .Select(emp => emp.ToDictionary())
                         .Cast<object>()
                         .ToList();
@@ -528,7 +539,7 @@ namespace ManagementApp.Controllers
                 var reportData = new Dictionary<string, object>
                 {
                     { "date", DateTime.Now.ToString("yyyy-MM-dd") },
-                    { "employees", Employees.Values.Where(emp => !emp.Role.ToLower().StartsWith("مدیر") && !emp.Role.ToLower().StartsWith("manager")).Select(emp => emp.ToDictionary()).Cast<object>().ToList() },
+                    { "employees", Employees.Values.Where(emp => !emp.IsManager && !emp.Role.ToLower().StartsWith("مدیر") && !emp.Role.ToLower().StartsWith("manager")).Select(emp => emp.ToDictionary()).Cast<object>().ToList() },
                     { "managers", managersToDisplay },
                     { "shifts", CreateShiftsData() },
                     { "absences", JsonConvert.DeserializeObject<Dictionary<string, object>>(AbsenceManager.ToJson()) ?? new Dictionary<string, object>() },

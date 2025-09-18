@@ -1,8 +1,0 @@
-{
-  "data_directory": "D:\\projects\\New folder (8)\\SharedData",
-  "reports_directory": "D:\\projects\\New folder (8)\\SharedData\\Reports",
-  "images_directory": "D:\\projects\\New folder (8)\\SharedData\\Images",
-  "logs_directory": "D:\\projects\\New folder (8)\\SharedData\\Logs",
-  "sync_enabled": true,
-  "sync_interval_seconds": 30
-}

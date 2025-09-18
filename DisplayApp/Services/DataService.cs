@@ -129,6 +129,7 @@ namespace DisplayApp.Services
                                         { "last_name", employeeObj.GetValueOrDefault("LastName", "") },
                                         { "role", employeeObj.GetValueOrDefault("Role", "") },
                                         { "photo_path", employeeObj.GetValueOrDefault("PhotoPath", "") },
+                                        { "is_manager", employeeObj.GetValueOrDefault("IsManager", false) },
                                         { "created_at", employeeObj.GetValueOrDefault("CreatedAt", "") },
                                         { "updated_at", employeeObj.GetValueOrDefault("UpdatedAt", "") }
                                     };
@@ -433,6 +434,79 @@ namespace DisplayApp.Services
                     _logger.LogWarning("No absences data found in original data");
                 }
 
+                // Add fallback managers from employees if managers array is empty
+                _logger.LogInformation("Checking managers array for fallback logic...");
+                if (transformedData.TryGetValue("managers", out var managersObj))
+                {
+                    _logger.LogInformation("Managers object found: {Type}", managersObj?.GetType().Name ?? "null");
+                    
+                    var managersCount = 0;
+                    var isEmpty = false;
+                    
+                    if (managersObj is List<object> managers)
+                    {
+                        managersCount = managers.Count;
+                        isEmpty = managersCount == 0;
+                        _logger.LogInformation("Managers array (List<object>) has {Count} items", managersCount);
+                    }
+                    else if (managersObj is Newtonsoft.Json.Linq.JArray managersJArray)
+                    {
+                        managersCount = managersJArray.Count;
+                        isEmpty = managersCount == 0;
+                        _logger.LogInformation("Managers array (JArray) has {Count} items", managersCount);
+                        
+                        // Convert JArray to List<object> with proper Dictionary objects
+                        var convertedManagers = new List<object>();
+                        foreach (var managerItem in managersJArray)
+                        {
+                            if (managerItem is Newtonsoft.Json.Linq.JObject managerJObject)
+                            {
+                                var convertedManager = ConvertJObjectToDictionary(managerJObject);
+                                convertedManagers.Add(convertedManager);
+                                _logger.LogInformation("Converted JObject manager: {EmployeeId}", 
+                                    convertedManager.GetValueOrDefault("employee_id", "Unknown"));
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Manager item is not a JObject: {Type}", managerItem?.GetType().Name ?? "null");
+                            }
+                        }
+                        
+                        if (convertedManagers.Count > 0)
+                        {
+                            transformedData["managers"] = convertedManagers;
+                            _logger.LogInformation("Converted {Count} managers from JArray to List<object>", convertedManagers.Count);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Managers object is not a List<object> or JArray: {Type}", managersObj?.GetType().Name ?? "null");
+                    }
+                    
+                    if (isEmpty)
+                    {
+                        _logger.LogInformation("Managers array is empty, checking employees for managers");
+                        var fallbackManagers = ExtractManagersFromEmployees(transformedData);
+                        if (fallbackManagers.Count > 0)
+                        {
+                            transformedData["managers"] = fallbackManagers;
+                            _logger.LogInformation("Found {Count} managers from employees fallback", fallbackManagers.Count);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No managers found in employees fallback");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Managers array has {Count} items, skipping fallback logic", managersCount);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No managers key found in transformed data");
+                }
+
                 _logger.LogInformation("Successfully transformed report data");
                 return transformedData;
             }
@@ -476,6 +550,100 @@ namespace DisplayApp.Services
             }
             
             return dictionary;
+        }
+
+        private List<object> ExtractManagersFromEmployees(Dictionary<string, object> reportData)
+        {
+            try
+            {
+                var managers = new List<object>();
+                
+                _logger.LogInformation("ExtractManagersFromEmployees called");
+                if (reportData.TryGetValue("employees", out var employeesObj))
+                {
+                    _logger.LogInformation("Employees object found: {Type}", employeesObj?.GetType().Name ?? "null");
+                    if (employeesObj is List<object> employees)
+                    {
+                        _logger.LogInformation("Checking {Count} employees for manager status", employees.Count);
+                    
+                    foreach (var employeeItem in employees)
+                    {
+                        if (employeeItem is Dictionary<string, object> employeeDict)
+                        {
+                            var employeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString();
+                            var firstName = employeeDict.GetValueOrDefault("first_name", "").ToString();
+                            var lastName = employeeDict.GetValueOrDefault("last_name", "").ToString();
+                            var role = employeeDict.GetValueOrDefault("role", "").ToString().ToLower();
+                            
+                            _logger.LogInformation("Checking employee: {EmployeeId} - {FirstName} {LastName} (Role: {Role})", 
+                                employeeId, firstName, lastName, role);
+                            
+                            var isManager = false;
+                            
+                            // Check is_manager field
+                            if (employeeDict.TryGetValue("is_manager", out var isManagerObj))
+                            {
+                                _logger.LogInformation("Employee {EmployeeId} has is_manager field: {IsManager} (Type: {Type})", 
+                                    employeeId, isManagerObj, isManagerObj?.GetType().Name ?? "null");
+                                
+                                if (isManagerObj is bool isManagerBool)
+                                {
+                                    isManager = isManagerBool;
+                                    _logger.LogInformation("Employee {EmployeeId} is_manager (bool): {IsManager}", employeeId, isManager);
+                                }
+                                else if (bool.TryParse(isManagerObj.ToString(), out var isManagerParsed))
+                                {
+                                    isManager = isManagerParsed;
+                                    _logger.LogInformation("Employee {EmployeeId} is_manager (parsed): {IsManager}", employeeId, isManager);
+                                }
+                            }
+                            else
+                            {
+                                _logger.LogInformation("Employee {EmployeeId} has no is_manager field", employeeId);
+                            }
+                            
+                            // Check role-based manager detection
+                            if (!isManager && (role.StartsWith("مدیر") || role.StartsWith("manager")))
+                            {
+                                isManager = true;
+                                _logger.LogInformation("Employee {EmployeeId} identified as manager by role: {Role}", employeeId, role);
+                            }
+                            
+                            if (isManager)
+                            {
+                                _logger.LogInformation("Found manager: {EmployeeId} - {FirstName} {LastName} (Role: {Role}, IsManager: {IsManager})", 
+                                    employeeId, firstName, lastName, role, employeeDict.GetValueOrDefault("is_manager", false));
+                                managers.Add(employeeDict);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("Employee {EmployeeId} is not a manager", employeeId);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Employee item is not a Dictionary: {Type}", employeeItem?.GetType().Name ?? "null");
+                        }
+                    }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Employees object is not a List<object>: {Type}", employeesObj?.GetType().Name ?? "null");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No employees key found in report data");
+                }
+                
+                _logger.LogInformation("Extracted {Count} managers from employees", managers.Count);
+                return managers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting managers from employees");
+                return new List<object>();
+            }
         }
 
         private List<object> GetAssignedEmployees(Dictionary<string, object> shiftObj, Dictionary<string, object> reportData)

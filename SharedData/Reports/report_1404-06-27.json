@@ -2,69 +2,9 @@
   "date": "1404-06-27",
   "employees": [
     {
-      "employee_id": "EMP_001",
-      "first_name": "احمد",
-      "last_name": "محمدی",
-      "role": "کارگر",
-      "photo_path": "",
-      "is_manager": false,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "1404-06-27T07:10:16"
-    },
-    {
-      "employee_id": "EMP_002",
-      "first_name": "فاطمه",
-      "last_name": "احمدی",
-      "role": "کارگر",
-      "photo_path": "",
-      "is_manager": false,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "1404-06-27T07:10:16"
-    },
-    {
-      "employee_id": "EMP_003",
-      "first_name": "علی",
-      "last_name": "حسینی",
-      "role": "کارگر",
-      "photo_path": "C:\\Users\\Administrator\\Downloads\\4444.png",
-      "is_manager": true,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "2025-09-18T10:29:13"
-    },
-    {
-      "employee_id": "EMP_004",
-      "first_name": "مریم",
-      "last_name": "کریمی",
-      "role": "کارگر",
-      "photo_path": "C:\\Users\\Administrator\\Downloads\\2 (2).png",
-      "is_manager": false,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "2025-09-18T07:12:38"
-    },
-    {
       "employee_id": "EMP_005",
       "first_name": "حسن",
       "last_name": "رضایی",
-      "role": "کارگر",
-      "photo_path": "",
-      "is_manager": false,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "1404-06-27T07:10:16"
-    },
-    {
-      "employee_id": "EMP_006",
-      "first_name": "زهرا",
-      "last_name": "موسوی",
-      "role": "کارگر",
-      "photo_path": "",
-      "is_manager": true,
-      "created_at": "1404-06-27T07:10:16",
-      "updated_at": "2025-09-18T07:34:23"
-    },
-    {
-      "employee_id": "EMP_007",
-      "first_name": "محمد",
-      "last_name": "نوری",
       "role": "کارگر",
       "photo_path": "",
       "is_manager": false,
@@ -202,24 +142,14 @@
       "updated_at": "2025-09-18T10:32:56"
     },
     {
-      "employee_id": "emp_20_1758178986",
-      "first_name": "گودزر",
-      "last_name": "ابهری",
-      "role": "",
-      "photo_path": "",
-      "is_manager": false,
-      "created_at": "2025-09-18T10:33:06",
-      "updated_at": "2025-09-18T10:33:06"
-    },
-    {
       "employee_id": "emp_21_1758179002",
       "first_name": "حسن",
       "last_name": "پرومومن",
       "role": "",
-      "photo_path": "",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\66.png",
       "is_manager": false,
       "created_at": "2025-09-18T10:33:22",
-      "updated_at": "2025-09-18T10:33:22"
+      "updated_at": "2025-09-18T10:38:37"
     },
     {
       "employee_id": "emp_22_1758179011",
@@ -232,141 +162,82 @@
       "updated_at": "2025-09-18T10:33:31"
     }
   ],
-  "managers": [],
+  "managers": [
+    {
+      "employee_id": "EMP_007",
+      "first_name": "محمد",
+      "last_name": "نوری",
+      "role": "کارگر",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\4444.png",
+      "is_manager": true,
+      "created_at": "1404-06-27T07:10:16",
+      "updated_at": "2025-09-18T16:12:03"
+    },
+    {
+      "employee_id": "EMP_001",
+      "first_name": "احمد",
+      "last_name": "محمدی",
+      "role": "مدیر",
+      "photo_path": "",
+      "is_manager": true,
+      "created_at": "1404-06-27T07:10:16",
+      "updated_at": "1404-06-27T07:10:16"
+    },
+    {
+      "employee_id": "EMP_002",
+      "first_name": "فاطمه",
+      "last_name": "احمدی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": true,
+      "created_at": "1404-06-27T07:10:16",
+      "updated_at": "1404-06-27T07:10:16"
+    },
+    {
+      "employee_id": "EMP_004",
+      "first_name": "مریم",
+      "last_name": "کریمی",
+      "role": "کارگر",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\2 (2).png",
+      "is_manager": true,
+      "created_at": "1404-06-27T07:10:16",
+      "updated_at": "2025-09-18T14:22:13"
+    }
+  ],
   "shifts": {
     "morning": {
       "shift_type": "morning",
       "capacity": 15,
       "assigned_employees": [
         {
-          "employee_id": "EMP_008",
-          "first_name": "نرگس",
-          "last_name": "صادقی",
-          "role": "کارگر",
+          "employee_id": "emp_22_1758179011",
+          "first_name": "احمد",
+          "last_name": "قانعی",
+          "role": "",
           "photo_path": "",
           "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
+          "created_at": "2025-09-18T10:33:31",
+          "updated_at": "2025-09-18T10:33:31"
         },
         {
-          "employee_id": "EMP_003",
-          "first_name": "علی",
-          "last_name": "حسینی",
-          "role": "کارگر",
-          "photo_path": "C:\\Users\\Administrator\\Downloads\\4444.png",
-          "is_manager": true,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "2025-09-18T10:29:13"
+          "employee_id": "emp_21_1758179002",
+          "first_name": "حسن",
+          "last_name": "پرومومن",
+          "role": "",
+          "photo_path": "C:\\Users\\Administrator\\Downloads\\66.png",
+          "is_manager": false,
+          "created_at": "2025-09-18T10:33:22",
+          "updated_at": "2025-09-18T10:38:37"
         },
         {
           "employee_id": "EMP_001",
           "first_name": "احمد",
           "last_name": "محمدی",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "EMP_002",
-          "first_name": "فاطمه",
-          "last_name": "احمدی",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "EMP_005",
-          "first_name": "حسن",
-          "last_name": "رضایی",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "EMP_006",
-          "first_name": "زهرا",
-          "last_name": "موسوی",
-          "role": "کارگر",
+          "role": "مدیر",
           "photo_path": "",
           "is_manager": true,
           "created_at": "1404-06-27T07:10:16",
-          "updated_at": "2025-09-18T07:34:23"
-        },
-        {
-          "employee_id": "EMP_007",
-          "first_name": "محمد",
-          "last_name": "نوری",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
           "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "EMP_009",
-          "first_name": "رضا",
-          "last_name": "جعفری",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "EMP_010",
-          "first_name": "سارا",
-          "last_name": "کاظمی",
-          "role": "کارگر",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "1404-06-27T07:10:16",
-          "updated_at": "1404-06-27T07:10:16"
-        },
-        {
-          "employee_id": "emp_10_1758176526",
-          "first_name": "asa",
-          "last_name": "aassa",
-          "role": "",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "2025-09-18T09:52:06",
-          "updated_at": "2025-09-18T09:52:06"
-        },
-        {
-          "employee_id": "emp_11_1758178852",
-          "first_name": "بهروز",
-          "last_name": "یوسفی",
-          "role": "",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "2025-09-18T10:30:52",
-          "updated_at": "2025-09-18T10:30:52"
-        },
-        {
-          "employee_id": "emp_12_1758178865",
-          "first_name": "احسان",
-          "last_name": "مللی",
-          "role": "",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "2025-09-18T10:31:05",
-          "updated_at": "2025-09-18T10:31:05"
-        },
-        {
-          "employee_id": "emp_13_1758178882",
-          "first_name": "حسن",
-          "last_name": "پورشیرازی",
-          "role": "",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "2025-09-18T10:31:22",
-          "updated_at": "2025-09-18T10:31:22"
         },
         {
           "employee_id": "emp_14_1758178897",
@@ -377,16 +248,6 @@
           "is_manager": false,
           "created_at": "2025-09-18T10:31:37",
           "updated_at": "2025-09-18T10:31:37"
-        },
-        {
-          "employee_id": "emp_15_1758178914",
-          "first_name": "محمدحسن",
-          "last_name": "بهروزیان",
-          "role": "",
-          "photo_path": "",
-          "is_manager": false,
-          "created_at": "2025-09-18T10:31:54",
-          "updated_at": "2025-09-18T10:31:54"
         }
       ]
     },
@@ -438,7 +299,9 @@
     }
   },
   "absences": {
-    "مرخصی": [],
+    "مرخصی": [
+      "{\r\n  \"EmployeeId\": \"EMP_002\",\r\n  \"FirstName\": \"فاطمه\",\r\n  \"LastName\": \"احمدی\",\r\n  \"EmployeeName\": \"فاطمه احمدی\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"مرخصی\",\r\n  \"Date\": \"1404/06/27\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-18T11:40:22.64463+03:30\",\r\n  \"UpdatedAt\": \"2025-09-18T11:40:22.6446393+03:30\"\r\n}"
+    ],
     "بیمار": [
       "{\r\n  \"EmployeeId\": \"EMP_004\",\r\n  \"FirstName\": \"مریم\",\r\n  \"LastName\": \"کریمی\",\r\n  \"EmployeeName\": \"مریم کریمی\",\r\n  \"PhotoPath\": \"C:\\\\Users\\\\Administrator\\\\Downloads\\\\2 (2).png\",\r\n  \"Category\": \"بیمار\",\r\n  \"Date\": \"1404/06/27\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-18T07:12:24.3634148+03:30\",\r\n  \"UpdatedAt\": \"2025-09-18T07:12:24.3634766+03:30\"\r\n}"
     ],
@@ -455,5 +318,5 @@
     "shared_folder_path": "D:\\projects\\New folder (8)\\SharedData",
     "managers": []
   },
-  "last_modified": "1404-06-27T10:35:39"
+  "last_modified": "1404-06-27T16:12:03"
 }

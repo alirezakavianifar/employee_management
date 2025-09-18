@@ -72,21 +72,32 @@ namespace DisplayApp
 
         private void SetupTimers()
         {
-            // Refresh timer - every 30 seconds
-            _refreshTimer = new DispatcherTimer
+            try
             {
-                Interval = TimeSpan.FromSeconds(30)
-            };
-            _refreshTimer.Tick += RefreshTimer_Tick;
-            _refreshTimer.Start();
-            
-            // Countdown timer - every second
-            _countdownTimer = new DispatcherTimer
+                _logger.LogInformation("Setting up timers...");
+                
+                // Refresh timer - every 30 seconds
+                _refreshTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(30)
+                };
+                _refreshTimer.Tick += RefreshTimer_Tick;
+                _refreshTimer.Start();
+                _logger.LogInformation("Refresh timer started successfully");
+                
+                // Countdown timer - every second
+                _countdownTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1)
+                };
+                _countdownTimer.Tick += CountdownTimer_Tick;
+                _countdownTimer.Start();
+                _logger.LogInformation("Countdown timer started successfully");
+            }
+            catch (Exception ex)
             {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _countdownTimer.Tick += CountdownTimer_Tick;
-            _countdownTimer.Start();
+                _logger.LogError(ex, "Error setting up timers");
+            }
         }
 
         private void InitializeChart()
@@ -116,7 +127,7 @@ namespace DisplayApp
             try
             {
                 // StatusText removed - no longer needed
-                _logger.LogInformation("Loading data...");
+                _logger.LogInformation("LoadData method called - starting data load...");
                 
                 // Data reading and transformation is working correctly
                 
@@ -155,6 +166,7 @@ namespace DisplayApp
             try
             {
                 // Debug: Show that UpdateUI is being called
+                _logger.LogInformation("UpdateUI method called with {Count} data keys", reportData.Count);
                 // StatusText removed - no longer needed
                 
                 // Update managers
@@ -184,19 +196,65 @@ namespace DisplayApp
 
         private void UpdateManagersPanel(Dictionary<string, object> reportData)
         {
+            _logger.LogInformation("UpdateManagersPanel called");
             ManagersGrid.Children.Clear();
             
-            if (reportData.TryGetValue("managers", out var managersObj) && managersObj is List<object> managers)
+            if (reportData.TryGetValue("managers", out var managersObj))
             {
-                for (int i = 0; i < Math.Min(managers.Count, 3); i++)
+                _logger.LogInformation("Managers object found: {Type}", managersObj?.GetType().Name ?? "null");
+                
+                List<object> managers = null;
+                
+                if (managersObj is List<object> managersList)
                 {
-                    if (managers[i] is Dictionary<string, object> managerData)
+                    managers = managersList;
+                    _logger.LogInformation("Found {Count} managers to display (List<object>)", managers.Count);
+                }
+                else if (managersObj is Newtonsoft.Json.Linq.JArray managersJArray)
+                {
+                    managers = managersJArray.ToObject<List<object>>() ?? new List<object>();
+                    _logger.LogInformation("Found {Count} managers to display (JArray converted)", managers.Count);
+                }
+                else
+                {
+                    _logger.LogWarning("Managers object is not a List<object> or JArray: {Type}", managersObj?.GetType().Name ?? "null");
+                }
+                
+                if (managers != null)
+                {
+                    for (int i = 0; i < Math.Min(managers.Count, 3); i++)
                     {
-                        var managerCard = CreateManagerCard(managerData);
-                        Grid.SetColumn(managerCard, i);
-                        ManagersGrid.Children.Add(managerCard);
+                        Dictionary<string, object> managerData = null;
+                        
+                        if (managers[i] is Dictionary<string, object> managerDict)
+                        {
+                            managerData = managerDict;
+                        }
+                        else if (managers[i] is Newtonsoft.Json.Linq.JObject managerJObject)
+                        {
+                            // Convert JObject to Dictionary
+                            managerData = ConvertJObjectToDictionary(managerJObject);
+                            _logger.LogInformation("Converted JObject manager to Dictionary");
+                        }
+                        
+                        if (managerData != null)
+                        {
+                            var name = $"{managerData.GetValueOrDefault("first_name", "")} {managerData.GetValueOrDefault("last_name", "")}".Trim();
+                            _logger.LogInformation("Creating manager card for: {Name}", name);
+                            var managerCard = CreateManagerCard(managerData);
+                            Grid.SetColumn(managerCard, i);
+                            ManagersGrid.Children.Add(managerCard);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Manager item {Index} is not a Dictionary or JObject: {Type}", i, managers[i]?.GetType().Name ?? "null");
+                        }
                     }
                 }
+            }
+            else
+            {
+                _logger.LogWarning("No managers key found in report data");
             }
         }
 
@@ -804,6 +862,7 @@ namespace DisplayApp
 
         private void RefreshTimer_Tick(object sender, EventArgs e)
         {
+            _logger.LogInformation("RefreshTimer_Tick called");
             LoadData();
             _countdownSeconds = 30; // Reset countdown
         }
