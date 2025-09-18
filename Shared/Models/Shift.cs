@@ -174,25 +174,89 @@ namespace Shared.Models
 
         public static Shift FromJson(string json, Dictionary<string, Employee> employeesDict)
         {
-            var shiftData = JsonConvert.DeserializeObject<ShiftData>(json);
-            if (shiftData == null)
-                return new Shift();
-
-            var shift = new Shift(shiftData.ShiftType, shiftData.Capacity);
-            
-            // Restore employee assignments
-            for (int i = 0; i < shiftData.AssignedEmployeeIds.Count && i < shift.Capacity; i++)
+            try
             {
-                var empId = shiftData.AssignedEmployeeIds[i];
-                if (!string.IsNullOrEmpty(empId) && employeesDict.ContainsKey(empId))
+                // Try to deserialize as the expected ShiftData structure first
+                var shiftData = JsonConvert.DeserializeObject<ShiftData>(json);
+                if (shiftData != null && !string.IsNullOrEmpty(shiftData.ShiftType))
                 {
-                    shift.AssignedEmployees[i] = employeesDict[empId];
+                    var shift = new Shift(shiftData.ShiftType, shiftData.Capacity);
+                    
+                    // Restore employee assignments
+                    for (int i = 0; i < shiftData.AssignedEmployeeIds.Count && i < shift.Capacity; i++)
+                    {
+                        var empId = shiftData.AssignedEmployeeIds[i];
+                        if (!string.IsNullOrEmpty(empId) && employeesDict.ContainsKey(empId))
+                        {
+                            shift.AssignedEmployees[i] = employeesDict[empId];
+                        }
+                    }
+
+                    shift.CreatedAt = shiftData.CreatedAt;
+                    shift.UpdatedAt = shiftData.UpdatedAt;
+                    return shift;
                 }
             }
+            catch
+            {
+                // If that fails, try to deserialize as the actual structure being saved
+            }
 
-            shift.CreatedAt = shiftData.CreatedAt;
-            shift.UpdatedAt = shiftData.UpdatedAt;
-            return shift;
+            // Try to deserialize as the actual structure being saved (Dictionary<string, object>)
+            var shiftDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            if (shiftDict != null)
+            {
+                var shiftType = shiftDict.GetValueOrDefault("shift_type", "").ToString() ?? "";
+                var capacity = 15; // Default capacity
+                
+                if (shiftDict.ContainsKey("capacity") && int.TryParse(shiftDict["capacity"].ToString(), out int parsedCapacity))
+                {
+                    capacity = parsedCapacity;
+                }
+
+                var shift = new Shift(shiftType, capacity);
+                
+                // Load assigned employees
+                if (shiftDict.ContainsKey("assigned_employees"))
+                {
+                    var assignedEmployeesData = shiftDict["assigned_employees"];
+                    if (assignedEmployeesData is Newtonsoft.Json.Linq.JArray jArray)
+                    {
+                        var assignedEmployees = jArray.ToObject<List<object>>();
+                        if (assignedEmployees != null)
+                        {
+                            for (int i = 0; i < assignedEmployees.Count && i < shift.Capacity; i++)
+                            {
+                                var empObj = assignedEmployees[i];
+                                if (empObj != null)
+                                {
+                                    // Try to extract employee ID from the employee object
+                                    string? empId = null;
+                                    
+                                    if (empObj is Dictionary<string, object> empDict)
+                                    {
+                                        empId = empDict.GetValueOrDefault("employee_id", "").ToString();
+                                    }
+                                    else if (empObj is Newtonsoft.Json.Linq.JObject jObj)
+                                    {
+                                        empId = jObj["employee_id"]?.ToString();
+                                    }
+                                    
+                                    if (!string.IsNullOrEmpty(empId) && employeesDict.ContainsKey(empId))
+                                    {
+                                        shift.AssignedEmployees[i] = employeesDict[empId];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return shift;
+            }
+
+            // If all else fails, return a new shift
+            return new Shift();
         }
 
         public string ToJson()
@@ -310,19 +374,61 @@ namespace Shared.Models
 
         public static ShiftManager FromJson(string json, Dictionary<string, Employee> employeesDict)
         {
-            var managerData = JsonConvert.DeserializeObject<ShiftManagerData>(json);
-            if (managerData == null)
-                return new ShiftManager();
+            try
+            {
+                // Try to deserialize as the expected ShiftManagerData structure first
+                var managerData = JsonConvert.DeserializeObject<ShiftManagerData>(json);
+                if (managerData != null && !string.IsNullOrEmpty(managerData.MorningShift))
+                {
+                    var manager = new ShiftManager(managerData.Capacity);
+                    
+                    if (managerData.MorningShift != null)
+                        manager.MorningShift = Shift.FromJson(managerData.MorningShift, employeesDict);
+                    
+                    if (managerData.EveningShift != null)
+                        manager.EveningShift = Shift.FromJson(managerData.EveningShift, employeesDict);
 
-            var manager = new ShiftManager(managerData.Capacity);
-            
-            if (managerData.MorningShift != null)
-                manager.MorningShift = Shift.FromJson(managerData.MorningShift, employeesDict);
-            
-            if (managerData.EveningShift != null)
-                manager.EveningShift = Shift.FromJson(managerData.EveningShift, employeesDict);
+                    return manager;
+                }
+            }
+            catch
+            {
+                // If that fails, try to deserialize as the actual structure being saved
+            }
 
-            return manager;
+            // Try to deserialize as the actual structure being saved (Dictionary<string, object>)
+            var shiftsData = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+            if (shiftsData != null)
+            {
+                var manager = new ShiftManager(15); // Default capacity
+                
+                // Load morning shift
+                if (shiftsData.ContainsKey("morning"))
+                {
+                    var morningData = shiftsData["morning"];
+                    if (morningData != null)
+                    {
+                        var morningJson = JsonConvert.SerializeObject(morningData);
+                        manager.MorningShift = Shift.FromJson(morningJson, employeesDict);
+                    }
+                }
+                
+                // Load evening shift
+                if (shiftsData.ContainsKey("evening"))
+                {
+                    var eveningData = shiftsData["evening"];
+                    if (eveningData != null)
+                    {
+                        var eveningJson = JsonConvert.SerializeObject(eveningData);
+                        manager.EveningShift = Shift.FromJson(eveningJson, employeesDict);
+                    }
+                }
+                
+                return manager;
+            }
+
+            // If all else fails, return a new manager
+            return new ShiftManager();
         }
 
         public string ToJson()

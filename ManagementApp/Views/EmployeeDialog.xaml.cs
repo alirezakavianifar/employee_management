@@ -9,6 +9,7 @@ namespace ManagementApp.Views
         public string LastName { get; private set; } = string.Empty;
         public string Role { get; private set; } = string.Empty;
         public string PhotoPath { get; private set; } = string.Empty;
+        public bool IsManager { get; private set; } = false;
 
         public EmployeeDialog()
         {
@@ -21,6 +22,7 @@ namespace ManagementApp.Views
             LastNameTextBox.Text = employee.LastName;
             RoleTextBox.Text = employee.Role;
             PhotoPath = employee.PhotoPath;
+            IsManagerCheckBox.IsChecked = employee.IsManager;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -34,6 +36,7 @@ namespace ManagementApp.Views
             FirstName = FirstNameTextBox.Text.Trim();
             LastName = LastNameTextBox.Text.Trim();
             Role = RoleTextBox.Text.Trim();
+            IsManager = IsManagerCheckBox.IsChecked ?? false;
             
             DialogResult = true;
         }

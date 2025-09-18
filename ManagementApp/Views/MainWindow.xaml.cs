@@ -202,6 +202,7 @@ namespace ManagementApp.Views
                 FirstNameTextBox.Text = employee.FirstName;
                 LastNameTextBox.Text = employee.LastName;
                 RoleTextBox.Text = employee.Role;
+                IsManagerCheckBox.IsChecked = employee.IsManager;
                 
                 // Load employee photo
                 var photo = employee.GetPhotoImageSource(200);
@@ -233,7 +234,7 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog();
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath);
+                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath, dialog.IsManager);
                     if (success)
                     {
                         LoadEmployees();
@@ -261,7 +262,7 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog(_selectedEmployee);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath);
+                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath, dialog.IsManager);
                     if (success)
                     {
                         LoadEmployees();
@@ -374,7 +375,7 @@ namespace ManagementApp.Views
                 }
 
                 var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
-                    FirstNameTextBox.Text, LastNameTextBox.Text, RoleTextBox.Text);
+                    FirstNameTextBox.Text, LastNameTextBox.Text, RoleTextBox.Text, null, IsManagerCheckBox.IsChecked);
                 
                 if (success)
                 {

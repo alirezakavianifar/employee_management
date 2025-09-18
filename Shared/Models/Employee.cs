@@ -11,6 +11,7 @@ namespace Shared.Models
         public string LastName { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public string PhotoPath { get; set; } = string.Empty;
+        public bool IsManager { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -20,13 +21,14 @@ namespace Shared.Models
             UpdatedAt = DateTime.Now;
         }
 
-        public Employee(string employeeId, string firstName, string lastName, string role = "", string photoPath = "")
+        public Employee(string employeeId, string firstName, string lastName, string role = "", string photoPath = "", bool isManager = false)
         {
             EmployeeId = employeeId;
             FirstName = firstName;
             LastName = lastName;
             Role = role;
             PhotoPath = photoPath;
+            IsManager = isManager;
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }
@@ -76,7 +78,7 @@ namespace Shared.Models
             return string.Empty;
         }
 
-        public void Update(string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null)
+        public void Update(string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null, bool? isManager = null)
         {
             if (!string.IsNullOrEmpty(firstName))
                 FirstName = firstName;
@@ -86,6 +88,8 @@ namespace Shared.Models
                 Role = role;
             if (!string.IsNullOrEmpty(photoPath))
                 PhotoPath = photoPath;
+            if (isManager.HasValue)
+                IsManager = isManager.Value;
             
             UpdatedAt = DateTime.Now;
         }
@@ -124,6 +128,7 @@ namespace Shared.Models
                 { "last_name", LastName },
                 { "role", Role },
                 { "photo_path", PhotoPath },
+                { "is_manager", IsManager },
                 { "created_at", CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
                 { "updated_at", UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) }
             };

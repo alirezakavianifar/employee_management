@@ -115,12 +115,12 @@ namespace DisplayApp
         {
             try
             {
-                StatusText.Text = "در حال بارگذاری داده‌ها...";
+                // StatusText removed - no longer needed
                 _logger.LogInformation("Loading data...");
                 
                 // Data reading and transformation is working correctly
                 
-                StatusText.Text = "Tests completed, loading data...";
+                // StatusText removed - no longer needed
                 
                 var reportData = await _dataService.GetLatestReportAsync();
                 if (reportData != null)
@@ -129,23 +129,23 @@ namespace DisplayApp
                         string.Join(", ", reportData.Keys));
                     
                     // Debug: Show data keys in status
-                    StatusText.Text = $"داده‌ها بارگذاری شد. کلیدها: {string.Join(", ", reportData.Keys)}";
+                    // StatusText removed - no longer needed
                     
                     UpdateUI(reportData);
                     _lastUpdateTime = DateTime.Now;
                     LastUpdateText.Text = $"آخرین بروزرسانی: {_lastUpdateTime:HH:mm:ss}";
-                    StatusText.Text = "آماده";
+                    // StatusText removed - no longer needed
                 }
                 else
                 {
-                    StatusText.Text = "خطا در بارگذاری داده‌ها";
+                    // StatusText removed - no longer needed
                     _logger.LogWarning("No report data found");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading data");
-                StatusText.Text = "خطا در بارگذاری داده‌ها";
+                // StatusText removed - no longer needed
                 ShowErrorDialog("خطا در بارگذاری داده‌ها", ex.Message);
             }
         }
@@ -155,7 +155,7 @@ namespace DisplayApp
             try
             {
                 // Debug: Show that UpdateUI is being called
-                StatusText.Text = "UpdateUI called - updating panels...";
+                // StatusText removed - no longer needed
                 
                 // Update managers
                 UpdateManagersPanel(reportData);
@@ -173,12 +173,12 @@ namespace DisplayApp
                 UpdateChart(reportData);
                 
                 _logger.LogInformation("UI updated successfully");
-                StatusText.Text = "UI updated successfully";
+                // StatusText removed - no longer needed
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating UI");
-                StatusText.Text = $"خطا در بروزرسانی UI: {ex.Message}";
+                // StatusText removed - no longer needed
             }
         }
 
@@ -218,8 +218,8 @@ namespace DisplayApp
             // Manager photo
             var image = new Image
             {
-                Width = 60,
-                Height = 60,
+                Width = 40,
+                Height = 40,
                 Stretch = Stretch.UniformToFill
             };
             
@@ -276,7 +276,7 @@ namespace DisplayApp
             var drawingVisual = new DrawingVisual();
             using (var drawingContext = drawingVisual.RenderOpen())
             {
-                drawingContext.DrawRectangle(Brushes.Gray, null, new System.Windows.Rect(0, 0, 60, 60));
+                drawingContext.DrawRectangle(Brushes.Gray, null, new System.Windows.Rect(0, 0, 40, 40));
                 drawingContext.DrawText(
                     new FormattedText("مدیر", 
                         System.Globalization.CultureInfo.CurrentCulture,
@@ -285,10 +285,10 @@ namespace DisplayApp
                         12,
                         Brushes.White,
                         96),
-                    new System.Windows.Point(15, 20));
+                    new System.Windows.Point(10, 13));
             }
             
-            var renderTargetBitmap = new RenderTargetBitmap(60, 60, 96, 96, PixelFormats.Pbgra32);
+            var renderTargetBitmap = new RenderTargetBitmap(40, 40, 96, 96, PixelFormats.Pbgra32);
             renderTargetBitmap.Render(drawingVisual);
             renderTargetBitmap.Freeze();
             
@@ -603,12 +603,151 @@ namespace DisplayApp
 
         private void UpdateAbsencePanel(Dictionary<string, object> reportData)
         {
+            // Update absence counts
             if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
             {
                 LeaveCount.Text = GetAbsenceCount(absences, "مرخصی").ToString();
                 SickCount.Text = GetAbsenceCount(absences, "بیمار").ToString();
                 AbsentCount.Text = GetAbsenceCount(absences, "غایب").ToString();
+                
+                // Update absence cards
+                UpdateAbsenceCards(absences);
             }
+        }
+        
+        private void UpdateAbsenceCards(Dictionary<string, object> absences)
+        {
+            _logger.LogInformation("Updating absence cards");
+            
+            // Check if panel exists
+            if (AbsencePanel == null)
+            {
+                _logger.LogError("AbsencePanel not found in UI");
+                return;
+            }
+            
+            AbsencePanel.Items.Clear();
+            
+            // Process all absence categories
+            foreach (var category in new[] { "مرخصی", "بیمار", "غایب" })
+            {
+                if (absences.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
+                {
+                    _logger.LogInformation("Found {Count} {Category} absences", categoryList.Count, category);
+                    
+                    foreach (var absenceObj in categoryList)
+                    {
+                        if (absenceObj is Dictionary<string, object> absenceData)
+                        {
+                            _logger.LogInformation("Creating absence card for {EmployeeId}", 
+                                absenceData.GetValueOrDefault("employee_id", "Unknown"));
+                            var absenceCard = CreateAbsenceCard(absenceData, category);
+                            AbsencePanel.Items.Add(absenceCard);
+                        }
+                    }
+                }
+            }
+        }
+        
+        private Border CreateAbsenceCard(Dictionary<string, object> absenceData, string category)
+        {
+            _logger.LogInformation("Creating absence card with data keys: {Keys}", string.Join(", ", absenceData.Keys));
+            
+            // Get employee information
+            var firstName = absenceData.GetValueOrDefault("first_name", "").ToString();
+            var lastName = absenceData.GetValueOrDefault("last_name", "").ToString();
+            var fullName = $"{firstName} {lastName}".Trim();
+            var employeeId = absenceData.GetValueOrDefault("employee_id", "").ToString();
+            var photoPath = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            
+            _logger.LogInformation("Employee first_name: '{FirstName}', employee_id: '{EmployeeId}'", firstName, employeeId);
+            _logger.LogInformation("Using full name: '{FullName}'", fullName);
+            
+            // Create the card (compact with reduced margins)
+            var card = new Border
+            {
+                Width = 70,
+                Height = 90,
+                Background = GetAbsenceCategoryColor(category),
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(5),
+                Margin = new Thickness(1),
+                BorderBrush = Brushes.Gray,
+                BorderThickness = new Thickness(1)
+            };
+            
+            var stackPanel = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            
+            // Add image (larger for better visibility)
+            var image = new Image
+            {
+                Width = 35,
+                Height = 35,
+                Stretch = Stretch.Uniform
+            };
+            
+            if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
+            {
+                try
+                {
+                    image.Source = new BitmapImage(new Uri(photoPath));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to load image from {PhotoPath}", photoPath);
+                    image.Source = CreateEmployeePlaceholderImage(35);
+                }
+            }
+            else
+            {
+                image.Source = CreateEmployeePlaceholderImage(35);
+            }
+            
+            stackPanel.Children.Add(image);
+            
+            // Add name (compact margins)
+            var nameText = new TextBlock
+            {
+                Text = fullName,
+                Foreground = Brushes.White,
+                FontSize = 9,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 2, 0, 0)
+            };
+            stackPanel.Children.Add(nameText);
+            
+            // Add category label (compact margins)
+            var categoryText = new TextBlock
+            {
+                Text = category,
+                Foreground = Brushes.White,
+                FontSize = 7,
+                FontWeight = FontWeights.Normal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 1, 0, 0)
+            };
+            stackPanel.Children.Add(categoryText);
+            
+            card.Child = stackPanel;
+            return card;
+        }
+        
+        private Brush GetAbsenceCategoryColor(string category)
+        {
+            return category switch
+            {
+                "مرخصی" => new SolidColorBrush(Color.FromRgb(52, 152, 219)), // Blue
+                "بیمار" => new SolidColorBrush(Color.FromRgb(231, 76, 60)),  // Red
+                "غایب" => new SolidColorBrush(Color.FromRgb(241, 196, 15)),  // Yellow
+                _ => new SolidColorBrush(Color.FromRgb(149, 165, 166))       // Gray
+            };
         }
 
         private int GetAbsenceCount(Dictionary<string, object> absences, string category)

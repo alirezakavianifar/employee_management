@@ -91,6 +91,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
@@ -107,14 +108,17 @@
                             <Label Grid.Row="2" Grid.Column="0" Content="سمت:"/>
                             <TextBox Grid.Row="2" Grid.Column="1" x:Name="RoleTextBox" Margin="5"/>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="عکس:"/>
-                            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
+                            <Label Grid.Row="3" Grid.Column="0" Content="نقش مدیر:"/>
+                            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="IsManagerCheckBox" Content="این کارمند مدیر است" Margin="5"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="عکس:"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="5">
                                 <Button Content="انتخاب عکس" Click="SelectPhoto_Click" Margin="0,0,5,0"/>
                                 <Button Content="ذخیره تغییرات" Click="SaveEmployeeChanges_Click"/>
                             </StackPanel>
 
                             <!-- Employee Photo -->
-                            <Image Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                            <Image Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
                                   x:Name="EmployeePhoto" 
                                   Width="200" Height="200" 
                                   Stretch="Uniform"

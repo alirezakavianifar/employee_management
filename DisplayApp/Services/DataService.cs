@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 namespace DisplayApp.Services
 {
     public class DataService
+    
     {
         private readonly ILogger<DataService> _logger;
         private readonly JsonHandler _jsonHandler;

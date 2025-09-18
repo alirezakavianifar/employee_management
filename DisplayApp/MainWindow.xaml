@@ -4,13 +4,12 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         Title="Display App" Height="800" Width="1200"
         WindowState="Maximized" WindowStyle="None"
-        Background="#1a1a1a">
+        Background="#1a1a1a" FlowDirection="RightToLeft">
     
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
         <!-- Header -->
@@ -49,14 +48,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
              <!-- Managers Section -->
              <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,20">
                  <StackPanel>
                      <TextBlock Text="مدیران" Style="{StaticResource SubtitleTextStyle}"/>
-                     <Grid x:Name="ManagersGrid" Height="60">
+                     <Grid x:Name="ManagersGrid" Height="40">
                          <Grid.ColumnDefinitions>
                              <ColumnDefinition Width="*"/>
                              <ColumnDefinition Width="*"/>
@@ -68,34 +66,20 @@
             
             <!-- Shifts Section -->
             <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 
-                 <!-- Morning Shift -->
+                <!-- Shifts Row -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                
+                 <!-- Evening Shift (Right side in RTL) -->
                  <Border Grid.Column="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,10,0">
-                     <Grid>
-                         <Grid.RowDefinitions>
-                             <RowDefinition Height="Auto"/>
-                             <RowDefinition Height="*"/>
-                         </Grid.RowDefinitions>
-                         <TextBlock Grid.Row="0" Text="شیفت صبح" Style="{StaticResource SubtitleTextStyle}" 
-                                   Foreground="{StaticResource MorningShiftText}"/>
-                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                             <ItemsControl x:Name="MorningShiftPanel">
-                                 <ItemsControl.ItemsPanel>
-                                     <ItemsPanelTemplate>
-                                         <UniformGrid Columns="5"/>
-                                     </ItemsPanelTemplate>
-                                 </ItemsControl.ItemsPanel>
-                             </ItemsControl>
-                         </ScrollViewer>
-                     </Grid>
-                 </Border>
-                 
-                 <!-- Evening Shift -->
-                 <Border Grid.Column="1" Style="{StaticResource MainPanelStyle}" Margin="10,0,0,0">
                      <Grid>
                          <Grid.RowDefinitions>
                              <RowDefinition Height="Auto"/>
@@ -114,21 +98,93 @@
                          </ScrollViewer>
                      </Grid>
                  </Border>
-            </Grid>
-            
-            <!-- Bottom Section -->
-            <Grid Grid.Row="2" Margin="0,20,0,0">
+                 
+                 <!-- Morning Shift (Left side in RTL) -->
+                 <Border Grid.Column="1" Style="{StaticResource MainPanelStyle}" Margin="10,0,0,0">
+                     <Grid>
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/>
+                             <RowDefinition Height="*"/>
+                         </Grid.RowDefinitions>
+                         <TextBlock Grid.Row="0" Text="شیفت صبح" Style="{StaticResource SubtitleTextStyle}" 
+                                   Foreground="{StaticResource MorningShiftText}"/>
+                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                             <ItemsControl x:Name="MorningShiftPanel">
+                                 <ItemsControl.ItemsPanel>
+                                     <ItemsPanelTemplate>
+                                         <UniformGrid Columns="5"/>
+                                     </ItemsPanelTemplate>
+                                 </ItemsControl.ItemsPanel>
+                             </ItemsControl>
+                         </ScrollViewer>
+                     </Grid>
+                 </Border>
+                </Grid>
+                
+                <!-- Bottom Section -->
+                <Grid Grid.Row="1" Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
-                <!-- Absence Counts -->
+                <!-- Chart with AI Recommendation (Right side in RTL) -->
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,10,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Chart Title -->
+                        <TextBlock Grid.Row="0" x:Name="ChartTitle" Text="نمودار عملکرد" Style="{StaticResource SubtitleTextStyle}"/>
+                        
+                        <!-- AI Recommendation -->
+                        <TextBlock Grid.Row="1" Text="توصیه هوش مصنوعی" Style="{StaticResource SubtitleTextStyle}" Margin="0,10,0,5"/>
+                        <TextBlock Grid.Row="1" x:Name="AIRecommendation" Text="در حال بارگذاری..." 
+                                  Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" Margin="0,25,0,0"/>
+                        
+                        <!-- Chart -->
+                        <lvc:CartesianChart Grid.Row="2" x:Name="PerformanceChart" Series="{Binding SeriesCollection}" 
+                                           Height="100" Margin="0,10,0,0">
+                            <lvc:CartesianChart.AxisX>
+                                <lvc:Axis Labels="{Binding Labels}"/>
+                            </lvc:CartesianChart.AxisX>
+                        </lvc:CartesianChart>
+                    </Grid>
+                </Border>
+                
+                <!-- Absence Cards (Middle in RTL) -->
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="5,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Title -->
+                        <TextBlock Grid.Row="0" Text="کارکنان غایب" Style="{StaticResource SubtitleTextStyle}"/>
+                        
+                        <!-- Absence Cards -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="150">
+                            <ItemsControl x:Name="AbsencePanel">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="3"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+                
+                <!-- Absence Statistics (Left side in RTL) -->
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
                     <StackPanel>
                         <TextBlock Text="آمار غیبت" Style="{StaticResource SubtitleTextStyle}"/>
-                        <Grid>
+                        <Grid Margin="0,10,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="*"/>
@@ -150,35 +206,8 @@
                         </Grid>
                     </StackPanel>
                 </Border>
-                
-                <!-- AI Recommendation -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="5,0">
-                    <StackPanel>
-                        <TextBlock Text="توصیه هوش مصنوعی" Style="{StaticResource SubtitleTextStyle}"/>
-                        <TextBlock x:Name="AIRecommendation" Text="در حال بارگذاری..." 
-                                  Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Border>
-                
-                <!-- Chart -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
-                    <StackPanel>
-                        <TextBlock x:Name="ChartTitle" Text="نمودار عملکرد" Style="{StaticResource SubtitleTextStyle}"/>
-                        <lvc:CartesianChart x:Name="PerformanceChart" Series="{Binding SeriesCollection}" 
-                                           Height="120" Margin="0,10,0,0">
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Labels="{Binding Labels}"/>
-                            </lvc:CartesianChart.AxisX>
-                        </lvc:CartesianChart>
-                    </StackPanel>
-                </Border>
+                </Grid>
             </Grid>
         </Grid>
-        
-        <!-- Status Bar -->
-        <Border Grid.Row="2" Background="#2d2d2d" Padding="20,10">
-            <TextBlock x:Name="StatusText" Text="آماده" Style="{StaticResource BodyTextStyle}" 
-                      HorizontalAlignment="Center"/>
-        </Border>
     </Grid>
 </Window>

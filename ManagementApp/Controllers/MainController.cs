@@ -80,9 +80,14 @@ namespace ManagementApp.Controllers
                     return;
                 }
 
+                var employeeCount = (reportData.GetValueOrDefault("employees") as List<object>)?.Count ?? 0;
+                var managerCount = (reportData.GetValueOrDefault("managers") as List<object>)?.Count ?? 0;
+                
                 _logger.LogInformation("Successfully loaded report data with {EmployeeCount} employees and {ManagerCount} managers", 
-                    (reportData.GetValueOrDefault("employees") as List<object>)?.Count ?? 0,
-                    (reportData.GetValueOrDefault("managers") as List<object>)?.Count ?? 0);
+                    employeeCount, managerCount);
+                
+                // Log all available keys in the report data for debugging
+                _logger.LogInformation("Report data keys: {Keys}", string.Join(", ", reportData.Keys));
 
                 // Load settings
                 if (reportData.ContainsKey("settings"))
@@ -213,27 +218,51 @@ namespace ManagementApp.Controllers
                     {
                         employeeDict = jObj.ToObject<Dictionary<string, object>>();
                     }
+                    else if (employeeObj is Newtonsoft.Json.Linq.JToken jToken)
+                    {
+                        // Handle JToken objects that might be nested
+                        var jObject = jToken as Newtonsoft.Json.Linq.JObject ?? jToken.ToObject<Newtonsoft.Json.Linq.JObject>();
+                        if (jObject != null)
+                        {
+                            employeeDict = jObject.ToObject<Dictionary<string, object>>();
+                        }
+                    }
                     
                     if (employeeDict == null)
                     {
-                        _logger.LogWarning("Employee object could not be converted to Dictionary, skipping");
+                        _logger.LogWarning("Employee object could not be converted to Dictionary, skipping. Object type: {Type}, Value: {Value}", 
+                            employeeObj?.GetType().Name ?? "null", 
+                            employeeObj?.ToString()?.Substring(0, Math.Min(100, employeeObj.ToString()?.Length ?? 0)) ?? "null");
                         continue;
                     }
 
                     var employeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString() ?? "";
                     if (string.IsNullOrEmpty(employeeId))
+                    {
+                        _logger.LogWarning("Employee object missing employee_id, skipping. Available keys: {Keys}", 
+                            string.Join(", ", employeeDict.Keys));
                         continue;
+                    }
 
                     // Skip if employee already exists
                     if (Employees.ContainsKey(employeeId))
+                    {
+                        _logger.LogInformation("Employee {EmployeeId} already exists, skipping", employeeId);
                         continue;
+                    }
 
                     var firstName = employeeDict.GetValueOrDefault("first_name", "").ToString() ?? "";
                     var lastName = employeeDict.GetValueOrDefault("last_name", "").ToString() ?? "";
                     var role = employeeDict.GetValueOrDefault("role", "Employee").ToString() ?? "Employee";
                     var photoPath = employeeDict.GetValueOrDefault("photo_path", "").ToString() ?? "";
+                    var isManager = employeeDict.GetValueOrDefault("is_manager", false);
+                    bool isManagerBool = false;
+                    if (isManager is bool b)
+                        isManagerBool = b;
+                    else if (isManager is string s && bool.TryParse(s, out bool parsed))
+                        isManagerBool = parsed;
 
-                    var employee = new Employee(employeeId, firstName, lastName, role, photoPath);
+                    var employee = new Employee(employeeId, firstName, lastName, role, photoPath, isManagerBool);
 
                     // Set creation/update times if available, with validation for Persian calendar
                     if (employeeDict.ContainsKey("created_at"))
@@ -339,20 +368,32 @@ namespace ManagementApp.Controllers
         {
             try
             {
+                _logger.LogInformation("Loading shifts from data. Data type: {Type}", shiftsData?.GetType().Name ?? "null");
+                
                 var shiftsJson = JsonConvert.SerializeObject(shiftsData);
+                _logger.LogInformation("Shifts JSON: {ShiftsJson}", shiftsJson);
+                
                 ShiftManager = ShiftManager.FromJson(shiftsJson, Employees);
                 
-                // Ensure minimum capacity of 5
+                // Log shift assignments after loading
+                var morningCount = ShiftManager.MorningShift.AssignedEmployees.Count(emp => emp != null);
+                var eveningCount = ShiftManager.EveningShift.AssignedEmployees.Count(emp => emp != null);
+                _logger.LogInformation("Loaded shifts - Morning: {MorningCount}, Evening: {EveningCount}, Capacity: {Capacity}", 
+                    morningCount, eveningCount, ShiftManager.Capacity);
+                
+                // Ensure minimum capacity of 15
                 if (ShiftManager.Capacity <= 0)
                 {
                     ShiftManager.SetCapacity(15);
+                    _logger.LogInformation("Set minimum capacity to 15");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading shifts");
+                _logger.LogError(ex, "Error loading shifts from data: {ShiftsData}", shiftsData);
                 // If loading fails, ensure we have a valid ShiftManager with capacity 15
                 ShiftManager = new ShiftManager(15);
+                _logger.LogInformation("Created new ShiftManager with capacity 15 due to loading error");
             }
         }
 
@@ -517,12 +558,12 @@ namespace ManagementApp.Controllers
         }
 
         // Employee Management Methods
-        public bool AddEmployee(string firstName, string lastName, string role = "", string photoPath = "")
+        public bool AddEmployee(string firstName, string lastName, string role = "", string photoPath = "", bool isManager = false)
         {
             try
             {
                 var employeeId = $"emp_{Employees.Count}_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
-                var employee = new Employee(employeeId, firstName, lastName, role, photoPath);
+                var employee = new Employee(employeeId, firstName, lastName, role, photoPath, isManager);
 
                 Employees[employeeId] = employee;
                 EmployeesUpdated?.Invoke();
@@ -539,7 +580,7 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null)
+        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null, bool? isManager = null)
         {
             try
             {
@@ -547,7 +588,7 @@ namespace ManagementApp.Controllers
                     return false;
 
                 var employee = Employees[employeeId];
-                employee.Update(firstName, lastName, role, photoPath);
+                employee.Update(firstName, lastName, role, photoPath, isManager);
 
                 EmployeesUpdated?.Invoke();
                 SaveData();

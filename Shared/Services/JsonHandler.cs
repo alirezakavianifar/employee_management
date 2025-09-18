@@ -396,6 +396,7 @@ namespace Shared.Services
                     // If no employees, try to carry forward from previous day
                     if (empCount == 0 && mgrCount == 0)
                     {
+                        _logger.LogWarning("No employees found in existing file, attempting to carry forward from previous day");
                         var previousData = GetPreviousDayData();
                         if (previousData != null)
                         {
@@ -415,9 +416,10 @@ namespace Shared.Services
                         }
                         else
                         {
-                            _logger.LogInformation("No previous day data found, recreating with sample data");
-                            File.Delete(filepath);
-                            data = null; // Force recreation
+                            _logger.LogWarning("No previous day data found, but keeping existing file to preserve any shift assignments");
+                            // Don't delete the file - it might contain shift assignments even without employees
+                            // Just return the existing data
+                            return data;
                         }
                     }
                     else
