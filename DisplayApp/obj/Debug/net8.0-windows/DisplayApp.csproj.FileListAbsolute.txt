@@ -37,3 +37,45 @@ D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\refint\DisplayApp
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.pdb
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.genruntimeconfig.cache
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.exe
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.deps.json
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.runtimeconfig.json
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.pdb
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\LiveCharts.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\LiveCharts.Wpf.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Binder.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Configuration.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Console.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Microsoft.Extensions.Primitives.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Newtonsoft.Json.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Shared.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Shared.pdb
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.csproj.AssemblyReference.cache
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\MainWindow.baml
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\App.baml
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\MainWindow.g.cs
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\App.g.cs
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_MarkupCompile.cache
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.g.resources
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.GeneratedMSBuildEditorConfig.editorconfig
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.AssemblyInfoInputs.cache
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.AssemblyInfo.cs
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.csproj.CoreCompileInputs.cache
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.csproj.Up2Date
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\refint\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.pdb
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.genruntimeconfig.cache
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\display_config.json
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_Content.g.cs
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\app_config.json

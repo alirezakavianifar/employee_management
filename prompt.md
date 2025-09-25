@@ -1,4 +1,4 @@
-You are an expert C# developer. Your task is to create the **Display App (Dashboard)** for an Employee Shift Management System. The **Management App** has already been implemented and is located at `D:\projects\New folder (8)\ManagementApp`. 
+You are an expert C# developer. Your task is to create the **Display App (Dashboard)** for an Employee Shift Management System. The **Management App** has already been implemented and is located at `D:\projects\employee_management_csharp\ManagementApp`. 
 
 The system uses a **serverless** architecture with a **shared folder (e.g., OneDrive)** to store all data in **JSON files**.
 
@@ -21,7 +21,7 @@ The system uses a **serverless** architecture with a **shared folder (e.g., OneD
 
 ## **2. Management App (Already Implemented)**
 
-The Management App has already been implemented at `D:\projects\New folder (8)\ManagementApp` and includes:
+The Management App has already been implemented at `D:\projects\employee_management_csharp\ManagementApp` and includes:
 
   * **Employee Management:** Full CRUD operations for employees with photo uploads
   * **Shift Management:** Visual drag-and-drop interface for Morning and Evening shifts
@@ -70,7 +70,7 @@ This is a **full-screen, read-only** dashboard application that you need to crea
 The existing project structure is:
 
 ```
-D:\projects\New folder (8)\
+D:\projects\employee_management_csharp\
 ├── ManagementApp/                    # Already implemented
 │   ├── Views/
 │   ├── Controllers/

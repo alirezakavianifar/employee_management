@@ -5654,11 +5654,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\projects\\New folder (8)\\ManagementApp\\ManagementApp.csproj",
+      "projectUniqueName": "D:\\projects\\employee_management_csharp\\ManagementApp\\ManagementApp.csproj",
       "projectName": "ManagementApp",
-      "projectPath": "D:\\projects\\New folder (8)\\ManagementApp\\ManagementApp.csproj",
+      "projectPath": "D:\\projects\\employee_management_csharp\\ManagementApp\\ManagementApp.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "D:\\projects\\New folder (8)\\ManagementApp\\obj\\",
+      "outputPath": "D:\\projects\\employee_management_csharp\\ManagementApp\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -5673,8 +5673,8 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "projectReferences": {
-            "D:\\projects\\New folder (8)\\Shared\\Shared.csproj": {
-              "projectPath": "D:\\projects\\New folder (8)\\Shared\\Shared.csproj"
+            "D:\\projects\\employee_management_csharp\\Shared\\Shared.csproj": {
+              "projectPath": "D:\\projects\\employee_management_csharp\\Shared\\Shared.csproj"
             }
           }
         }

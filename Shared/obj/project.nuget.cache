@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "8YYd7OS56GI+1O5qk2znL/I9Auk1cu2LcRS+6BDSBJqk+ouPpoPc0BhSrkHP8b7uRR+/Q3y1ZfMkdjzpUCZaGw==",
+  "dgSpecHash": "xS6KIpjVlff7Su5AebexD2LLic+O08drxZwcln+1fOH1EpRIpoG5jhAFuuYK1a4zwheg68fKfWmeNqu8g/TrcQ==",
   "success": true,
-  "projectFilePath": "D:\\projects\\New folder (8)\\Shared\\Shared.csproj",
+  "projectFilePath": "D:\\projects\\employee_management_csharp\\Shared\\Shared.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.extensions.configuration\\8.0.0\\microsoft.extensions.configuration.8.0.0.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\8.0.0\\microsoft.extensions.configuration.abstractions.8.0.0.nupkg.sha512",

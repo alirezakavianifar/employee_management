@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LvYswcwTThsARH4MUHXNJm2ydD9sqQaaNoawMBJ29vO+hG+KQ9hgHDi1ObCCuf4qirPoo4z/2LzlQkWxoRX60Q==",
+  "dgSpecHash": "epETUjw2Jk+N7IbtB+Iht9WbkXo6MxpgoqZ2bK4k07aZDQ4AuF2YYjS60lxx4CKxQgn6pCl0V+uNfs8xEQN4cw==",
   "success": true,
-  "projectFilePath": "D:\\projects\\New folder (8)\\DisplayApp\\DisplayApp.csproj",
+  "projectFilePath": "D:\\projects\\employee_management_csharp\\DisplayApp\\DisplayApp.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\livecharts\\0.9.7\\livecharts.0.9.7.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\livecharts.wpf\\0.9.7\\livecharts.wpf.0.9.7.nupkg.sha512",
