@@ -9,11 +9,16 @@ namespace Shared.Models
         public string EmployeeId { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
+        public string RoleId { get; set; } = "employee"; // Default to employee role
+        public string ShiftGroupId { get; set; } = "default"; // Default to default group
         public string PhotoPath { get; set; } = string.Empty;
         public bool IsManager { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // Backward compatibility property
+        [JsonIgnore]
+        public string Role => RoleId;
 
         public Employee()
         {
@@ -21,12 +26,13 @@ namespace Shared.Models
             UpdatedAt = DateTime.Now;
         }
 
-        public Employee(string employeeId, string firstName, string lastName, string role = "", string photoPath = "", bool isManager = false)
+        public Employee(string employeeId, string firstName, string lastName, string roleId = "employee", string shiftGroupId = "default", string photoPath = "", bool isManager = false)
         {
             EmployeeId = employeeId;
             FirstName = firstName;
             LastName = lastName;
-            Role = role;
+            RoleId = roleId;
+            ShiftGroupId = shiftGroupId;
             PhotoPath = photoPath;
             IsManager = isManager;
             CreatedAt = DateTime.Now;
@@ -78,14 +84,16 @@ namespace Shared.Models
             return string.Empty;
         }
 
-        public void Update(string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null, bool? isManager = null)
+        public void Update(string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null)
         {
             if (!string.IsNullOrEmpty(firstName))
                 FirstName = firstName;
             if (!string.IsNullOrEmpty(lastName))
                 LastName = lastName;
-            if (!string.IsNullOrEmpty(role))
-                Role = role;
+            if (!string.IsNullOrEmpty(roleId))
+                RoleId = roleId;
+            if (!string.IsNullOrEmpty(shiftGroupId))
+                ShiftGroupId = shiftGroupId;
             if (!string.IsNullOrEmpty(photoPath))
                 PhotoPath = photoPath;
             if (isManager.HasValue)
@@ -126,7 +134,9 @@ namespace Shared.Models
                 { "employee_id", EmployeeId },
                 { "first_name", FirstName },
                 { "last_name", LastName },
-                { "role", Role },
+                { "role", RoleId }, // Keep backward compatibility
+                { "role_id", RoleId },
+                { "shift_group_id", ShiftGroupId },
                 { "photo_path", PhotoPath },
                 { "is_manager", IsManager },
                 { "created_at", CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },

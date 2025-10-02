@@ -89,18 +89,19 @@ namespace Shared.Utils
         private static AppConfig CreateDefaultConfig()
         {
             // Try multiple possible locations for SharedData directory
+            var executableDir = AppDomain.CurrentDomain.BaseDirectory;
             var possiblePaths = new[]
             {
-                // For development: relative to current directory
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "SharedData"),
-                // For deployment: relative to executable
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "SharedData"),
+                // For deployment: relative to executable (most common case)
+                Path.Combine(executableDir, "..", "SharedData"),
                 // For portable deployment: in same directory as executable
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SharedData"),
+                Path.Combine(executableDir, "SharedData"),
                 // For development: relative to project root
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "SharedData"),
-                // Fallback: create in current directory
-                Path.Combine(Directory.GetCurrentDirectory(), "SharedData")
+                Path.Combine(executableDir, "..", "..", "..", "SharedData"),
+                // Fallback: use Documents folder for user data
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "EmployeeManagement", "SharedData"),
+                // Last resort: use temp directory
+                Path.Combine(Path.GetTempPath(), "EmployeeManagement", "SharedData")
             };
 
             string? sharedDataPath = null;
@@ -142,15 +143,54 @@ namespace Shared.Utils
         {
             try
             {
-                Directory.CreateDirectory(config.DataDirectory);
-                Directory.CreateDirectory(config.ReportsDirectory);
-                Directory.CreateDirectory(config.ImagesDirectory);
-                Directory.CreateDirectory(config.LogsDirectory);
+                // Try to create directories with proper error handling
+                CreateDirectoryIfNotExists(config.DataDirectory);
+                CreateDirectoryIfNotExists(config.ReportsDirectory);
+                CreateDirectoryIfNotExists(config.ImagesDirectory);
+                CreateDirectoryIfNotExists(config.LogsDirectory);
                 Console.WriteLine("Ensured all data directories exist");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error creating data directories: {ex.Message}");
+                // If we can't create directories, try to use a fallback location
+                TryFallbackLocation(config);
+            }
+        }
+
+        private static void CreateDirectoryIfNotExists(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+                Console.WriteLine($"Created directory: {path}");
+            }
+        }
+
+        private static void TryFallbackLocation(AppConfig config)
+        {
+            try
+            {
+                // Try using Documents folder as fallback
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var fallbackPath = Path.Combine(documentsPath, "EmployeeManagement", "SharedData");
+                
+                config.DataDirectory = fallbackPath;
+                config.ReportsDirectory = Path.Combine(fallbackPath, "Reports");
+                config.ImagesDirectory = Path.Combine(fallbackPath, "Images");
+                config.LogsDirectory = Path.Combine(fallbackPath, "Logs");
+                
+                CreateDirectoryIfNotExists(config.DataDirectory);
+                CreateDirectoryIfNotExists(config.ReportsDirectory);
+                CreateDirectoryIfNotExists(config.ImagesDirectory);
+                CreateDirectoryIfNotExists(config.LogsDirectory);
+                
+                Console.WriteLine($"Using fallback location: {fallbackPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Fallback location also failed: {ex.Message}");
+                throw;
             }
         }
 

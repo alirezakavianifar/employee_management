@@ -225,59 +225,85 @@ namespace DisplayApp.Services
                     if (shiftsDict.ContainsKey("morning") && shiftsDict.ContainsKey("evening"))
                     {
                         _logger.LogInformation("Processing shifts in new format (morning/evening keys found)");
-                        // New format - shifts are already objects with employee objects in assigned_employees
-                        foreach (var shiftType in new[] { "morning", "evening" })
+                        
+                        // Check if we have selected_group data (newest format)
+                        if (shiftsDict.ContainsKey("selected_group") && shiftsDict["selected_group"] is Dictionary<string, object> selectedGroup)
                         {
-                            if (shiftsDict.TryGetValue(shiftType, out var shiftObj) && shiftObj is Dictionary<string, object> shift)
+                            _logger.LogInformation("Found selected_group data, using it for shift display");
+                            
+                            // Preserve the selected_group data for UI display
+                            transformedShifts["selected_group"] = selectedGroup;
+                            
+                            // Use selected_group data for shifts
+                            if (selectedGroup.TryGetValue("morning_shift", out var morningShiftObj) && morningShiftObj is Dictionary<string, object> morningShift)
                             {
-                                _logger.LogInformation("Processing {ShiftType} shift with {Count} keys", shiftType, shift.Count);
-                                
-                                // Check if assigned_employees already contains employee objects
-                                if (shift.TryGetValue("assigned_employees", out var assignedEmployeesObj))
+                                _logger.LogInformation("Processing morning shift from selected_group");
+                                transformedShifts["morning"] = morningShift;
+                            }
+                            
+                            if (selectedGroup.TryGetValue("evening_shift", out var eveningShiftObj) && eveningShiftObj is Dictionary<string, object> eveningShift)
+                            {
+                                _logger.LogInformation("Processing evening shift from selected_group");
+                                transformedShifts["evening"] = eveningShift;
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No selected_group found, using direct morning/evening data");
+                            // Fallback to direct morning/evening data
+                            foreach (var shiftType in new[] { "morning", "evening" })
+                            {
+                                if (shiftsDict.TryGetValue(shiftType, out var shiftObj) && shiftObj is Dictionary<string, object> shift)
                                 {
-                                    _logger.LogInformation("Found assigned_employees in {ShiftType} shift: {Type}", shiftType, assignedEmployeesObj?.GetType().Name ?? "null");
+                                    _logger.LogInformation("Processing {ShiftType} shift with {Count} keys", shiftType, shift.Count);
                                     
-                                    if (assignedEmployeesObj is List<object> assignedEmployees)
+                                    // Check if assigned_employees already contains employee objects
+                                    if (shift.TryGetValue("assigned_employees", out var assignedEmployeesObj))
                                     {
-                                        _logger.LogInformation("Found {Count} assigned employees in {ShiftType} shift", assignedEmployees.Count, shiftType);
+                                        _logger.LogInformation("Found assigned_employees in {ShiftType} shift: {Type}", shiftType, assignedEmployeesObj?.GetType().Name ?? "null");
                                         
-                                        // Check if these are already employee objects or just IDs
-                                        if (assignedEmployees.Count > 0)
+                                        if (assignedEmployeesObj is List<object> assignedEmployees)
                                         {
-                                            var firstEmployee = assignedEmployees[0];
-                                            if (firstEmployee is Dictionary<string, object> employeeObj && employeeObj.ContainsKey("employee_id"))
+                                            _logger.LogInformation("Found {Count} assigned employees in {ShiftType} shift", assignedEmployees.Count, shiftType);
+                                            
+                                            // Check if these are already employee objects or just IDs
+                                            if (assignedEmployees.Count > 0)
                                             {
-                                                _logger.LogInformation("Assigned employees are already employee objects - no transformation needed");
-                                                // Already employee objects, no transformation needed
-                                            }
-                                            else
-                                            {
-                                                _logger.LogInformation("Assigned employees are IDs - transforming to employee objects");
-                                                // These are IDs, need to convert to employee objects
-                                                var transformedEmployees = new List<object>();
-                                                
-                                        if (transformedData.TryGetValue("employees", out var employeesListObj) && employeesListObj is List<object> employees)
-                                        {
-                                                    foreach (var employeeId in assignedEmployees)
-                                            {
-                                                var employee = employees.FirstOrDefault(e => 
-                                                    e is Dictionary<string, object> emp && 
-                                                    emp.GetValueOrDefault("employee_id", "").ToString() == employeeId.ToString());
-                                                if (employee != null)
+                                                var firstEmployee = assignedEmployees[0];
+                                                if (firstEmployee is Dictionary<string, object> employeeObj && employeeObj.ContainsKey("employee_id"))
                                                 {
-                                                            transformedEmployees.Add(employee);
+                                                    _logger.LogInformation("Assigned employees are already employee objects - no transformation needed");
+                                                    // Already employee objects, no transformation needed
+                                                }
+                                                else
+                                                {
+                                                    _logger.LogInformation("Assigned employees are IDs - transforming to employee objects");
+                                                    // These are IDs, need to convert to employee objects
+                                                    var transformedEmployees = new List<object>();
+                                                    
+                                            if (transformedData.TryGetValue("employees", out var employeesListObj) && employeesListObj is List<object> employees)
+                                            {
+                                                        foreach (var employeeId in assignedEmployees)
+                                                {
+                                                    var employee = employees.FirstOrDefault(e => 
+                                                        e is Dictionary<string, object> emp && 
+                                                        emp.GetValueOrDefault("employee_id", "").ToString() == employeeId.ToString());
+                                                    if (employee != null)
+                                                    {
+                                                                transformedEmployees.Add(employee);
+                                                            }
                                                         }
                                                     }
+                                                    
+                                                    shift["assigned_employees"] = transformedEmployees;
+                                                    _logger.LogInformation("Transformed {Count} employee IDs to objects for {ShiftType} shift", transformedEmployees.Count, shiftType);
                                                 }
-                                                
-                                                shift["assigned_employees"] = transformedEmployees;
-                                                _logger.LogInformation("Transformed {Count} employee IDs to objects for {ShiftType} shift", transformedEmployees.Count, shiftType);
                                             }
                                         }
                                     }
+                                    
+                                    transformedShifts[shiftType] = shift;
                                 }
-                                
-                                transformedShifts[shiftType] = shift;
                             }
                         }
                     }

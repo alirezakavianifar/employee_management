@@ -23,14 +23,19 @@ namespace ManagementApp.Controllers
 
         // Data structures
         public Dictionary<string, Employee> Employees { get; private set; } = new();
+        public RoleManager RoleManager { get; private set; } = new();
         public ShiftManager ShiftManager { get; private set; } = new(15); // Start with 15 instead of 5
+        public ShiftGroupManager ShiftGroupManager { get; private set; } = new(); // New shift group manager
         public AbsenceManager AbsenceManager { get; private set; } = new();
         public TaskManager TaskManager { get; private set; } = new();
         public Dictionary<string, object> Settings { get; private set; } = new();
+        public string SelectedDisplayGroupId { get; private set; } = "default";
 
         // Events
         public event Action? EmployeesUpdated;
+        public event Action? RolesUpdated;
         public event Action? ShiftsUpdated;
+        public event Action? ShiftGroupsUpdated;
         public event Action? AbsencesUpdated;
         public event Action? TasksUpdated;
         public event Action? SettingsUpdated;
@@ -104,6 +109,17 @@ namespace ManagementApp.Controllers
                         {
                             Settings[kvp.Key] = kvp.Value;
                         }
+                        
+                        // Load selected display group from settings
+                        if (Settings.ContainsKey("selected_display_group_id") && Settings["selected_display_group_id"] is string savedGroupId)
+                        {
+                            SelectedDisplayGroupId = savedGroupId;
+                            _logger.LogInformation("Loaded selected display group from settings: {GroupId}", savedGroupId);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("No saved display group found, using default: {GroupId}", SelectedDisplayGroupId);
+                        }
 
                         // Ensure shift manager capacity matches settings
                         if (Settings.ContainsKey("shift_capacity") && Settings["shift_capacity"] is int capacity)
@@ -176,10 +192,22 @@ namespace ManagementApp.Controllers
                     LoadShiftsFromData(reportData["shifts"]);
                 }
 
+                // Load shift groups
+                if (reportData.ContainsKey("shift_groups"))
+                {
+                    LoadShiftGroupsFromData(reportData["shift_groups"]);
+                }
+
                 // Load absences
                 if (reportData.ContainsKey("absences"))
                 {
                     LoadAbsencesFromData(reportData["absences"]);
+                }
+
+                // Load roles
+                if (reportData.ContainsKey("roles"))
+                {
+                    LoadRolesFromData(reportData["roles"]);
                 }
 
                 // Load tasks
@@ -258,7 +286,17 @@ namespace ManagementApp.Controllers
 
                     var firstName = employeeDict.GetValueOrDefault("first_name", "").ToString() ?? "";
                     var lastName = employeeDict.GetValueOrDefault("last_name", "").ToString() ?? "";
-                    var role = employeeDict.GetValueOrDefault("role", "Employee").ToString() ?? "Employee";
+                    
+                    // Handle both old "role" and new "role_id" fields for backward compatibility
+                    var roleId = employeeDict.GetValueOrDefault("role_id", "").ToString() ?? "";
+                    if (string.IsNullOrEmpty(roleId))
+                    {
+                        roleId = employeeDict.GetValueOrDefault("role", "employee").ToString() ?? "employee";
+                    }
+                    
+                    // Handle shift group assignment
+                    var shiftGroupId = employeeDict.GetValueOrDefault("shift_group_id", "default").ToString() ?? "default";
+                    
                     var photoPath = employeeDict.GetValueOrDefault("photo_path", "").ToString() ?? "";
                     var isManager = employeeDict.GetValueOrDefault("is_manager", false);
                     bool isManagerBool = false;
@@ -267,7 +305,7 @@ namespace ManagementApp.Controllers
                     else if (isManager is string s && bool.TryParse(s, out bool parsed))
                         isManagerBool = parsed;
 
-                    var employee = new Employee(employeeId, firstName, lastName, role, photoPath, isManagerBool);
+                    var employee = new Employee(employeeId, firstName, lastName, roleId, shiftGroupId, photoPath, isManagerBool);
 
                     // Set creation/update times if available, with validation for Persian calendar
                     if (employeeDict.ContainsKey("created_at"))
@@ -401,6 +439,32 @@ namespace ManagementApp.Controllers
             }
         }
 
+        private void LoadShiftGroupsFromData(object shiftGroupsData)
+        {
+            try
+            {
+                _logger.LogInformation("Loading shift groups from data. Data type: {Type}", shiftGroupsData?.GetType().Name ?? "null");
+                
+                var shiftGroupsJson = JsonConvert.SerializeObject(shiftGroupsData);
+                _logger.LogInformation("Shift Groups JSON: {ShiftGroupsJson}", shiftGroupsJson);
+                
+                ShiftGroupManager = ShiftGroupManager.FromJson(shiftGroupsJson, Employees);
+                
+                // Log shift group assignments after loading
+                var totalGroups = ShiftGroupManager.GetAllShiftGroups().Count;
+                var totalAssigned = ShiftGroupManager.GetTotalAssignedEmployees();
+                _logger.LogInformation("Loaded shift groups - Total Groups: {TotalGroups}, Total Assigned: {TotalAssigned}", 
+                    totalGroups, totalAssigned);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading shift groups from data: {ShiftGroupsData}", shiftGroupsData);
+                // If loading fails, ensure we have a valid ShiftGroupManager
+                ShiftGroupManager = new ShiftGroupManager();
+                _logger.LogInformation("Created new ShiftGroupManager due to loading error");
+            }
+        }
+
         private void LoadAbsencesFromData(object absencesData)
         {
             try
@@ -421,6 +485,30 @@ namespace ManagementApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading absences");
+            }
+        }
+
+        private void LoadRolesFromData(object rolesData)
+        {
+            try
+            {
+                var rolesJson = JsonConvert.SerializeObject(rolesData);
+                var loadedRoleManager = RoleManager.FromJson(rolesJson);
+                
+                // Ensure the loaded manager is valid, otherwise keep the existing one
+                if (loadedRoleManager != null && loadedRoleManager.Roles != null)
+                {
+                    RoleManager = loadedRoleManager;
+                    _logger.LogInformation("Loaded {Count} roles", RoleManager.GetRoleCount());
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to load roles from data, keeping existing RoleManager");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading roles");
             }
         }
 
@@ -532,6 +620,7 @@ namespace ManagementApp.Controllers
             try
             {
                 // Create shifts data in the format expected by Display App
+                // Include both default shifts and shift group data
                 var shiftsData = new Dictionary<string, object>
                 {
                     { "morning", new Dictionary<string, object>
@@ -557,7 +646,8 @@ namespace ManagementApp.Controllers
                                 .ToList()
                             }
                         }
-                    }
+                    },
+                    { "selected_group", CreateSelectedGroupData() }
                 };
 
                 var morningShift = shiftsData["morning"] as Dictionary<string, object>;
@@ -588,8 +678,72 @@ namespace ManagementApp.Controllers
                             { "capacity", 15 },
                             { "assigned_employees", new List<object>() }
                         }
+                    },
+                    { "selected_group", new Dictionary<string, object>() }
+                };
+            }
+        }
+
+        private Dictionary<string, object> CreateSelectedGroupData()
+        {
+            try
+            {
+                var selectedGroup = ShiftGroupManager.GetShiftGroup(SelectedDisplayGroupId);
+                if (selectedGroup == null)
+                {
+                    _logger.LogWarning("Selected display group not found: {GroupId}, falling back to default", SelectedDisplayGroupId);
+                    selectedGroup = ShiftGroupManager.GetShiftGroup("default");
+                }
+
+                if (selectedGroup == null)
+                {
+                    _logger.LogError("No shift groups available, including default");
+                    return new Dictionary<string, object>();
+                }
+
+                var groupData = new Dictionary<string, object>
+                {
+                    { "group_id", selectedGroup.GroupId },
+                    { "name", selectedGroup.Name },
+                    { "description", selectedGroup.Description },
+                    { "color", selectedGroup.Color },
+                    { "is_active", selectedGroup.IsActive },
+                    { "morning_capacity", selectedGroup.MorningCapacity },
+                    { "evening_capacity", selectedGroup.EveningCapacity },
+                    { "morning_shift", new Dictionary<string, object>
+                        {
+                            { "shift_type", "morning" },
+                            { "capacity", selectedGroup.MorningCapacity },
+                            { "assigned_employees", selectedGroup.MorningShift.AssignedEmployees
+                                .Where(emp => emp != null)
+                                .Select(emp => emp.ToDictionary())
+                                .Cast<object>()
+                                .ToList()
+                            }
+                        }
+                    },
+                    { "evening_shift", new Dictionary<string, object>
+                        {
+                            { "shift_type", "evening" },
+                            { "capacity", selectedGroup.EveningCapacity },
+                            { "assigned_employees", selectedGroup.EveningShift.AssignedEmployees
+                                .Where(emp => emp != null)
+                                .Select(emp => emp.ToDictionary())
+                                .Cast<object>()
+                                .ToList()
+                            }
+                        }
                     }
                 };
+                
+                _logger.LogInformation("Created selected group data for group: {GroupId} ({GroupName})", 
+                    selectedGroup.GroupId, selectedGroup.Name);
+                return groupData;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating selected group data");
+                return new Dictionary<string, object>();
             }
         }
 
@@ -645,7 +799,9 @@ namespace ManagementApp.Controllers
                     { "date", DateTime.Now.ToString("yyyy-MM-dd") },
                     { "employees", Employees.Values.Where(emp => !emp.IsManager && !emp.Role.ToLower().StartsWith("مدیر") && !emp.Role.ToLower().StartsWith("manager")).Select(emp => emp.ToDictionary()).Cast<object>().ToList() },
                     { "managers", managersToDisplay },
+                    { "roles", JsonConvert.DeserializeObject<Dictionary<string, object>>(RoleManager.ToJson()) ?? new Dictionary<string, object>() },
                     { "shifts", CreateShiftsData() },
+                    { "shift_groups", JsonConvert.DeserializeObject<Dictionary<string, object>>(ShiftGroupManager.ToJson()) ?? new Dictionary<string, object>() },
                     { "absences", JsonConvert.DeserializeObject<Dictionary<string, object>>(AbsenceManager.ToJson()) ?? new Dictionary<string, object>() },
                     { "tasks", JsonConvert.DeserializeObject<Dictionary<string, object>>(TaskManager.ToJson()) ?? new Dictionary<string, object>() },
                     { "settings", Settings },
@@ -672,13 +828,209 @@ namespace ManagementApp.Controllers
             }
         }
 
+        // Role Management Methods
+        public bool AddRole(string roleId, string name, string description = "", string color = "#4CAF50", int priority = 0)
+        {
+            try
+            {
+                var success = RoleManager.AddRole(roleId, name, description, color, priority);
+                if (success)
+                {
+                    RolesUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Role added: {Name}", name);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding role");
+                ShowErrorDialog("خطا در افزودن نقش", ex.Message);
+                return false;
+            }
+        }
+
+        public bool UpdateRole(string roleId, string? name = null, string? description = null, string? color = null, int? priority = null, bool? isActive = null)
+        {
+            try
+            {
+                var success = RoleManager.UpdateRole(roleId, name, description, color, priority, isActive);
+                if (success)
+                {
+                    RolesUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Role updated: {RoleId}", roleId);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating role");
+                ShowErrorDialog("خطا در بروزرسانی نقش", ex.Message);
+                return false;
+            }
+        }
+
+        public bool DeleteRole(string roleId)
+        {
+            try
+            {
+                var success = RoleManager.DeleteRole(roleId);
+                if (success)
+                {
+                    RolesUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Role deleted: {RoleId}", roleId);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting role");
+                ShowErrorDialog("خطا در حذف نقش", ex.Message);
+                return false;
+            }
+        }
+
+        public Role? GetRole(string roleId)
+        {
+            return RoleManager.GetRole(roleId);
+        }
+
+        public List<Role> GetAllRoles()
+        {
+            return RoleManager.GetAllRoles();
+        }
+
+        public List<Role> GetActiveRoles()
+        {
+            return RoleManager.GetActiveRoles();
+        }
+
+        // Shift Group Management Methods
+        public bool AddShiftGroup(string groupId, string name, string description = "", string color = "#4CAF50", 
+                                 int morningCapacity = 15, int eveningCapacity = 15)
+        {
+            try
+            {
+                var success = ShiftGroupManager.AddShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity);
+                if (success)
+                {
+                    ShiftGroupsUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Shift group added: {Name}", name);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding shift group");
+                ShowErrorDialog("خطا در افزودن گروه شیفت", ex.Message);
+                return false;
+            }
+        }
+
+        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
+                                    string? color = null, int? morningCapacity = null, int? eveningCapacity = null, 
+                                    bool? isActive = null)
+        {
+            try
+            {
+                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity, isActive);
+                if (success)
+                {
+                    ShiftGroupsUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Shift group updated: {GroupId}", groupId);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating shift group");
+                ShowErrorDialog("خطا در بروزرسانی گروه شیفت", ex.Message);
+                return false;
+            }
+        }
+
+        public bool DeleteShiftGroup(string groupId)
+        {
+            try
+            {
+                var success = ShiftGroupManager.DeleteShiftGroup(groupId);
+                if (success)
+                {
+                    ShiftGroupsUpdated?.Invoke();
+                    SaveData();
+                    _logger.LogInformation("Shift group deleted: {GroupId}", groupId);
+                }
+                return success;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting shift group");
+                ShowErrorDialog("خطا در حذف گروه شیفت", ex.Message);
+                return false;
+            }
+        }
+
+        public ShiftGroup? GetShiftGroup(string groupId)
+        {
+            return ShiftGroupManager.GetShiftGroup(groupId);
+        }
+
+        public List<ShiftGroup> GetAllShiftGroups()
+        {
+            return ShiftGroupManager.GetAllShiftGroups();
+        }
+
+        public List<ShiftGroup> GetActiveShiftGroups()
+        {
+            return ShiftGroupManager.GetActiveShiftGroups();
+        }
+
+        public bool SetSelectedDisplayGroup(string groupId)
+        {
+            try
+            {
+                // Validate that the group exists
+                var group = ShiftGroupManager.GetShiftGroup(groupId);
+                if (group == null)
+                {
+                    _logger.LogWarning("Attempted to set non-existent group as display group: {GroupId}", groupId);
+                    return false;
+                }
+
+                SelectedDisplayGroupId = groupId;
+                
+                // Save to settings for persistence
+                Settings["selected_display_group_id"] = groupId;
+                
+                _logger.LogInformation("Selected display group changed to: {GroupId}", groupId);
+                
+                // Trigger data save to update reports
+                SaveData();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting selected display group");
+                return false;
+            }
+        }
+
+        public string GetSelectedDisplayGroupId()
+        {
+            return SelectedDisplayGroupId;
+        }
+
         // Employee Management Methods
-        public bool AddEmployee(string firstName, string lastName, string role = "", string photoPath = "", bool isManager = false)
+        public bool AddEmployee(string firstName, string lastName, string roleId = "employee", string shiftGroupId = "default", string photoPath = "", bool isManager = false)
         {
             try
             {
                 var employeeId = $"emp_{Employees.Count}_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
-                var employee = new Employee(employeeId, firstName, lastName, role, photoPath, isManager);
+                var employee = new Employee(employeeId, firstName, lastName, roleId, shiftGroupId, photoPath, isManager);
 
                 Employees[employeeId] = employee;
                 EmployeesUpdated?.Invoke();
@@ -695,7 +1047,7 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? role = null, string? photoPath = null, bool? isManager = null)
+        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null)
         {
             try
             {
@@ -703,7 +1055,7 @@ namespace ManagementApp.Controllers
                     return false;
 
                 var employee = Employees[employeeId];
-                employee.Update(firstName, lastName, role, photoPath, isManager);
+                employee.Update(firstName, lastName, roleId, shiftGroupId, photoPath, isManager);
 
                 EmployeesUpdated?.Invoke();
                 SaveData();
@@ -825,12 +1177,23 @@ namespace ManagementApp.Controllers
         }
 
         // Shift Management Methods
-        public bool AssignEmployeeToShift(Employee employee, string shiftType, int? slotIndex = null)
+        public bool AssignEmployeeToShift(Employee employee, string shiftType, int? slotIndex = null, string? groupId = null)
         {
             try
             {
-                // Check if shift exists
-                var shift = ShiftManager.GetShift(shiftType);
+                // Use employee's group if not specified
+                var targetGroupId = groupId ?? employee.ShiftGroupId;
+                
+                // Check if shift group exists
+                var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
+                if (group == null)
+                {
+                    ShowErrorDialog("خطا", "گروه شیفت مورد نظر یافت نشد");
+                    return false;
+                }
+
+                // Check if shift exists in the group
+                var shift = group.GetShift(shiftType);
                 if (shift == null)
                 {
                     ShowErrorDialog("خطا", "شیفت مورد نظر یافت نشد");
@@ -848,31 +1211,42 @@ namespace ManagementApp.Controllers
                     return false;
                 }
 
-                // Check if employee is already assigned to another shift
-                var currentShifts = ShiftManager.GetEmployeeShifts(employee);
+                // Check if employee is already assigned to another shift in this group
+                var currentShifts = group.GetEmployeeShifts(employee);
                 if (currentShifts.Any() && !currentShifts.Contains(shiftType))
                 {
                     var shiftNames = currentShifts.Select(s => s == "morning" ? "صبح" : s == "evening" ? "عصر" : s).ToArray();
                     ShowErrorDialog("خطا در تخصیص شیفت", 
-                        $"کارمند {employee.FullName} قبلاً به شیفت {string.Join(", ", shiftNames)} تخصیص داده شده است.\nهر کارمند فقط می‌تواند به یک شیفت تخصیص داده شود.");
+                        $"کارمند {employee.FullName} قبلاً به شیفت {string.Join(", ", shiftNames)} در این گروه تخصیص داده شده است.\nهر کارمند فقط می‌تواند به یک شیفت در هر گروه تخصیص داده شود.");
+                    return false;
+                }
+
+                // Check if employee is assigned to a different group
+                var currentGroupId = ShiftGroupManager.GetEmployeeGroup(employee);
+                if (currentGroupId != null && currentGroupId != targetGroupId)
+                {
+                    var currentGroup = ShiftGroupManager.GetShiftGroup(currentGroupId);
+                    ShowErrorDialog("خطا در تخصیص شیفت", 
+                        $"کارمند {employee.FullName} قبلاً به گروه {currentGroup?.Name} تخصیص داده شده است.\nهر کارمند فقط می‌تواند به یک گروه تخصیص داده شود.");
                     return false;
                 }
 
                 bool success;
                 if (slotIndex.HasValue)
                 {
-                    success = ShiftManager.AssignEmployeeToSlot(employee, shiftType, slotIndex.Value);
+                    success = ShiftGroupManager.AssignEmployeeToSlot(employee, targetGroupId, shiftType, slotIndex.Value);
                 }
                 else
                 {
-                    success = ShiftManager.AssignEmployee(employee, shiftType);
+                    success = ShiftGroupManager.AssignEmployee(employee, targetGroupId, shiftType);
                 }
 
                 if (success)
                 {
                     ShiftsUpdated?.Invoke();
+                    ShiftGroupsUpdated?.Invoke();
                     SaveData();
-                    _logger.LogInformation("Employee {FullName} assigned to {ShiftType} shift", employee.FullName, shiftType);
+                    _logger.LogInformation("Employee {FullName} assigned to {ShiftType} shift in group {GroupId}", employee.FullName, shiftType, targetGroupId);
                     return true;
                 }
                 else
@@ -889,16 +1263,20 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool RemoveEmployeeFromShift(Employee employee, string shiftType)
+        public bool RemoveEmployeeFromShift(Employee employee, string shiftType, string? groupId = null)
         {
             try
             {
-                var success = ShiftManager.RemoveEmployeeFromShift(employee, shiftType);
+                // Use employee's group if not specified
+                var targetGroupId = groupId ?? employee.ShiftGroupId;
+                
+                var success = ShiftGroupManager.RemoveEmployeeFromShift(employee, targetGroupId, shiftType);
                 if (success)
                 {
                     ShiftsUpdated?.Invoke();
+                    ShiftGroupsUpdated?.Invoke();
                     SaveData();
-                    _logger.LogInformation("Employee {FullName} removed from {ShiftType} shift", employee.FullName, shiftType);
+                    _logger.LogInformation("Employee {FullName} removed from {ShiftType} shift in group {GroupId}", employee.FullName, shiftType, targetGroupId);
                     return true;
                 }
                 return false;
@@ -911,14 +1289,29 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool ClearShift(string shiftType)
+        public bool ClearShift(string shiftType, string? groupId = null)
         {
             try
             {
-                ShiftManager.ClearShift(shiftType);
+                if (string.IsNullOrEmpty(groupId))
+                {
+                    // Clear shift in all groups
+                    foreach (var group in ShiftGroupManager.GetAllShiftGroups())
+                    {
+                        group.ClearShift(shiftType);
+                    }
+                }
+                else
+                {
+                    // Clear shift in specific group
+                    var group = ShiftGroupManager.GetShiftGroup(groupId);
+                    group?.ClearShift(shiftType);
+                }
+                
                 ShiftsUpdated?.Invoke();
+                ShiftGroupsUpdated?.Invoke();
                 SaveData();
-                _logger.LogInformation("Shift {ShiftType} cleared", shiftType);
+                _logger.LogInformation("Shift {ShiftType} cleared in group {GroupId}", shiftType, groupId ?? "all");
                 return true;
             }
             catch (Exception ex)
@@ -977,19 +1370,29 @@ namespace ManagementApp.Controllers
 
                 if (success)
                 {
-                    // Remove from shifts only if the absence is for today
-                    var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
-                    if (absence.Date == todayGeorgian)
+                    // Always remove from shifts when employee is marked as absent, regardless of date
+                    // Remove from shift groups (new system) - find actual assigned group
+                    var assignedGroupId = ShiftGroupManager.GetEmployeeGroup(employee);
+                    if (!string.IsNullOrEmpty(assignedGroupId))
                     {
-                        ShiftManager.RemoveEmployeeFromShift(employee, "morning");
-                        ShiftManager.RemoveEmployeeFromShift(employee, "evening");
+                        _logger.LogInformation("Removing employee {FullName} from assigned group {GroupId} due to absence", employee.FullName, assignedGroupId);
+                        ShiftGroupManager.RemoveEmployeeFromShift(employee, assignedGroupId, "morning");
+                        ShiftGroupManager.RemoveEmployeeFromShift(employee, assignedGroupId, "evening");
                     }
+                    else
+                    {
+                        _logger.LogInformation("Employee {FullName} not found in any shift group", employee.FullName);
+                    }
+                    
+                    // Also remove from old ShiftManager for backward compatibility
+                    ShiftManager.RemoveEmployeeFromShift(employee, "morning");
+                    ShiftManager.RemoveEmployeeFromShift(employee, "evening");
 
                     AbsencesUpdated?.Invoke();
                     ShiftsUpdated?.Invoke();
                     SaveData();
 
-                    _logger.LogInformation("Employee {FullName} marked as {Category} for date {Date}", employee.FullName, category, absence.Date);
+                    _logger.LogInformation("Employee {FullName} marked as {Category} for date {Date} and removed from all shifts", employee.FullName, category, absence.Date);
                     return true;
                 }
                 return false;

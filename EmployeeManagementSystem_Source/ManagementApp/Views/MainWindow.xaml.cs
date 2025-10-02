@@ -24,7 +24,11 @@ namespace ManagementApp.Views
     public partial class MainWindow : Window
     {
         private readonly MainController _controller;
+        public MainController Controller => _controller;
         private readonly ILogger<MainWindow> _logger;
+        
+        // Static reference for dialogs to access the main controller
+        public static MainWindow? Instance { get; private set; }
         private readonly DispatcherTimer _timer;
         private readonly PdfReportService _pdfService;
         private Employee? _selectedEmployee;
@@ -38,6 +42,9 @@ namespace ManagementApp.Views
             _logger = LoggingService.CreateLogger<MainWindow>();
             _pdfService = new PdfReportService();
             
+            // Set static instance for dialogs to access
+            Instance = this;
+            
             // Setup timer for status updates
             _timer = new DispatcherTimer
             {
@@ -48,6 +55,8 @@ namespace ManagementApp.Views
 
             // Subscribe to controller events
             _controller.EmployeesUpdated += OnEmployeesUpdated;
+            _controller.RolesUpdated += OnRolesUpdated;
+            _controller.ShiftGroupsUpdated += OnShiftGroupsUpdated;
             
             // Initialize settings display
             UpdateSettingsDisplay();
@@ -82,6 +91,9 @@ namespace ManagementApp.Views
                 
                 // Initialize assigned person ComboBox
                 InitializeAssignedPersonComboBox();
+                
+                // Initialize role ComboBox
+                InitializeRoleComboBox();
 
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
@@ -145,6 +157,40 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing assigned person ComboBox");
+            }
+        }
+
+        private void InitializeRoleComboBox()
+        {
+            try
+            {
+                var roles = _controller.GetActiveRoles();
+                RoleComboBox.Items.Clear();
+                
+                foreach (var role in roles)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = role.Name,
+                        Tag = role.RoleId,
+                        ToolTip = role.Description
+                    };
+                    RoleComboBox.Items.Add(item);
+                }
+                
+                // Select default role if available
+                if (RoleComboBox.Items.Count > 0)
+                {
+                    var defaultRole = RoleComboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == "employee");
+                    RoleComboBox.SelectedItem = defaultRole ?? RoleComboBox.Items[0];
+                }
+                
+                _logger.LogInformation("Role ComboBox initialized with {Count} items", RoleComboBox.Items.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error initializing role ComboBox");
             }
         }
 
@@ -270,7 +316,17 @@ namespace ManagementApp.Views
             {
                 FirstNameTextBox.Text = employee.FirstName;
                 LastNameTextBox.Text = employee.LastName;
-                RoleTextBox.Text = employee.Role;
+                
+                // Set the selected role in ComboBox
+                foreach (ComboBoxItem item in RoleComboBox.Items)
+                {
+                    if (item.Tag?.ToString() == employee.RoleId)
+                    {
+                        RoleComboBox.SelectedItem = item;
+                        break;
+                    }
+                }
+                
                 IsManagerCheckBox.IsChecked = employee.IsManager;
                 
                 // Load employee photo
@@ -300,10 +356,10 @@ namespace ManagementApp.Views
         {
             try
             {
-                var dialog = new EmployeeDialog();
+                var dialog = new EmployeeDialog(_controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
                     if (success)
                     {
                         LoadEmployees();
@@ -328,10 +384,10 @@ namespace ManagementApp.Views
                     return;
                 }
 
-                var dialog = new EmployeeDialog(_selectedEmployee);
+                var dialog = new EmployeeDialog(_selectedEmployee, _controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.Role, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
                     if (success)
                     {
                         LoadEmployees();
@@ -344,6 +400,38 @@ namespace ManagementApp.Views
             {
                 _logger.LogError(ex, "Error editing employee");
                 MessageBox.Show($"خطا در ویرایش کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ManageRoles_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new RoleDialog(_controller);
+                dialog.ShowDialog();
+                // Roles are automatically saved when modified in the dialog
+                UpdateStatus("مدیریت نقش‌ها تکمیل شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error managing roles");
+                MessageBox.Show($"خطا در مدیریت نقش‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ManageShiftGroups_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new ShiftGroupDialog(_controller);
+                dialog.ShowDialog();
+                // Shift groups are automatically saved when modified in the dialog
+                UpdateStatus("مدیریت گروه‌های شیفت تکمیل شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error managing shift groups");
+                MessageBox.Show($"خطا در مدیریت گروه‌های شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -474,8 +562,9 @@ namespace ManagementApp.Views
                     return;
                 }
 
+                var selectedRoleId = (RoleComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "employee";
                 var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
-                    FirstNameTextBox.Text, LastNameTextBox.Text, RoleTextBox.Text, null, IsManagerCheckBox.IsChecked);
+                    FirstNameTextBox.Text, LastNameTextBox.Text, selectedRoleId, _selectedEmployee.ShiftGroupId, null, IsManagerCheckBox.IsChecked);
                 
                 if (success)
                 {
@@ -553,10 +642,147 @@ namespace ManagementApp.Views
 
         #region Shift Management
 
+        private void LoadShiftGroups()
+        {
+            try
+            {
+                // Preserve current selection if any
+                string? previouslySelectedGroupId = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem currentItem && currentItem.Tag is string currentGroupId)
+                {
+                    previouslySelectedGroupId = currentGroupId;
+                }
+
+                var shiftGroups = _controller.GetAllShiftGroups();
+                ShiftGroupComboBox.Items.Clear();
+                
+                foreach (var group in shiftGroups)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = group.Name,
+                        Tag = group.GroupId,
+                        ToolTip = group.Description
+                    };
+                    ShiftGroupComboBox.Items.Add(item);
+                }
+                
+                // Reselect previous group if possible; otherwise select default
+                if (ShiftGroupComboBox.Items.Count > 0)
+                {
+                    ComboBoxItem? toSelect = null;
+                    if (!string.IsNullOrEmpty(previouslySelectedGroupId))
+                    {
+                        toSelect = ShiftGroupComboBox.Items.Cast<ComboBoxItem>()
+                            .FirstOrDefault(item => item.Tag?.ToString() == previouslySelectedGroupId);
+                    }
+
+                    if (toSelect == null)
+                    {
+                        toSelect = ShiftGroupComboBox.Items.Cast<ComboBoxItem>()
+                            .FirstOrDefault(item => item.Tag?.ToString() == "default")
+                            ?? (ComboBoxItem)ShiftGroupComboBox.Items[0];
+                    }
+
+                    ShiftGroupComboBox.SelectedItem = toSelect;
+                }
+                
+                _logger.LogInformation("Loaded {Count} shift groups", shiftGroups.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading shift groups");
+            }
+        }
+
+        private void LoadDisplayGroups()
+        {
+            try
+            {
+                var shiftGroups = _controller.GetAllShiftGroups();
+                DisplayGroupComboBox.Items.Clear();
+                
+                foreach (var group in shiftGroups)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = group.Name,
+                        Tag = group.GroupId,
+                        ToolTip = group.Description
+                    };
+                    DisplayGroupComboBox.Items.Add(item);
+                }
+                
+                // Select the currently selected display group
+                var currentDisplayGroup = _controller.GetSelectedDisplayGroupId();
+                if (DisplayGroupComboBox.Items.Count > 0)
+                {
+                    var selectedGroup = DisplayGroupComboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == currentDisplayGroup);
+                    DisplayGroupComboBox.SelectedItem = selectedGroup ?? DisplayGroupComboBox.Items[0];
+                }
+                
+                _logger.LogInformation("Loaded {Count} display groups, selected: {SelectedGroup}", 
+                    shiftGroups.Count, currentDisplayGroup);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading display groups");
+            }
+        }
+
+        private void ShiftGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    _logger.LogInformation("Shift group changed to: {GroupId}", groupId);
+                    LoadShiftSlots();
+                    UpdateShiftStatistics();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling shift group selection change");
+            }
+        }
+
+        private void DisplayGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (DisplayGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    _logger.LogInformation("Display group changed to: {GroupId}", groupId);
+                    
+                    // Set the selected display group in the controller
+                    var success = _controller.SetSelectedDisplayGroup(groupId);
+                    if (success)
+                    {
+                        UpdateStatus($"گروه نمایش به '{selectedItem.Content}' تغییر یافت");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"خطا در تغییر گروه نمایش", "خطا", 
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling display group selection change");
+                MessageBox.Show($"خطا در تغییر گروه نمایش: {ex.Message}", "خطا", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void LoadShifts()
         {
             try
             {
+                LoadShiftGroups();
+                LoadDisplayGroups();
                 LoadShiftSlots();
                 UpdateShiftStatistics();
                 
@@ -576,25 +802,44 @@ namespace ManagementApp.Views
         {
             try
             {
-                var capacity = _controller.ShiftManager.Capacity;
-                _logger.LogInformation("LoadShiftSlots: Current capacity is {Capacity}", capacity);
+                // Get the selected shift group
+                ShiftGroup? selectedGroup = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    selectedGroup = _controller.GetShiftGroup(groupId);
+                }
+                
+                // Fallback to default group if no selection
+                if (selectedGroup == null)
+                {
+                    selectedGroup = _controller.GetShiftGroup("default");
+                }
+                
+                // Use shift group capacities or fallback to default ShiftManager
+                int morningCapacity = selectedGroup?.MorningCapacity ?? _controller.ShiftManager.Capacity;
+                int eveningCapacity = selectedGroup?.EveningCapacity ?? _controller.ShiftManager.Capacity;
+                
+                _logger.LogInformation("LoadShiftSlots: Selected group: {GroupName}, Morning: {MorningCapacity}, Evening: {EveningCapacity}", 
+                    selectedGroup?.Name ?? "Default", morningCapacity, eveningCapacity);
                 
                 // Clear existing slots
                 MorningShiftPanel.Children.Clear();
                 EveningShiftPanel.Children.Clear();
 
-                ShiftCapacityTextBox.Text = capacity.ToString();
-                _logger.LogInformation("LoadShiftSlots: TextBox updated to {Capacity}", capacity);
+                // Update capacity text box to show morning capacity (primary)
+                ShiftCapacityTextBox.Text = morningCapacity.ToString();
+                _logger.LogInformation("LoadShiftSlots: TextBox updated to {Capacity}", morningCapacity);
 
                 // Create morning shift slots in a grid layout
-                var morningGrid = CreateShiftGrid("morning", capacity);
+                var morningGrid = CreateShiftGrid("morning", morningCapacity, selectedGroup);
                 MorningShiftPanel.Children.Add(morningGrid);
 
                 // Create evening shift slots in a grid layout
-                var eveningGrid = CreateShiftGrid("evening", capacity);
+                var eveningGrid = CreateShiftGrid("evening", eveningCapacity, selectedGroup);
                 EveningShiftPanel.Children.Add(eveningGrid);
                 
-                _logger.LogInformation("LoadShiftSlots: Grids created with capacity {Capacity}", capacity);
+                _logger.LogInformation("LoadShiftSlots: Grids created with capacities - Morning: {MorningCapacity}, Evening: {EveningCapacity}", 
+                    morningCapacity, eveningCapacity);
             }
             catch (Exception ex)
             {
@@ -602,7 +847,7 @@ namespace ManagementApp.Views
             }
         }
 
-        private Grid CreateShiftGrid(string shiftType, int capacity)
+        private Grid CreateShiftGrid(string shiftType, int capacity, ShiftGroup? shiftGroup = null)
         {
             var grid = new Grid();
             
@@ -653,7 +898,26 @@ namespace ManagementApp.Views
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            var employee = _controller.ShiftManager.GetShift(shiftType)?.GetEmployeeAtSlot(slotIndex);
+            // Get employee from selected shift group
+            Employee? employee = null;
+            if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+            {
+                var selectedGroup = _controller.GetShiftGroup(groupId);
+                if (selectedGroup != null)
+                {
+                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
+                    employee = shift?.GetEmployeeAtSlot(slotIndex);
+                }
+            }
+            
+            // Fallback to default ShiftManager if no group selected
+            if (employee == null)
+            {
+                employee = _controller.ShiftManager.GetShift(shiftType)?.GetEmployeeAtSlot(slotIndex);
+            }
+            
+            // Note: Absent employees are now properly removed from shift assignments
+            // in the MarkEmployeeAbsent method, so no need to hide them here
             
             var stackPanel = new StackPanel
             {
@@ -731,12 +995,42 @@ namespace ManagementApp.Views
         {
             try
             {
-                var morningCount = _controller.ShiftManager.MorningShift.AssignedEmployees.Count(emp => emp != null);
-                var eveningCount = _controller.ShiftManager.EveningShift.AssignedEmployees.Count(emp => emp != null);
-                var capacity = _controller.ShiftManager.Capacity;
+                // Get the selected shift group
+                ShiftGroup? selectedGroup = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    selectedGroup = _controller.GetShiftGroup(groupId);
+                }
+                
+                // Fallback to default group if no selection
+                if (selectedGroup == null)
+                {
+                    selectedGroup = _controller.GetShiftGroup("default");
+                }
+                
+                // Use shift group data or fallback to default ShiftManager
+                int morningCount, eveningCount, morningCapacity, eveningCapacity;
+                
+                if (selectedGroup != null)
+                {
+                    morningCount = selectedGroup.MorningShift.AssignedEmployees.Count(emp => emp != null);
+                    eveningCount = selectedGroup.EveningShift.AssignedEmployees.Count(emp => emp != null);
+                    morningCapacity = selectedGroup.MorningCapacity;
+                    eveningCapacity = selectedGroup.EveningCapacity;
+                }
+                else
+                {
+                    morningCount = _controller.ShiftManager.MorningShift.AssignedEmployees.Count(emp => emp != null);
+                    eveningCount = _controller.ShiftManager.EveningShift.AssignedEmployees.Count(emp => emp != null);
+                    morningCapacity = _controller.ShiftManager.Capacity;
+                    eveningCapacity = _controller.ShiftManager.Capacity;
+                }
 
-                MorningShiftStats.Text = $"{morningCount}/{capacity}";
-                EveningShiftStats.Text = $"{eveningCount}/{capacity}";
+                MorningShiftStats.Text = $"{morningCount}/{morningCapacity}";
+                EveningShiftStats.Text = $"{eveningCount}/{eveningCapacity}";
+                
+                _logger.LogInformation("Updated shift statistics - Morning: {MorningCount}/{MorningCapacity}, Evening: {EveningCount}/{EveningCapacity}", 
+                    morningCount, morningCapacity, eveningCount, eveningCapacity);
             }
             catch (Exception ex)
             {
@@ -783,7 +1077,14 @@ namespace ManagementApp.Views
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    _controller.ClearShift("morning");
+                    // Get the selected group ID
+                    string? groupId = null;
+                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                    {
+                        groupId = selectedGroupId;
+                    }
+                    
+                    _controller.ClearShift("morning", groupId);
                     LoadShiftSlots();
                     UpdateShiftStatistics();
                     UpdateStatus("شیفت صبح پاک شد");
@@ -805,7 +1106,14 @@ namespace ManagementApp.Views
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    _controller.ClearShift("evening");
+                    // Get the selected group ID
+                    string? groupId = null;
+                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                    {
+                        groupId = selectedGroupId;
+                    }
+                    
+                    _controller.ClearShift("evening", groupId);
                     LoadShiftSlots();
                     UpdateShiftStatistics();
                     UpdateStatus("شیفت عصر پاک شد");
@@ -905,7 +1213,14 @@ namespace ManagementApp.Views
                     var employee = e.Data.GetData(typeof(Employee)) as Employee;
                     if (employee != null)
                     {
-                        var success = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex);
+                        // Get the selected group ID
+                        string? groupId = null;
+                        if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                        {
+                            groupId = selectedGroupId;
+                        }
+                        
+                        var success = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
                         if (success)
                         {
                             LoadShiftSlots();
@@ -927,7 +1242,23 @@ namespace ManagementApp.Views
         {
             try
             {
-                var employee = _controller.ShiftManager.GetShift(shiftType)?.GetEmployeeAtSlot(slotIndex);
+                // Get employee from selected shift group
+                Employee? employee = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    var selectedGroup = _controller.GetShiftGroup(groupId);
+                    if (selectedGroup != null)
+                    {
+                        var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
+                        employee = shift?.GetEmployeeAtSlot(slotIndex);
+                    }
+                }
+                
+                // Fallback to default ShiftManager if no group selected
+                if (employee == null)
+                {
+                    employee = _controller.ShiftManager.GetShift(shiftType)?.GetEmployeeAtSlot(slotIndex);
+                }
                 
                 // If slot is empty, show employee selection dialog
                 if (employee == null)
@@ -972,7 +1303,14 @@ namespace ManagementApp.Views
                     
                     if (result == MessageBoxResult.Yes)
                     {
-                        var success = _controller.RemoveEmployeeFromShift(employee, shiftType);
+                        // Get the selected group ID
+                        string? groupId = null;
+                        if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                        {
+                            groupId = selectedGroupId;
+                        }
+                        
+                        var success = _controller.RemoveEmployeeFromShift(employee, shiftType, groupId);
                         if (success)
                         {
                             LoadShiftSlots();
@@ -1050,7 +1388,14 @@ namespace ManagementApp.Views
                 {
                     if (listBox.SelectedItem is Employee selectedEmployee)
                     {
-                        var success = _controller.AssignEmployeeToShift(selectedEmployee, shiftType, slotIndex);
+                        // Get the selected group ID
+                        string? groupId = null;
+                        if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                        {
+                            groupId = selectedGroupId;
+                        }
+                        
+                        var success = _controller.AssignEmployeeToShift(selectedEmployee, shiftType, slotIndex, groupId);
                         if (success)
                         {
                             LoadShiftSlots();
@@ -2183,6 +2528,16 @@ namespace ManagementApp.Views
             });
         }
 
+        private void OnRolesUpdated()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Refresh role ComboBox when roles are updated
+                InitializeRoleComboBox();
+                _logger.LogInformation("Roles updated and ComboBox refreshed");
+            });
+        }
+
         private void OnShiftsUpdated()
         {
             Dispatcher.Invoke(() =>
@@ -2198,6 +2553,7 @@ namespace ManagementApp.Views
             {
                 LoadAbsences();
                 LoadEmployees(); // Refresh employee lists
+                LoadShifts(); // Refresh shift data and absent employees list
             });
         }
 
@@ -2206,6 +2562,28 @@ namespace ManagementApp.Views
             Dispatcher.Invoke(() =>
             {
                 LoadTasks();
+            });
+        }
+
+        private void OnShiftGroupsUpdated()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Refresh shift group selection ComboBox
+                LoadShiftGroups();
+                LoadDisplayGroups();
+                
+                // Refresh shift-related data when shift groups are updated
+                LoadShiftSlots();
+                UpdateShiftStatistics();
+                
+                // Refresh employee lists if they depend on shift groups
+                LoadEmployees();
+                
+                // Update status to show that shift groups were updated
+                UpdateStatus("گروه‌های شیفت بروزرسانی شدند");
+                
+                _logger.LogInformation("Shift groups updated - UI refreshed");
             });
         }
 
@@ -2522,6 +2900,12 @@ namespace ManagementApp.Views
                 _timer?.Stop();
                 _controller?.Cleanup();
                 _logger.LogInformation("MainWindow closed");
+                
+                // Clear static instance when window is closed
+                if (Instance == this)
+                {
+                    Instance = null;
+                }
             }
             catch (Exception ex)
             {

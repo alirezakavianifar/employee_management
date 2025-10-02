@@ -1,0 +1,42 @@
+<Window x:Class="ManagementApp.Views.ShiftGroupEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="افزودن گروه شیفت جدید" Height="420" Width="520"
+        MinHeight="360" MinWidth="480"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Group Name -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <Label Content="نام گروه:" FontWeight="Bold"/>
+            <TextBox x:Name="NameTextBox" Height="25"/>
+        </StackPanel>
+
+        <!-- Description -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+            <Label Content="توضیحات:" FontWeight="Bold"/>
+            <TextBox x:Name="DescriptionTextBox" Height="60" TextWrapping="Wrap" AcceptsReturn="True"/>
+        </StackPanel>
+
+        <!-- Color -->
+        <StackPanel Grid.Row="2" Margin="0,0,0,15">
+            <Label Content="رنگ گروه:" FontWeight="Bold"/>
+            <TextBox x:Name="ColorTextBox" Height="25"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="OkButton" Content="تأیید" Width="80" Height="30" Margin="0,0,10,0" Click="OkButton_Click" IsDefault="True"/>
+            <Button x:Name="CancelButton" Content="لغو" Width="80" Height="30" Click="CancelButton_Click" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -127,7 +127,7 @@ namespace Shared.Models
 
                 for (int i = 0; i < AssignedEmployees.Count; i++)
                 {
-                    if (AssignedEmployees[i] == employee)
+                    if (AssignedEmployees[i] != null && AssignedEmployees[i].Equals(employee))
                     {
                         System.Diagnostics.Debug.WriteLine($"Shift.RemoveEmployee: Found employee at index {i}, removing");
                         AssignedEmployees[i] = null;
@@ -173,7 +173,7 @@ namespace Shared.Models
                 return false;
             }
 
-            return AssignedEmployees.Contains(employee);
+            return AssignedEmployees.Any(emp => emp != null && emp.Equals(employee));
         }
 
         public void SetCapacity(int newCapacity)

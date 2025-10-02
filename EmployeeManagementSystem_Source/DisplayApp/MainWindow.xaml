@@ -74,12 +74,25 @@
             <!-- Shifts Section -->
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
+                <!-- Current Display Group Info -->
+                <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="گروه نمایش:" Style="{StaticResource BodyTextStyle}" 
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="CurrentGroupLabel" Text="در حال بارگذاری..." 
+                                   Style="{StaticResource BodyTextStyle}" 
+                                   Foreground="#4CAF50" FontWeight="Bold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                
                 <!-- Shifts Row -->
-                <Grid Grid.Row="0">
+                <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
@@ -129,7 +142,7 @@
                 </Grid>
                 
                 <!-- Bottom Section -->
-                <Grid Grid.Row="1" Margin="0,10,0,0">
+                <Grid Grid.Row="2" Margin="0,10,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>

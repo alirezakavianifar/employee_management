@@ -78,6 +78,8 @@
                                 <Button Content="افزودن کارمند" Click="AddEmployee_Click" Margin="2"/>
                                 <Button Content="ویرایش کارمند" Click="EditEmployee_Click" Margin="2"/>
                                 <Button Content="حذف کارمند" Click="DeleteEmployee_Click" Margin="2"/>
+                                <Button Content="مدیریت نقش‌ها" Click="ManageRoles_Click" Margin="2" Background="#9C27B0" Foreground="White"/>
+                                <Button Content="مدیریت گروه‌های شیفت" Click="ManageShiftGroups_Click" Margin="2" Background="#FF5722" Foreground="White"/>
                                 <Button Content="وارد کردن از CSV" Click="ImportCSV_Click" Margin="2"/>
                             </StackPanel>
                         </Grid>
@@ -106,7 +108,7 @@
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="LastNameTextBox" Margin="5"/>
 
                             <Label Grid.Row="2" Grid.Column="0" Content="سمت:"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="RoleTextBox" Margin="5"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="RoleComboBox" Margin="5"/>
 
                             <Label Grid.Row="3" Grid.Column="0" Content="نقش مدیر:"/>
                             <CheckBox Grid.Row="3" Grid.Column="1" x:Name="IsManagerCheckBox" Content="این کارمند مدیر است" Margin="5"/>
@@ -191,12 +193,30 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Shift Controls -->
+                            <!-- Display Group Selection -->
                             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                                <Label Content="گروه نمایش:"/>
+                                <ComboBox x:Name="DisplayGroupComboBox" Width="150" Margin="5,0" 
+                                         SelectionChanged="DisplayGroupComboBox_SelectionChanged"/>
+                                <TextBlock Text="(کنترل نمایش در DisplayApp)" FontSize="10" 
+                                          Foreground="Gray" VerticalAlignment="Center" Margin="5,0"/>
+                            </StackPanel>
+
+                            <!-- Shift Group Selection -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5">
+                                <Label Content="گروه شیفت:"/>
+                                <ComboBox x:Name="ShiftGroupComboBox" Width="150" Margin="5,0" 
+                                         SelectionChanged="ShiftGroupComboBox_SelectionChanged"/>
+                            </StackPanel>
+
+                            <!-- Shift Controls -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
                                 <Label Content="ظرفیت شیفت:"/>
                                 <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="15" Margin="5,0"/>
                                 <Button Content="تغییر ظرفیت" Click="ChangeCapacity_Click" Margin="5,0"/>
@@ -205,7 +225,7 @@
                             </StackPanel>
 
                             <!-- Shift Slots -->
-                            <Grid Grid.Row="1" Margin="5">
+                            <Grid Grid.Row="3" Margin="5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
@@ -227,7 +247,7 @@
                             </Grid>
 
                             <!-- Shift Statistics -->
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
+                            <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="5">
                                 <Label Content="شیفت صبح:"/>
                                 <TextBlock x:Name="MorningShiftStats" Text="0/15" Margin="5,0"/>
                                 <Label Content="شیفت عصر:"/>

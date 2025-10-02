@@ -410,9 +410,12 @@ namespace DisplayApp
                 return;
             }
             
+            // Update current group info first
+            UpdateCurrentGroupInfo(reportData);
+            
             MorningShiftPanel.Items.Clear();
             EveningShiftPanel.Items.Clear();
-            
+
             // Debug: Check if shifts key exists
             if (reportData.ContainsKey("shifts"))
             {
@@ -426,42 +429,70 @@ namespace DisplayApp
                     _logger.LogInformation("Found shifts data with {Count} shift types", shifts.Count);
                     _logger.LogInformation("Shift keys: {Keys}", string.Join(", ", shifts.Keys));
                     
-                    // Morning shift
-                    if (shifts.TryGetValue("morning", out var morningShiftObj))
+                    // Try to get selected group data first
+                    if (shifts.ContainsKey("selected_group") && 
+                        shifts["selected_group"] is Dictionary<string, object> selectedGroupData)
                     {
-                        _logger.LogInformation("Morning shift object type: {Type}", morningShiftObj?.GetType().Name ?? "null");
-                        if (morningShiftObj is Dictionary<string, object> morningShift)
+                        _logger.LogInformation("Using selected group data");
+                        
+                        // Get morning shift from selected group
+                        if (selectedGroupData.TryGetValue("morning_shift", out var morningShiftObj) &&
+                            morningShiftObj is Dictionary<string, object> morningShift)
                         {
-                            _logger.LogInformation("Found morning shift data");
+                            _logger.LogInformation("Found morning shift data from selected group");
                             UpdateShiftPanel(MorningShiftPanel, morningShift, "صبح");
                         }
-                        else
+                        
+                        // Get evening shift from selected group
+                        if (selectedGroupData.TryGetValue("evening_shift", out var eveningShiftObj) &&
+                            eveningShiftObj is Dictionary<string, object> eveningShift)
                         {
-                            _logger.LogWarning("Morning shift data is not a Dictionary: {Type}", morningShiftObj?.GetType().Name ?? "null");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Morning shift key not found in shifts data");
-                    }
-                    
-                    // Evening shift
-                    if (shifts.TryGetValue("evening", out var eveningShiftObj))
-                    {
-                        _logger.LogInformation("Evening shift object type: {Type}", eveningShiftObj?.GetType().Name ?? "null");
-                        if (eveningShiftObj is Dictionary<string, object> eveningShift)
-                        {
-                            _logger.LogInformation("Found evening shift data");
+                            _logger.LogInformation("Found evening shift data from selected group");
                             UpdateShiftPanel(EveningShiftPanel, eveningShift, "عصر");
                         }
-                        else
-                        {
-                            _logger.LogWarning("Evening shift data is not a Dictionary: {Type}", eveningShiftObj?.GetType().Name ?? "null");
-                        }
                     }
                     else
                     {
-                        _logger.LogWarning("Evening shift key not found in shifts data");
+                        _logger.LogInformation("No selected group data found, using default shifts");
+                        
+                        // Fallback to default shifts
+                        // Morning shift
+                        if (shifts.TryGetValue("morning", out var morningShiftObj))
+                        {
+                            _logger.LogInformation("Morning shift object type: {Type}", morningShiftObj?.GetType().Name ?? "null");
+                            if (morningShiftObj is Dictionary<string, object> morningShift)
+                            {
+                                _logger.LogInformation("Found morning shift data");
+                                UpdateShiftPanel(MorningShiftPanel, morningShift, "صبح");
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Morning shift data is not a Dictionary: {Type}", morningShiftObj?.GetType().Name ?? "null");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Morning shift key not found in shifts data");
+                        }
+                        
+                        // Evening shift
+                        if (shifts.TryGetValue("evening", out var eveningShiftObj))
+                        {
+                            _logger.LogInformation("Evening shift object type: {Type}", eveningShiftObj?.GetType().Name ?? "null");
+                            if (eveningShiftObj is Dictionary<string, object> eveningShift)
+                            {
+                                _logger.LogInformation("Found evening shift data");
+                                UpdateShiftPanel(EveningShiftPanel, eveningShift, "عصر");
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Evening shift data is not a Dictionary: {Type}", eveningShiftObj?.GetType().Name ?? "null");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Evening shift key not found in shifts data");
+                        }
                     }
                 }
                 else if (shiftsObj is JObject shiftsJObject)
@@ -469,8 +500,46 @@ namespace DisplayApp
                     _logger.LogInformation("Found shifts data as JObject with {Count} shift types", shiftsJObject.Count);
                     _logger.LogInformation("Shift keys: {Keys}", string.Join(", ", shiftsJObject.Properties().Select(p => p.Name)));
                     
-                    // Morning shift
-                    if (shiftsJObject.TryGetValue("morning", out var morningShiftToken))
+                    // Try to get selected group data first
+                    if (shiftsJObject.ContainsKey("selected_group"))
+                    {
+                        var selectedGroupData = shiftsJObject["selected_group"] as JObject;
+                        if (selectedGroupData != null)
+                        {
+                            _logger.LogInformation("Using selected group data");
+                            
+                            // Get morning shift from selected group
+                            if (selectedGroupData.ContainsKey("morning_shift"))
+                            {
+                                var morningShift = selectedGroupData["morning_shift"] as JObject;
+                                if (morningShift != null)
+                                {
+                                    _logger.LogInformation("Found morning shift data from selected group");
+                                    var morningShiftDict = ConvertJObjectToDictionary(morningShift);
+                                    UpdateShiftPanel(MorningShiftPanel, morningShiftDict, "صبح");
+                                }
+                            }
+                            
+                            // Get evening shift from selected group
+                            if (selectedGroupData.ContainsKey("evening_shift"))
+                            {
+                                var eveningShift = selectedGroupData["evening_shift"] as JObject;
+                                if (eveningShift != null)
+                                {
+                                    _logger.LogInformation("Found evening shift data from selected group");
+                                    var eveningShiftDict = ConvertJObjectToDictionary(eveningShift);
+                                    UpdateShiftPanel(EveningShiftPanel, eveningShiftDict, "عصر");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation("No selected group data found, using default shifts");
+                        
+                        // Fallback to default shifts
+                        // Morning shift
+                        if (shiftsJObject.TryGetValue("morning", out var morningShiftToken))
                     {
                         _logger.LogInformation("Morning shift token type: {Type}", morningShiftToken?.GetType().Name ?? "null");
                         if (morningShiftToken is JObject morningShiftJObject)
@@ -507,6 +576,7 @@ namespace DisplayApp
                     else
                     {
                         _logger.LogWarning("Evening shift key not found in shifts JObject");
+                    }
                     }
                 }
                 else
@@ -979,6 +1049,55 @@ namespace DisplayApp
                 _logger.LogError(ex, "Error updating DisplayApp configuration");
             }
         }
+
+        private void UpdateCurrentGroupInfo(Dictionary<string, object> reportData)
+        {
+            try
+            {
+                if (CurrentGroupLabel == null)
+                {
+                    _logger.LogWarning("CurrentGroupLabel not found in UI");
+                    return;
+                }
+
+                // Check if selected_group data exists
+                if (reportData.ContainsKey("shifts") && reportData["shifts"] is Dictionary<string, object> shiftsData)
+                {
+                    if (shiftsData.ContainsKey("selected_group") && shiftsData["selected_group"] is Dictionary<string, object> selectedGroupData)
+                    {
+                        var groupName = selectedGroupData.GetValueOrDefault("name", "نامشخص")?.ToString() ?? "نامشخص";
+                        var groupDescription = selectedGroupData.GetValueOrDefault("description", "")?.ToString();
+                        
+                        CurrentGroupLabel.Text = groupName;
+                        if (!string.IsNullOrEmpty(groupDescription))
+                        {
+                            CurrentGroupLabel.ToolTip = groupDescription;
+                        }
+                        
+                        _logger.LogInformation("Updated current group display to: {GroupName}", groupName);
+                    }
+                    else
+                    {
+                        CurrentGroupLabel.Text = "گروه پیش‌فرض";
+                        _logger.LogWarning("No selected_group data found, using default");
+                    }
+                }
+                else
+                {
+                    CurrentGroupLabel.Text = "در حال بارگذاری...";
+                    _logger.LogWarning("No shifts data found in report");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating current group info");
+                if (CurrentGroupLabel != null)
+                {
+                    CurrentGroupLabel.Text = "خطا در بارگذاری";
+                }
+            }
+        }
+
 
         protected override void OnClosed(EventArgs e)
         {

@@ -1,0 +1,72 @@
+<Window x:Class="ManagementApp.Views.RoleDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="مدیریت نقش‌ها" 
+        Height="500" Width="600"
+        FlowDirection="RightToLeft"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <Button Content="افزودن نقش جدید" x:Name="AddRoleButton" Click="AddRoleButton_Click" 
+                   Width="120" Height="30" Margin="0,0,10,0" Background="#4CAF50" Foreground="White"/>
+            <Button Content="ویرایش نقش" x:Name="EditRoleButton" Click="EditRoleButton_Click" 
+                   Width="100" Height="30" Margin="0,0,10,0" Background="#FF9800" Foreground="White"/>
+            <Button Content="حذف نقش" x:Name="DeleteRoleButton" Click="DeleteRoleButton_Click" 
+                   Width="100" Height="30" Background="#F44336" Foreground="White"/>
+        </StackPanel>
+
+        <!-- Role List -->
+        <GroupBox Grid.Row="1" Header="لیست نقش‌ها" Margin="0,0,0,20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Search Box -->
+                <TextBox Grid.Row="0" x:Name="RoleSearchBox" 
+                        Text="جستجو در نقش‌ها..." 
+                        Foreground="Gray"
+                        Margin="5" 
+                        TextChanged="RoleSearchBox_TextChanged"/>
+
+                <!-- Role List -->
+                <ListBox Grid.Row="1" x:Name="RoleListBox" 
+                        SelectionChanged="RoleListBox_SelectionChanged"
+                        Margin="5">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="5">
+                                <Border Width="20" Height="20" 
+                                       Background="{Binding Color}" 
+                                       CornerRadius="10" 
+                                       Margin="0,0,10,0"/>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                    <TextBlock Text="{Binding Description}" FontSize="11" Foreground="Gray"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </GroupBox>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
+            <Button Content="تأیید" x:Name="OkButton" Click="OkButton_Click" 
+                   Width="80" Height="30" Margin="0,0,10,0" IsDefault="True"/>
+            <Button Content="انصراف" x:Name="CancelButton" Click="CancelButton_Click" 
+                   Width="80" Height="30" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
