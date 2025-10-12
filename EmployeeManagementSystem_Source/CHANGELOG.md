@@ -1,134 +1,65 @@
 # Employee Management System - Changelog
 
-## Version 1.2.0 - January 21, 2025
+## Version 2.2.0 - Group Separation Display (Latest)
 
-### 🎯 Major Changes
-- **Enhanced AI Recommendation System**: Completely refined AI recommendation logic to handle edge cases and data inconsistencies
-- **Context-Aware Recommendations**: AI now provides more intelligent and contextually appropriate recommendations
+### 🎨 Major UI Restructure
+- **Group Separation**: Complete redesign of shift display to show each group separately
+- **Horizontal Group Layout**: Groups are now displayed side by side with clear visual separation
+- **Individual Group Panels**: Each group shows its own morning and evening shifts in dedicated sections
+- **Visual Group Headers**: Clear group identification with bordered sections
 
-### ✨ New Features
-- **Critical Edge Case Analysis**: New analysis layer that detects and handles data inconsistencies
-- **Employee-Task Ratio Analysis**: AI now considers task-to-employee ratios for better workload recommendations
-- **Data Corruption Detection**: System now detects and reports data inconsistencies
-- **Contextual Absence Analysis**: Absence recommendations now consider employee count and absence rates
+### 🔧 Technical Improvements
+- **New Layout Structure**: Replaced combined employee display with separate group containers
+- **Dynamic Group Generation**: Each group is dynamically created as a separate UI panel
+- **Improved Employee Cards**: Smaller, more compact employee cards (70x90px) optimized for group display
+- **Responsive Design**: Horizontal scrolling enabled for multiple groups display
 
-### 🔄 Updated Components
+### 📁 Files Modified
+- `DisplayApp/MainWindow.xaml` - Complete restructure of shifts display section
+- `DisplayApp/MainWindow.xaml.cs` - New `CreateGroupPanel()` and `CreateShiftPanel()` methods
+- Added using directives for `System.Windows.Controls.Primitives` and `System.Windows.Data`
 
-#### DisplayApp
-- **AIService**: Completely refactored with new edge case handling
-- **Critical Edge Cases**: Added detection for:
-  - No employees with tasks → Recommends hiring staff
-  - No employees with absences → Reports data inconsistency
-  - Empty system → Recommends adding employees and tasks
-  - High absence rates (80%+) → Critical situation alerts
-  - Data corruption scenarios → Error reporting
-- **Enhanced Task Analysis**: Now considers employee count and task-to-employee ratios
-- **Improved Absence Analysis**: Calculates absence rates relative to employee count
-- **Better Shift Analysis**: Added data consistency checks and capacity utilization insights
-
-### 🐛 Bug Fixes
-- **Fixed Edge Case Issue**: Resolved incorrect "وضعیت حضور کارکنان عالی است" message when no employees exist
-- **Data Inconsistency Detection**: System now properly detects and reports data corruption scenarios
-- **Context-Aware Recommendations**: All recommendations now consider the overall system state
-
-### 📊 AI Recommendation Improvements
-- **Priority-Based Analysis**: Critical edge cases → Task workload → Absence patterns → Shift capacity
-- **Intelligent Workload Assessment**: Considers task-to-employee ratios for better recommendations
-- **Absence Rate Calculations**: More accurate absence analysis based on employee count
-- **Data Validation**: Built-in checks for data consistency and corruption
-
-## Version 1.1.0 - January 21, 2025
-
-### 🎯 Major Changes
-- **Georgian Calendar Support**: Completely migrated from Persian calendar to Georgian calendar
-- **Performance Formula Tooltip**: Added calculation formula display in ManagementApp reports section
-
-### ✨ New Features
-- **GeorgianDateHelper**: New utility class for Georgian calendar operations
-- **GeorgianDatePicker**: Updated date picker control with Georgian calendar support
-- **Performance Formula Display**: Added tooltip showing calculation formula in ManagementApp
-- **Improved Date Formatting**: Consistent Georgian date formatting across both applications
-
-### 🔄 Updated Components
-
-#### ManagementApp
-- Replaced `ShamsiDateHelper` with `GeorgianDateHelper`
-- Updated `ShamsiDatePicker` to `GeorgianDatePicker`
-- Modified all date-related logic to use Georgian calendar
-- Added performance calculation formula tooltip in reports section
-- Updated culture settings from Persian to Georgian
-- Changed UI flow direction from RTL to LTR
-
-#### DisplayApp
-- Updated configuration to use Georgian calendar
-- Modified display settings for Georgian calendar support
-- Updated language settings from Persian to English
-- Disabled Persian fonts and RTL layout
-
-#### Shared Components
-- **Absence Model**: Updated to use `GeorgianDateHelper`
-- **Task Model**: Updated to use `GeorgianDateHelper`
-- **JsonHandler**: Updated to use Georgian date formatting
-- **MainController**: Updated date validation and processing
-
-### 🗓️ Date Format Changes
-- **Before**: Persian calendar (Shamsi) - yyyy/MM/dd format
-- **After**: Georgian calendar (Gregorian) - yyyy/MM/dd format
-- **Example**: 1404/06/26 → 2025/01/21
-
-### 📊 Performance Calculation Formula
-The formula tooltip now displays:
-```
-عملکرد پایه (70) + کارمندان (×2) + شیفت (×3) - غیبت (×2) + تغییرات روزانه (±12)
-```
-
-### 🔧 Technical Details
-- All date picker controls updated to use Georgian calendar
-- Date validation updated for Georgian calendar range
-- Culture settings changed from `fa-IR` to `en-US`
-- UI flow direction changed from `RightToLeft` to `LeftToRight`
-- All date display properties updated to use Georgian formatting
-
-### 📁 File Changes
-- **New Files**:
-  - `Shared/Utils/GeorgianDateHelper.cs`
-  - `ManagementApp/Controls/GeorgianDatePicker.xaml`
-  - `ManagementApp/Controls/GeorgianDatePicker.xaml.cs`
-
-- **Removed Files**:
-  - `ManagementApp/Controls/ShamsiDatePicker.xaml`
-  - `ManagementApp/Controls/ShamsiDatePicker.xaml.cs`
-
-- **Updated Files**:
-  - All model classes (Absence, Task)
-  - All controller classes
-  - All view classes
-  - Configuration files
-  - XAML files
-
-### 🚀 Deployment Notes
-- All existing data will be preserved
-- Applications will automatically use Georgian calendar for new entries
-- Historical data with Persian dates will still be readable
-- No data migration required - applications handle both formats
-
-### 🐛 Bug Fixes
-- Fixed date picker controls to properly display Georgian calendar
-- Resolved date formatting inconsistencies
-- Fixed UI layout issues with calendar controls
-
-### 📋 Migration Guide
-1. **For Users**: No action required - applications will automatically use Georgian calendar
-2. **For Developers**: Update any custom code that references `ShamsiDateHelper` to use `GeorgianDateHelper`
-3. **For Data**: Existing Persian date data will continue to work, new data will use Georgian calendar
+### 🚀 User Experience
+- **Better Organization**: Each group is clearly separated with distinct visual boundaries
+- **Easy Navigation**: All groups visible simultaneously on the same screen
+- **Clear Shift Distinction**: Morning (green) and evening (blue) shifts color-coded within each group
+- **Improved Readability**: Dedicated group headers and organized employee layout
 
 ---
 
-## Version 1.0.0 - September 2025
+## Version 2.1.0 - Chart and UI Improvements
 
-### Initial Release
-- Employee management system with Persian calendar support
-- Shift scheduling and task management
-- Display application with charts and analytics
-- PDF report generation
-- Data backup and restore functionality
+### 🎯 Chart Fixes
+- **Fixed Chart Data Issue**: Chart no longer shows false data when there are no employees
+- **Empty State Handling**: Chart now displays "نمودار عملکرد - داده‌ای موجود نیست" when no employee data is available
+- **Performance Calculation**: Updated to return 0.0 when no employees exist instead of showing fake base performance
+
+### 🎨 UI Improvements
+- **Reorganized Absence Section**: Complete redesign of absence display
+- **Category-Based Layout**: 
+  - **Leave (مرخصی)**: Blue section with count and employee photos
+  - **Sick (بیمار)**: Red section with count and employee photos  
+  - **Absent (غایب)**: Yellow section with count and employee photos
+- **Visual Hierarchy**: Category name at top, count in middle, employee photos below
+- **Color Coding**: Each absence category has distinct colored borders and text
+
+### 🔧 Technical Changes
+- **ChartService.cs**: Updated performance calculation logic
+- **MainWindow.xaml**: Redesigned absence section layout
+- **MainWindow.xaml.cs**: Updated absence card generation and display logic
+- **Removed**: Unused `GetAbsenceCategoryColor()` method
+
+### 📁 Files Modified
+- `DisplayApp/Services/ChartService.cs`
+- `DisplayApp/MainWindow.xaml`
+- `DisplayApp/MainWindow.xaml.cs`
+
+### 🚀 Deployment
+- Updated binaries in `EmployeeManagementSystem_Deploy/`
+- Updated source code in `EmployeeManagementSystem_Source/`
+- All changes compiled and tested successfully
+
+---
+
+## Previous Versions
+[Previous changelog entries would go here]

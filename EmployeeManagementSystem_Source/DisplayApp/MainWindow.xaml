@@ -74,75 +74,36 @@
             <!-- Shifts Section -->
             <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
-                <!-- Current Display Group Info -->
-                <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,10">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <TextBlock Text="گروه نمایش:" Style="{StaticResource BodyTextStyle}" 
-                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <TextBlock x:Name="CurrentGroupLabel" Text="در حال بارگذاری..." 
-                                   Style="{StaticResource BodyTextStyle}" 
-                                   Foreground="#4CAF50" FontWeight="Bold"
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
                 
-                <!-- Shifts Row -->
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                
-                 <!-- Evening Shift (Right side in RTL) -->
-                 <Border Grid.Column="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,5,0">
-                     <Grid>
-                         <Grid.RowDefinitions>
-                             <RowDefinition Height="Auto"/>
-                             <RowDefinition Height="*"/>
-                         </Grid.RowDefinitions>
-                         <TextBlock Grid.Row="0" Text="شیفت عصر" Style="{StaticResource SubtitleTextStyle}" 
-                                   Foreground="{StaticResource EveningShiftText}"/>
-                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                             <ItemsControl x:Name="EveningShiftPanel">
-                                 <ItemsControl.ItemsPanel>
-                                     <ItemsPanelTemplate>
-                                         <UniformGrid Columns="5"/>
-                                     </ItemsPanelTemplate>
-                                 </ItemsControl.ItemsPanel>
-                             </ItemsControl>
-                         </ScrollViewer>
-                     </Grid>
-                 </Border>
-                 
-                 <!-- Morning Shift (Left side in RTL) -->
-                 <Border Grid.Column="1" Style="{StaticResource MainPanelStyle}" Margin="5,0,0,0">
-                     <Grid>
-                         <Grid.RowDefinitions>
-                             <RowDefinition Height="Auto"/>
-                             <RowDefinition Height="*"/>
-                         </Grid.RowDefinitions>
-                         <TextBlock Grid.Row="0" Text="شیفت صبح" Style="{StaticResource SubtitleTextStyle}" 
-                                   Foreground="{StaticResource MorningShiftText}"/>
-                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                             <ItemsControl x:Name="MorningShiftPanel">
-                                 <ItemsControl.ItemsPanel>
-                                     <ItemsPanelTemplate>
-                                         <UniformGrid Columns="5"/>
-                                     </ItemsPanelTemplate>
-                                 </ItemsControl.ItemsPanel>
-                             </ItemsControl>
-                         </ScrollViewer>
-                     </Grid>
-                 </Border>
-                </Grid>
+                <!-- Groups Container -->
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <Border Style="{StaticResource MainPanelStyle}" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Border Grid.Row="0" Background="#2d2d2d" Padding="10,5" CornerRadius="3">
+                                <TextBlock Text="گروه‌های کاری" Style="{StaticResource SubtitleTextStyle}" 
+                                           HorizontalAlignment="Center" FontWeight="Bold"/>
+                            </Border>
+                            
+                            <!-- Groups Display Container -->
+                            <ScrollViewer Grid.Row="1" Margin="5" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <StackPanel x:Name="GroupsContainer" Orientation="Horizontal" HorizontalAlignment="Center"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </ScrollViewer>
                 
                 <!-- Bottom Section -->
-                <Grid Grid.Row="2" Margin="0,10,0,0">
+                <Grid Grid.Row="1" Margin="0,10,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -181,55 +142,81 @@
                     </Grid>
                 </Border>
                 
-                <!-- Absence Cards (Middle in RTL) -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="3,0">
+                <!-- Absence Section with Categories -->
+                <Border Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource CardStyle}" Margin="3,0,0,0">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
                         
-                        <!-- Title -->
-                        <TextBlock Grid.Row="0" Text="کارکنان غایب" Style="{StaticResource SubtitleTextStyle}"/>
+                        <!-- Leave (مرخصی) Section -->
+                        <Border Grid.Column="0" BorderBrush="#3498db" BorderThickness="2" CornerRadius="5" Padding="5" Margin="3">
+                            <StackPanel>
+                                <!-- Category Header -->
+                                <TextBlock Text="مرخصی" Style="{StaticResource SubtitleTextStyle}" 
+                                          Foreground="#3498db" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold"/>
+                                <TextBlock x:Name="LeaveCount" Text="0" Style="{StaticResource CountTextStyle}" 
+                                          Foreground="#3498db" HorizontalAlignment="Center" FontSize="20" Margin="0,5,0,10"/>
+                                
+                                <!-- Employee Photos -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="120">
+                                    <ItemsControl x:Name="LeavePanel">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
                         
-                        <!-- Absence Cards -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="150">
-                            <ItemsControl x:Name="AbsencePanel">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <UniformGrid Columns="3"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </ScrollViewer>
+                        <!-- Sick (بیمار) Section -->
+                        <Border Grid.Column="1" BorderBrush="#e74c3c" BorderThickness="2" CornerRadius="5" Padding="5" Margin="3">
+                            <StackPanel>
+                                <!-- Category Header -->
+                                <TextBlock Text="بیمار" Style="{StaticResource SubtitleTextStyle}" 
+                                          Foreground="#e74c3c" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold"/>
+                                <TextBlock x:Name="SickCount" Text="0" Style="{StaticResource CountTextStyle}" 
+                                          Foreground="#e74c3c" HorizontalAlignment="Center" FontSize="20" Margin="0,5,0,10"/>
+                                
+                                <!-- Employee Photos -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="120">
+                                    <ItemsControl x:Name="SickPanel">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Absent (غایب) Section -->
+                        <Border Grid.Column="2" BorderBrush="#f1c40f" BorderThickness="2" CornerRadius="5" Padding="5" Margin="3">
+                            <StackPanel>
+                                <!-- Category Header -->
+                                <TextBlock Text="غایب" Style="{StaticResource SubtitleTextStyle}" 
+                                          Foreground="#f1c40f" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold"/>
+                                <TextBlock x:Name="AbsentCount" Text="0" Style="{StaticResource CountTextStyle}" 
+                                          Foreground="#f1c40f" HorizontalAlignment="Center" FontSize="20" Margin="0,5,0,10"/>
+                                
+                                <!-- Employee Photos -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="120">
+                                    <ItemsControl x:Name="AbsentPanel">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
                     </Grid>
-                </Border>
-                
-                <!-- Absence Statistics (Left side in RTL) -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="5,0,0,0">
-                    <StackPanel>
-                        <TextBlock Text="آمار غیبت" Style="{StaticResource SubtitleTextStyle}"/>
-                        <Grid Margin="0,10,0,0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="مرخصی:" Style="{StaticResource BodyTextStyle}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LeaveCount" Text="0" Style="{StaticResource CountTextStyle}"/>
-                            
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="بیمار:" Style="{StaticResource BodyTextStyle}"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="SickCount" Text="0" Style="{StaticResource CountTextStyle}"/>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="غایب:" Style="{StaticResource BodyTextStyle}"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="AbsentCount" Text="0" Style="{StaticResource CountTextStyle}"/>
-                        </Grid>
-                    </StackPanel>
                 </Border>
                 </Grid>
             </Grid>

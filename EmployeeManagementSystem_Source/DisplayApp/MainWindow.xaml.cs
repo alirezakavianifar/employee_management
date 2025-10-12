@@ -16,7 +16,10 @@ using Shared.Models;
 using Shared.Services;
 using Shared.Utils;
 using DisplayApp.Services;
+using DisplayApp.Models;
 using Newtonsoft.Json.Linq;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 
 namespace DisplayApp
 {
@@ -396,198 +399,201 @@ namespace DisplayApp
 
         private void UpdateShiftsPanel(Dictionary<string, object> reportData)
         {
-            _logger.LogInformation("Updating shifts panel");
+            _logger.LogInformation("Updating shifts panel for separate group display");
             
-            // Check if panels exist
-            if (MorningShiftPanel == null)
+            // Check if the groups container exists
+            if (GroupsContainer == null)
             {
-                _logger.LogError("MorningShiftPanel not found in UI");
-                return;
-            }
-            if (EveningShiftPanel == null)
-            {
-                _logger.LogError("EveningShiftPanel not found in UI");
+                _logger.LogError("Groups container not found in UI");
                 return;
             }
             
-            // Update current group info first
-            UpdateCurrentGroupInfo(reportData);
+            // Debug: Log all keys in report data
+            _logger.LogInformation("Report data keys: {Keys}", string.Join(", ", reportData.Keys));
             
-            MorningShiftPanel.Items.Clear();
-            EveningShiftPanel.Items.Clear();
+            // Get all groups data
+            var groups = GetAllGroupsData(reportData);
+            _logger.LogInformation("Found {Count} groups from GetAllGroupsData", groups.Count);
+            
+            // Use Dispatcher to update UI from background thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Clear existing groups
+                    GroupsContainer.Children.Clear();
+                    
+                    if (groups.Count == 0)
+                    {
+                        _logger.LogWarning("No groups found to display");
+                        return;
+                    }
+                    
+                    // Create UI for each group
+                    foreach (var group in groups)
+                    {
+                        var groupPanel = CreateGroupPanel(group);
+                        GroupsContainer.Children.Add(groupPanel);
+                    }
+                    
+                    _logger.LogInformation("Successfully updated {Count} group displays", groups.Count);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error updating shifts UI");
+                }
+            });
+        }
 
-            // Debug: Check if shifts key exists
-            if (reportData.ContainsKey("shifts"))
+        private Border CreateGroupPanel(DisplayApp.Models.GroupDisplayModel group)
+        {
+            // Create the main border for the group
+            var groupBorder = new Border
             {
-                _logger.LogInformation("Shifts key exists in report data");
-                var shiftsObj = reportData["shifts"];
-                _logger.LogInformation("Shifts object type: {Type}", shiftsObj?.GetType().Name ?? "null");
-                
-                // Handle both Dictionary and JObject types
-                if (shiftsObj is Dictionary<string, object> shifts)
-                {
-                    _logger.LogInformation("Found shifts data with {Count} shift types", shifts.Count);
-                    _logger.LogInformation("Shift keys: {Keys}", string.Join(", ", shifts.Keys));
-                    
-                    // Try to get selected group data first
-                    if (shifts.ContainsKey("selected_group") && 
-                        shifts["selected_group"] is Dictionary<string, object> selectedGroupData)
-                    {
-                        _logger.LogInformation("Using selected group data");
-                        
-                        // Get morning shift from selected group
-                        if (selectedGroupData.TryGetValue("morning_shift", out var morningShiftObj) &&
-                            morningShiftObj is Dictionary<string, object> morningShift)
-                        {
-                            _logger.LogInformation("Found morning shift data from selected group");
-                            UpdateShiftPanel(MorningShiftPanel, morningShift, "صبح");
-                        }
-                        
-                        // Get evening shift from selected group
-                        if (selectedGroupData.TryGetValue("evening_shift", out var eveningShiftObj) &&
-                            eveningShiftObj is Dictionary<string, object> eveningShift)
-                        {
-                            _logger.LogInformation("Found evening shift data from selected group");
-                            UpdateShiftPanel(EveningShiftPanel, eveningShift, "عصر");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogInformation("No selected group data found, using default shifts");
-                        
-                        // Fallback to default shifts
-                        // Morning shift
-                        if (shifts.TryGetValue("morning", out var morningShiftObj))
-                        {
-                            _logger.LogInformation("Morning shift object type: {Type}", morningShiftObj?.GetType().Name ?? "null");
-                            if (morningShiftObj is Dictionary<string, object> morningShift)
-                            {
-                                _logger.LogInformation("Found morning shift data");
-                                UpdateShiftPanel(MorningShiftPanel, morningShift, "صبح");
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Morning shift data is not a Dictionary: {Type}", morningShiftObj?.GetType().Name ?? "null");
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Morning shift key not found in shifts data");
-                        }
-                        
-                        // Evening shift
-                        if (shifts.TryGetValue("evening", out var eveningShiftObj))
-                        {
-                            _logger.LogInformation("Evening shift object type: {Type}", eveningShiftObj?.GetType().Name ?? "null");
-                            if (eveningShiftObj is Dictionary<string, object> eveningShift)
-                            {
-                                _logger.LogInformation("Found evening shift data");
-                                UpdateShiftPanel(EveningShiftPanel, eveningShift, "عصر");
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Evening shift data is not a Dictionary: {Type}", eveningShiftObj?.GetType().Name ?? "null");
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Evening shift key not found in shifts data");
-                        }
-                    }
-                }
-                else if (shiftsObj is JObject shiftsJObject)
-                {
-                    _logger.LogInformation("Found shifts data as JObject with {Count} shift types", shiftsJObject.Count);
-                    _logger.LogInformation("Shift keys: {Keys}", string.Join(", ", shiftsJObject.Properties().Select(p => p.Name)));
-                    
-                    // Try to get selected group data first
-                    if (shiftsJObject.ContainsKey("selected_group"))
-                    {
-                        var selectedGroupData = shiftsJObject["selected_group"] as JObject;
-                        if (selectedGroupData != null)
-                        {
-                            _logger.LogInformation("Using selected group data");
-                            
-                            // Get morning shift from selected group
-                            if (selectedGroupData.ContainsKey("morning_shift"))
-                            {
-                                var morningShift = selectedGroupData["morning_shift"] as JObject;
-                                if (morningShift != null)
-                                {
-                                    _logger.LogInformation("Found morning shift data from selected group");
-                                    var morningShiftDict = ConvertJObjectToDictionary(morningShift);
-                                    UpdateShiftPanel(MorningShiftPanel, morningShiftDict, "صبح");
-                                }
-                            }
-                            
-                            // Get evening shift from selected group
-                            if (selectedGroupData.ContainsKey("evening_shift"))
-                            {
-                                var eveningShift = selectedGroupData["evening_shift"] as JObject;
-                                if (eveningShift != null)
-                                {
-                                    _logger.LogInformation("Found evening shift data from selected group");
-                                    var eveningShiftDict = ConvertJObjectToDictionary(eveningShift);
-                                    UpdateShiftPanel(EveningShiftPanel, eveningShiftDict, "عصر");
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogInformation("No selected group data found, using default shifts");
-                        
-                        // Fallback to default shifts
-                        // Morning shift
-                        if (shiftsJObject.TryGetValue("morning", out var morningShiftToken))
-                    {
-                        _logger.LogInformation("Morning shift token type: {Type}", morningShiftToken?.GetType().Name ?? "null");
-                        if (morningShiftToken is JObject morningShiftJObject)
-                        {
-                            _logger.LogInformation("Found morning shift data as JObject");
-                            var morningShift = ConvertJObjectToDictionary(morningShiftJObject);
-                            UpdateShiftPanel(MorningShiftPanel, morningShift, "صبح");
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Morning shift data is not a JObject: {Type}", morningShiftToken?.GetType().Name ?? "null");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Morning shift key not found in shifts JObject");
-                    }
-                    
-                    // Evening shift
-                    if (shiftsJObject.TryGetValue("evening", out var eveningShiftToken))
-                    {
-                        _logger.LogInformation("Evening shift token type: {Type}", eveningShiftToken?.GetType().Name ?? "null");
-                        if (eveningShiftToken is JObject eveningShiftJObject)
-                        {
-                            _logger.LogInformation("Found evening shift data as JObject");
-                            var eveningShift = ConvertJObjectToDictionary(eveningShiftJObject);
-                            UpdateShiftPanel(EveningShiftPanel, eveningShift, "عصر");
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Evening shift data is not a JObject: {Type}", eveningShiftToken?.GetType().Name ?? "null");
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Evening shift key not found in shifts JObject");
-                    }
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("Shifts data is neither Dictionary nor JObject: {Type}", shiftsObj?.GetType().Name ?? "null");
-                }
-            }
-            else
+                Style = Application.Current.FindResource("CardStyle") as Style,
+                Margin = new Thickness(5),
+                MinWidth = 400,
+                MaxWidth = 500
+            };
+            
+            var groupGrid = new Grid();
+            groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            groupGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            
+            // Group header
+            var headerBorder = new Border
             {
-                _logger.LogWarning("No shifts data found in report");
-            }
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 45)),
+                Padding = new Thickness(10, 5, 10, 5),
+                CornerRadius = new CornerRadius(3)
+            };
+            
+            var headerText = new TextBlock
+            {
+                Text = group.GroupName,
+                Style = Application.Current.FindResource("SubtitleTextStyle") as Style,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            };
+            
+            headerBorder.Child = headerText;
+            Grid.SetRow(headerBorder, 0);
+            groupGrid.Children.Add(headerBorder);
+            
+            // Shifts container
+            var shiftsGrid = new Grid
+            {
+                Margin = new Thickness(5)
+            };
+            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            
+            // Evening Shift (Right side in RTL)
+            var eveningBorder = CreateShiftPanel("شیفت عصر", group.EveningShiftEmployees, "#FF6B9BD1");
+            Grid.SetColumn(eveningBorder, 0);
+            shiftsGrid.Children.Add(eveningBorder);
+            
+            // Morning Shift (Left side in RTL)
+            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, "#FF81C784");
+            Grid.SetColumn(morningBorder, 1);
+            shiftsGrid.Children.Add(morningBorder);
+            
+            Grid.SetRow(shiftsGrid, 1);
+            groupGrid.Children.Add(shiftsGrid);
+            
+            groupBorder.Child = groupGrid;
+            return groupBorder;
+        }
+        
+        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color)
+        {
+            var shiftBorder = new Border
+            {
+                Style = Application.Current.FindResource("CardStyle") as Style,
+                Margin = new Thickness(2),
+                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)),
+                BorderThickness = new Thickness(2)
+            };
+            
+            var shiftGrid = new Grid();
+            shiftGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            shiftGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            
+            // Shift title
+            var titleText = new TextBlock
+            {
+                Text = shiftTitle,
+                Style = Application.Current.FindResource("SubtitleTextStyle") as Style,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)),
+                FontSize = 12,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+            Grid.SetRow(titleText, 0);
+            shiftGrid.Children.Add(titleText);
+            
+            // Employees scroll viewer
+            var scrollViewer = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                MaxHeight = 500
+            };
+            
+            var itemsControl = new ItemsControl();
+            
+            // Set items panel to UniformGrid
+            var itemsPanel = new ItemsPanelTemplate();
+            var uniformGridFactory = new FrameworkElementFactory(typeof(UniformGrid));
+            uniformGridFactory.SetValue(UniformGrid.ColumnsProperty, 3);
+            itemsPanel.VisualTree = uniformGridFactory;
+            itemsControl.ItemsPanel = itemsPanel;
+            
+            // Set data template
+            var dataTemplate = new DataTemplate();
+            var borderFactory = new FrameworkElementFactory(typeof(Border));
+            borderFactory.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(60, 60, 60)));
+            borderFactory.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(102, 102, 102)));
+            borderFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+            borderFactory.SetValue(Border.PaddingProperty, new Thickness(5));
+            borderFactory.SetValue(Border.MarginProperty, new Thickness(2));
+            borderFactory.SetValue(Border.WidthProperty, 70.0);
+            borderFactory.SetValue(Border.HeightProperty, 90.0);
+            
+            var stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
+            stackPanelFactory.SetValue(StackPanel.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            
+            var imageFactory = new FrameworkElementFactory(typeof(Image));
+            imageFactory.SetValue(Image.WidthProperty, 35.0);
+            imageFactory.SetValue(Image.HeightProperty, 35.0);
+            imageFactory.SetValue(Image.StretchProperty, Stretch.Uniform);
+            imageFactory.SetBinding(Image.SourceProperty, new Binding("PhotoPath") { Converter = Application.Current.FindResource("ImagePathConverter") as IValueConverter });
+            
+            var nameTextFactory = new FrameworkElementFactory(typeof(TextBlock));
+            nameTextFactory.SetBinding(TextBlock.TextProperty, new Binding("FullName"));
+            nameTextFactory.SetValue(TextBlock.ForegroundProperty, Brushes.White);
+            nameTextFactory.SetValue(TextBlock.FontSizeProperty, 9.0);
+            nameTextFactory.SetValue(TextBlock.FontWeightProperty, FontWeights.Bold);
+            nameTextFactory.SetValue(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            nameTextFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
+            nameTextFactory.SetValue(TextBlock.MarginProperty, new Thickness(0, 2, 0, 0));
+            
+            stackPanelFactory.AppendChild(imageFactory);
+            stackPanelFactory.AppendChild(nameTextFactory);
+            borderFactory.AppendChild(stackPanelFactory);
+            dataTemplate.VisualTree = borderFactory;
+            itemsControl.ItemTemplate = dataTemplate;
+            
+            // Set items source
+            itemsControl.ItemsSource = employees;
+            
+            scrollViewer.Content = itemsControl;
+            Grid.SetRow(scrollViewer, 1);
+            shiftGrid.Children.Add(scrollViewer);
+            
+            shiftBorder.Child = shiftGrid;
+            return shiftBorder;
         }
 
         private Dictionary<string, object> ConvertJObjectToDictionary(JObject jObject)
@@ -754,14 +760,14 @@ namespace DisplayApp
 
         private void UpdateAbsencePanel(Dictionary<string, object> reportData)
         {
-            // Update absence counts
+            // Update absence counts and cards
             if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
             {
                 LeaveCount.Text = GetAbsenceCount(absences, "مرخصی").ToString();
                 SickCount.Text = GetAbsenceCount(absences, "بیمار").ToString();
                 AbsentCount.Text = GetAbsenceCount(absences, "غایب").ToString();
                 
-                // Update absence cards
+                // Update absence cards in separate panels
                 UpdateAbsenceCards(absences);
             }
         }
@@ -770,31 +776,56 @@ namespace DisplayApp
         {
             _logger.LogInformation("Updating absence cards");
             
-            // Check if panel exists
-            if (AbsencePanel == null)
+            // Check if panels exist
+            if (LeavePanel == null || SickPanel == null || AbsentPanel == null)
             {
-                _logger.LogError("AbsencePanel not found in UI");
+                _logger.LogError("One or more absence panels not found in UI");
                 return;
             }
             
-            AbsencePanel.Items.Clear();
+            // Clear all panels
+            LeavePanel.Items.Clear();
+            SickPanel.Items.Clear();
+            AbsentPanel.Items.Clear();
             
-            // Process all absence categories
-            foreach (var category in new[] { "مرخصی", "بیمار", "غایب" })
+            // Process Leave (مرخصی) category
+            if (absences.TryGetValue("مرخصی", out var leaveObj) && leaveObj is List<object> leaveList)
             {
-                if (absences.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
+                _logger.LogInformation("Found {Count} leave absences", leaveList.Count);
+                foreach (var absenceObj in leaveList)
                 {
-                    _logger.LogInformation("Found {Count} {Category} absences", categoryList.Count, category);
-                    
-                    foreach (var absenceObj in categoryList)
+                    if (absenceObj is Dictionary<string, object> absenceData)
                     {
-                        if (absenceObj is Dictionary<string, object> absenceData)
-                        {
-                            _logger.LogInformation("Creating absence card for {EmployeeId}", 
-                                absenceData.GetValueOrDefault("employee_id", "Unknown"));
-                            var absenceCard = CreateAbsenceCard(absenceData, category);
-                            AbsencePanel.Items.Add(absenceCard);
-                        }
+                        var absenceCard = CreateAbsenceCard(absenceData, "مرخصی");
+                        LeavePanel.Items.Add(absenceCard);
+                    }
+                }
+            }
+            
+            // Process Sick (بیمار) category
+            if (absences.TryGetValue("بیمار", out var sickObj) && sickObj is List<object> sickList)
+            {
+                _logger.LogInformation("Found {Count} sick absences", sickList.Count);
+                foreach (var absenceObj in sickList)
+                {
+                    if (absenceObj is Dictionary<string, object> absenceData)
+                    {
+                        var absenceCard = CreateAbsenceCard(absenceData, "بیمار");
+                        SickPanel.Items.Add(absenceCard);
+                    }
+                }
+            }
+            
+            // Process Absent (غایب) category
+            if (absences.TryGetValue("غایب", out var absentObj) && absentObj is List<object> absentList)
+            {
+                _logger.LogInformation("Found {Count} absent absences", absentList.Count);
+                foreach (var absenceObj in absentList)
+                {
+                    if (absenceObj is Dictionary<string, object> absenceData)
+                    {
+                        var absenceCard = CreateAbsenceCard(absenceData, "غایب");
+                        AbsentPanel.Items.Add(absenceCard);
                     }
                 }
             }
@@ -814,17 +845,17 @@ namespace DisplayApp
             _logger.LogInformation("Employee first_name: '{FirstName}', employee_id: '{EmployeeId}'", firstName, employeeId);
             _logger.LogInformation("Using full name: '{FullName}'", fullName);
             
-            // Create the card (compact with reduced margins)
+            // Create a simple card with photo and name
             var card = new Border
             {
-                Width = 70,
-                Height = 90,
-                Background = GetAbsenceCategoryColor(category),
+                Width = 60,
+                Height = 80,
+                Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
                 CornerRadius = new CornerRadius(5),
-                Padding = new Thickness(5),
-                Margin = new Thickness(1),
-                BorderBrush = Brushes.Gray,
-                BorderThickness = new Thickness(1)
+                Padding = new Thickness(3),
+                Margin = new Thickness(2),
+                BorderBrush = Brushes.Transparent,
+                BorderThickness = new Thickness(0)
             };
             
             var stackPanel = new StackPanel
@@ -833,11 +864,11 @@ namespace DisplayApp
                 VerticalAlignment = VerticalAlignment.Center
             };
             
-            // Add image (larger for better visibility)
+            // Add image
             var image = new Image
             {
-                Width = 35,
-                Height = 35,
+                Width = 45,
+                Height = 45,
                 Stretch = Stretch.Uniform
             };
             
@@ -850,17 +881,17 @@ namespace DisplayApp
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to load image from {PhotoPath}", photoPath);
-                    image.Source = CreateEmployeePlaceholderImage(35);
+                    image.Source = CreateEmployeePlaceholderImage(45);
                 }
             }
             else
             {
-                image.Source = CreateEmployeePlaceholderImage(35);
+                image.Source = CreateEmployeePlaceholderImage(45);
             }
             
             stackPanel.Children.Add(image);
             
-            // Add name (compact margins)
+            // Add name below photo
             var nameText = new TextBlock
             {
                 Text = fullName,
@@ -869,38 +900,14 @@ namespace DisplayApp
                 FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 2, 0, 0)
+                Margin = new Thickness(0, 3, 0, 0)
             };
             stackPanel.Children.Add(nameText);
-            
-            // Add category label (compact margins)
-            var categoryText = new TextBlock
-            {
-                Text = category,
-                Foreground = Brushes.White,
-                FontSize = 7,
-                FontWeight = FontWeights.Normal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 1, 0, 0)
-            };
-            stackPanel.Children.Add(categoryText);
             
             card.Child = stackPanel;
             return card;
         }
         
-        private Brush GetAbsenceCategoryColor(string category)
-        {
-            return category switch
-            {
-                "مرخصی" => new SolidColorBrush(Color.FromRgb(52, 152, 219)), // Blue
-                "بیمار" => new SolidColorBrush(Color.FromRgb(231, 76, 60)),  // Red
-                "غایب" => new SolidColorBrush(Color.FromRgb(241, 196, 15)),  // Yellow
-                _ => new SolidColorBrush(Color.FromRgb(149, 165, 166))       // Gray
-            };
-        }
-
         private int GetAbsenceCount(Dictionary<string, object> absences, string category)
         {
             if (absences.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
@@ -937,9 +944,14 @@ namespace DisplayApp
                     // Update labels dynamically based on available data
                     Labels = _chartService.GetWeekLabels();
                     
-                    // Update chart title
+                    // Update chart title based on data availability
                     var dataPoints = chartData.Values.Count;
-                    if (dataPoints == 1)
+                    if (dataPoints == 0)
+                    {
+                        ChartTitle.Text = "نمودار عملکرد - داده‌ای موجود نیست";
+                        _logger.LogInformation("Chart has no data - no employees found");
+                    }
+                    else if (dataPoints == 1)
                     {
                         ChartTitle.Text = "عملکرد امروز";
                     }
@@ -952,6 +964,7 @@ namespace DisplayApp
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating chart");
+                ChartTitle.Text = "نمودار عملکرد - خطا در بارگذاری";
             }
         }
 
@@ -1050,52 +1063,582 @@ namespace DisplayApp
             }
         }
 
-        private void UpdateCurrentGroupInfo(Dictionary<string, object> reportData)
+
+        private List<DisplayApp.Models.GroupDisplayModel> GetAllGroupsData(Dictionary<string, object> reportData)
         {
+            var groups = new List<DisplayApp.Models.GroupDisplayModel>();
+            
             try
             {
-                if (CurrentGroupLabel == null)
+                _logger.LogInformation("Getting all groups data from report");
+                
+                // Check if we have shift groups data
+                if (reportData.ContainsKey("shift_groups"))
                 {
-                    _logger.LogWarning("CurrentGroupLabel not found in UI");
-                    return;
-                }
-
-                // Check if selected_group data exists
-                if (reportData.ContainsKey("shifts") && reportData["shifts"] is Dictionary<string, object> shiftsData)
-                {
-                    if (shiftsData.ContainsKey("selected_group") && shiftsData["selected_group"] is Dictionary<string, object> selectedGroupData)
+                    _logger.LogInformation("Found shift_groups data");
+                    var shiftGroupsObj = reportData["shift_groups"];
+                    
+                    if (shiftGroupsObj is Dictionary<string, object> shiftGroupsDict)
                     {
-                        var groupName = selectedGroupData.GetValueOrDefault("name", "نامشخص")?.ToString() ?? "نامشخص";
-                        var groupDescription = selectedGroupData.GetValueOrDefault("description", "")?.ToString();
+                        _logger.LogInformation("Processing shift groups from Dictionary");
                         
-                        CurrentGroupLabel.Text = groupName;
-                        if (!string.IsNullOrEmpty(groupDescription))
+                        // Check if we have ShiftGroups data
+                        if (shiftGroupsDict.TryGetValue("ShiftGroups", out var shiftGroupsData) && shiftGroupsData is Dictionary<string, object> shiftGroups)
                         {
-                            CurrentGroupLabel.ToolTip = groupDescription;
+                            _logger.LogInformation("Found {Count} shift groups in ShiftGroups", shiftGroups.Count);
+                            
+                            foreach (var groupEntry in shiftGroups)
+                            {
+                                var groupId = groupEntry.Key;
+                                var groupDataStr = groupEntry.Value?.ToString();
+                                
+                                if (!string.IsNullOrEmpty(groupDataStr))
+                                {
+                                    try
+                                    {
+                                        // Parse the JSON string
+                                        var groupData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(groupDataStr);
+                                        if (groupData != null)
+                                        {
+                                            var groupModel = CreateGroupDisplayModelFromParsedData(groupData, groupId, reportData);
+                                            if (groupModel != null)
+                                            {
+                                                groups.Add(groupModel);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        _logger.LogWarning(ex, "Failed to parse shift group data for group {GroupId}", groupId);
+                                    }
+                                }
+                            }
                         }
+                    }
+                    else if (shiftGroupsObj is List<object> shiftGroupsList)
+                    {
+                        _logger.LogInformation("Processing {Count} shift groups", shiftGroupsList.Count);
                         
-                        _logger.LogInformation("Updated current group display to: {GroupName}", groupName);
+                        foreach (var groupObj in shiftGroupsList)
+                        {
+                            if (groupObj is Dictionary<string, object> groupData)
+                            {
+                                var groupModel = CreateGroupDisplayModel(groupData);
+                                if (groupModel != null)
+                                {
+                                    groups.Add(groupModel);
+                                }
+                            }
+                            else if (groupObj is JObject groupJObject)
+                            {
+                                var groupDict = ConvertJObjectToDictionary(groupJObject);
+                                var groupModel = CreateGroupDisplayModel(groupDict);
+                                if (groupModel != null)
+                                {
+                                    groups.Add(groupModel);
+                                }
+                            }
+                        }
+                    }
+                    else if (shiftGroupsObj is JArray shiftGroupsJArray)
+                    {
+                        _logger.LogInformation("Processing {Count} shift groups from JArray", shiftGroupsJArray.Count);
+                        
+                        foreach (var groupItem in shiftGroupsJArray)
+                        {
+                            if (groupItem is JObject groupJObject)
+                            {
+                                var groupDict = ConvertJObjectToDictionary(groupJObject);
+                                var groupModel = CreateGroupDisplayModel(groupDict);
+                                if (groupModel != null)
+                                {
+                                    groups.Add(groupModel);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // If no shift groups found, try to get from shifts data (fallback)
+                if (groups.Count == 0 && reportData.ContainsKey("shifts"))
+                {
+                    _logger.LogInformation("No shift groups found, checking shifts data for fallback");
+                    var shiftsObj = reportData["shifts"];
+                    
+                    if (shiftsObj is Dictionary<string, object> shifts)
+                    {
+                        // Check if we have selected_group data
+                        if (shifts.ContainsKey("selected_group") && shifts["selected_group"] is Dictionary<string, object> selectedGroupData)
+                        {
+                            _logger.LogInformation("Found selected_group data, creating fallback group");
+                            var groupModel = CreateGroupDisplayModel(selectedGroupData);
+                            if (groupModel != null)
+                            {
+                                groups.Add(groupModel);
+                            }
                     }
                     else
                     {
-                        CurrentGroupLabel.Text = "گروه پیش‌فرض";
-                        _logger.LogWarning("No selected_group data found, using default");
+                            // Create a default group from morning/evening shifts
+                            _logger.LogInformation("Creating default group from morning/evening shifts");
+                            var defaultGroup = new DisplayApp.Models.GroupDisplayModel
+                            {
+                                GroupName = "گروه پیش‌فرض",
+                                GroupDescription = "گروه پیش‌فرض سیستم"
+                            };
+                            
+                            // Get morning shift employees
+                            if (shifts.TryGetValue("morning", out var morningShiftObj) && morningShiftObj is Dictionary<string, object> morningShift)
+                            {
+                                if (morningShift.TryGetValue("assigned_employees", out var morningEmployees) && morningEmployees is List<object> morningEmpList)
+                                {
+                                    defaultGroup.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, defaultGroup.GroupName);
+                                }
+                            }
+                            
+                            // Get evening shift employees
+                            if (shifts.TryGetValue("evening", out var eveningShiftObj) && eveningShiftObj is Dictionary<string, object> eveningShift)
+                            {
+                                if (eveningShift.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
+                                {
+                                    defaultGroup.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, defaultGroup.GroupName);
+                                }
+                            }
+                            
+                            groups.Add(defaultGroup);
+                        }
+                    }
+                }
+                
+                _logger.LogInformation("Created {Count} group display models", groups.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all groups data");
+            }
+            
+            return groups;
+        }
+
+        private DisplayApp.Models.CombinedDisplayModel? CreateCombinedDisplayModel(List<DisplayApp.Models.GroupDisplayModel> groups)
+        {
+            try
+            {
+                _logger.LogInformation("Creating combined display model from {Count} groups", groups.Count);
+                
+                var combinedModel = new DisplayApp.Models.CombinedDisplayModel
+                {
+                    TotalGroups = groups.Count,
+                    DisplayTitle = "همه کارکنان"
+                };
+                
+                // Debug: Log details about each group
+                foreach (var group in groups)
+                {
+                    _logger.LogInformation("Group '{GroupName}': {MorningCount} morning, {EveningCount} evening employees", 
+                        group.GroupName, group.MorningShiftEmployees.Count, group.EveningShiftEmployees.Count);
+                }
+                
+                // Combine all morning shift employees
+                foreach (var group in groups)
+                {
+                    _logger.LogInformation("Processing {Count} morning employees from group '{GroupName}'", 
+                        group.MorningShiftEmployees.Count, group.GroupName);
+                    foreach (var employee in group.MorningShiftEmployees)
+                    {
+                        // Set the group name for each employee
+                        employee.GroupName = group.GroupName;
+                        combinedModel.AllMorningShiftEmployees.Add(employee);
+                        _logger.LogInformation("Added morning employee: {EmployeeName} from group {GroupName}", 
+                            employee.FullName, group.GroupName);
+                    }
+                }
+                
+                // Combine all evening shift employees
+                foreach (var group in groups)
+                {
+                    _logger.LogInformation("Processing {Count} evening employees from group '{GroupName}'", 
+                        group.EveningShiftEmployees.Count, group.GroupName);
+                    foreach (var employee in group.EveningShiftEmployees)
+                    {
+                        // Set the group name for each employee
+                        employee.GroupName = group.GroupName;
+                        combinedModel.AllEveningShiftEmployees.Add(employee);
+                        _logger.LogInformation("Added evening employee: {EmployeeName} from group {GroupName}", 
+                            employee.FullName, group.GroupName);
+                    }
+                }
+                
+                _logger.LogInformation("Combined {MorningCount} morning and {EveningCount} evening employees", 
+                    combinedModel.AllMorningShiftEmployees.Count, 
+                    combinedModel.AllEveningShiftEmployees.Count);
+                
+                return combinedModel;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating combined display model");
+                return null;
+            }
+        }
+
+        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModel(Dictionary<string, object> groupData)
+        {
+            try
+            {
+                var groupName = groupData.GetValueOrDefault("name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
+                var groupDescription = groupData.GetValueOrDefault("description", "")?.ToString() ?? "";
+                
+                _logger.LogInformation("Creating group display model for: {GroupName}", groupName);
+                
+                var groupModel = new DisplayApp.Models.GroupDisplayModel
+                {
+                    GroupName = groupName,
+                    GroupDescription = groupDescription
+                };
+                
+                // Get morning shift employees
+                if (groupData.TryGetValue("morning_shift", out var morningShiftObj))
+                {
+                    if (morningShiftObj is Dictionary<string, object> morningShift)
+                    {
+                        if (morningShift.TryGetValue("assigned_employees", out var morningEmployees) && morningEmployees is List<object> morningEmpList)
+                        {
+                            groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, groupName);
+                            _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmpList.Count, groupName);
+                        }
+                    }
+                    else if (morningShiftObj is JObject morningShiftJObject)
+                    {
+                        var morningShiftDict = ConvertJObjectToDictionary(morningShiftJObject);
+                        if (morningShiftDict.TryGetValue("assigned_employees", out var morningEmployees) && morningEmployees is List<object> morningEmpList)
+                        {
+                            groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, groupName);
+                            _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmpList.Count, groupName);
+                        }
+                    }
+                }
+                
+                // Get evening shift employees
+                if (groupData.TryGetValue("evening_shift", out var eveningShiftObj))
+                {
+                    if (eveningShiftObj is Dictionary<string, object> eveningShift)
+                    {
+                        if (eveningShift.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
+                        {
+                            groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
+                            _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
+                        }
+                    }
+                    else if (eveningShiftObj is JObject eveningShiftJObject)
+                    {
+                        var eveningShiftDict = ConvertJObjectToDictionary(eveningShiftJObject);
+                        if (eveningShiftDict.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
+                        {
+                            groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
+                            _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
+                        }
+                    }
+                }
+                
+                return groupModel;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating group display model");
+                return null;
+            }
+        }
+
+        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModelFromParsedData(Dictionary<string, object> groupData, string groupId, Dictionary<string, object> reportData)
+        {
+            try
+            {
+                var groupName = groupData.GetValueOrDefault("Name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
+                var groupDescription = groupData.GetValueOrDefault("Description", "")?.ToString() ?? "";
+                
+                _logger.LogInformation("Creating group display model from parsed data for: {GroupName} (ID: {GroupId})", groupName, groupId);
+                _logger.LogInformation("Group data keys: {Keys}", string.Join(", ", groupData.Keys));
+                
+                var groupModel = new DisplayApp.Models.GroupDisplayModel
+                {
+                    GroupName = groupName,
+                    GroupDescription = groupDescription
+                };
+                
+                // Parse morning shift from JSON string
+                if (groupData.TryGetValue("MorningShift", out var morningShiftObj))
+                {
+                    // Handle both string and JsonElement types
+                    string? morningShiftJson = null;
+                    if (morningShiftObj is string str)
+                    {
+                        morningShiftJson = str;
+                    }
+                    else if (morningShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        morningShiftJson = jsonElement.GetString();
+                    }
+                    
+                    if (!string.IsNullOrEmpty(morningShiftJson))
+                    {
+                        _logger.LogInformation("Found MorningShift JSON string for group {GroupName}: {Length} characters", groupName, morningShiftJson.Length);
+                        try
+                        {
+                        // The JSON is double-escaped, so we need to unescape it first
+                        var unescapedJson = morningShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
+                        _logger.LogInformation("Unescaped morning shift JSON for group {GroupName}: {Length} characters", groupName, unescapedJson.Length);
+                        _logger.LogInformation("Unescaped morning shift JSON content: {Json}", unescapedJson);
+                        
+                        var morningShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
+                        if (morningShiftData != null)
+                        {
+                            _logger.LogInformation("Successfully parsed morning shift data for group {GroupName}, keys: {Keys}", groupName, string.Join(", ", morningShiftData.Keys));
+                            
+                            if (morningShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
+                            {
+                                List<object> assignedIdsList = new List<object>();
+                                
+                                // Handle both List<object> and JsonElement array types
+                                if (assignedIds is List<object> list)
+                                {
+                                    assignedIdsList = list;
+                                }
+                                else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    foreach (var item in jsonElement.EnumerateArray())
+                                    {
+                                        if (item.ValueKind == System.Text.Json.JsonValueKind.String)
+                                        {
+                                            assignedIdsList.Add(item.GetString() ?? "");
+                                        }
+                                        else if (item.ValueKind == System.Text.Json.JsonValueKind.Null)
+                                        {
+                                            assignedIdsList.Add(null!);
+                                        }
+                                    }
+                                }
+                                
+                                _logger.LogInformation("Found {Count} assigned employee IDs for morning shift in group {GroupName}", assignedIdsList.Count, groupName);
+                                
+                                // Filter out null values from the assigned IDs
+                                var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
+                                _logger.LogInformation("Found {Count} valid employee IDs for morning shift in group {GroupName}", validIds.Count, groupName);
+                                
+                                // Convert employee IDs to employee objects
+                                var morningEmployees = GetEmployeesByIds(validIds, reportData);
+                                groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmployees, groupName);
+                                _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmployees.Count, groupName);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("No AssignedEmployeeIds found in morning shift data for group {GroupName}", groupName);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to deserialize morning shift JSON for group {GroupName}", groupName);
+                        }
+                    }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to parse morning shift data for group {GroupName}", groupName);
+                        }
                     }
                 }
                 else
                 {
-                    CurrentGroupLabel.Text = "در حال بارگذاری...";
-                    _logger.LogWarning("No shifts data found in report");
+                    _logger.LogWarning("No morning shift found in group data for group {GroupName}", groupName);
+                }
+                
+                // Parse evening shift from JSON string
+                if (groupData.TryGetValue("EveningShift", out var eveningShiftObj))
+                {
+                    // Handle both string and JsonElement types
+                    string? eveningShiftJson = null;
+                    if (eveningShiftObj is string str)
+                    {
+                        eveningShiftJson = str;
+                    }
+                    else if (eveningShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        eveningShiftJson = jsonElement.GetString();
+                    }
+                    
+                    if (!string.IsNullOrEmpty(eveningShiftJson))
+                    {
+                        _logger.LogInformation("Found EveningShift JSON string for group {GroupName}: {Length} characters", groupName, eveningShiftJson.Length);
+                        try
+                        {
+                        // The JSON is double-escaped, so we need to unescape it first
+                        var unescapedJson = eveningShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
+                        _logger.LogInformation("Unescaped evening shift JSON for group {GroupName}: {Length} characters", groupName, unescapedJson.Length);
+                        _logger.LogInformation("Unescaped evening shift JSON content: {Json}", unescapedJson);
+                        
+                        var eveningShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
+                        if (eveningShiftData != null)
+                        {
+                            _logger.LogInformation("Successfully parsed evening shift data for group {GroupName}, keys: {Keys}", groupName, string.Join(", ", eveningShiftData.Keys));
+                            
+                            if (eveningShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
+                            {
+                                List<object> assignedIdsList = new List<object>();
+                                
+                                // Handle both List<object> and JsonElement array types
+                                if (assignedIds is List<object> list)
+                                {
+                                    assignedIdsList = list;
+                                }
+                                else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    foreach (var item in jsonElement.EnumerateArray())
+                                    {
+                                        if (item.ValueKind == System.Text.Json.JsonValueKind.String)
+                                        {
+                                            assignedIdsList.Add(item.GetString() ?? "");
+                                        }
+                                        else if (item.ValueKind == System.Text.Json.JsonValueKind.Null)
+                                        {
+                                            assignedIdsList.Add(null!);
+                                        }
+                                    }
+                                }
+                                
+                                _logger.LogInformation("Found {Count} assigned employee IDs for evening shift in group {GroupName}", assignedIdsList.Count, groupName);
+                                
+                                // Filter out null values from the assigned IDs
+                                var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
+                                _logger.LogInformation("Found {Count} valid employee IDs for evening shift in group {GroupName}", validIds.Count, groupName);
+                                
+                                // Convert employee IDs to employee objects
+                                var eveningEmployees = GetEmployeesByIds(validIds, reportData);
+                                groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmployees, groupName);
+                                _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmployees.Count, groupName);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("No AssignedEmployeeIds found in evening shift data for group {GroupName}", groupName);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to deserialize evening shift JSON for group {GroupName}", groupName);
+                        }
+                    }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to parse evening shift data for group {GroupName}", groupName);
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No evening shift found in group data for group {GroupName}", groupName);
+                }
+                
+                return groupModel;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating group display model from parsed data");
+                return null;
+            }
+        }
+
+        private List<object> GetEmployeesByIds(List<object> employeeIds, Dictionary<string, object> reportData)
+        {
+            var employees = new List<object>();
+            
+            try
+            {
+                _logger.LogInformation("Looking for {Count} employee IDs", employeeIds.Count);
+                
+                if (reportData.TryGetValue("employees", out var employeesObj) && employeesObj is List<object> allEmployees)
+                {
+                    _logger.LogInformation("Found {Count} total employees in report data", allEmployees.Count);
+                    
+                    foreach (var employeeId in employeeIds)
+                    {
+                        if (employeeId != null && !string.IsNullOrEmpty(employeeId.ToString()))
+                        {
+                            _logger.LogInformation("Looking for employee ID: {EmployeeId}", employeeId);
+                            
+                            var employee = allEmployees.FirstOrDefault(e => 
+                                e is Dictionary<string, object> emp && 
+                                emp.GetValueOrDefault("employee_id", "").ToString() == employeeId.ToString());
+                            if (employee != null)
+                            {
+                                employees.Add(employee);
+                                _logger.LogInformation("Found employee: {EmployeeId}", employeeId);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Employee not found: {EmployeeId}", employeeId);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Skipping null or empty employee ID");
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("No employees data found in report data");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating current group info");
-                if (CurrentGroupLabel != null)
+                _logger.LogError(ex, "Error getting employees by IDs");
+            }
+            
+            _logger.LogInformation("Returning {Count} employees", employees.Count);
+            return employees;
+        }
+
+        private List<EmployeeDisplayModel> ConvertToEmployeeDisplayModels(List<object> employeeObjects, string groupName = "")
+        {
+            var employeeModels = new List<EmployeeDisplayModel>();
+            
+            try
+            {
+                foreach (var employeeObj in employeeObjects)
                 {
-                    CurrentGroupLabel.Text = "خطا در بارگذاری";
+                    if (employeeObj is Dictionary<string, object> employeeDict)
+                    {
+                        var employeeModel = new EmployeeDisplayModel
+                        {
+                            EmployeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString() ?? "",
+                            FirstName = employeeDict.GetValueOrDefault("first_name", "").ToString() ?? "",
+                            LastName = employeeDict.GetValueOrDefault("last_name", "").ToString() ?? "",
+                            PhotoPath = employeeDict.GetValueOrDefault("photo_path", "").ToString() ?? "",
+                            Role = employeeDict.GetValueOrDefault("role", "").ToString() ?? "",
+                            GroupName = groupName
+                        };
+                        employeeModels.Add(employeeModel);
+                    }
+                    else if (employeeObj is JObject employeeJObject)
+                    {
+                        var employeeDictFromJObject = ConvertJObjectToDictionary(employeeJObject);
+                        var employeeModel = new EmployeeDisplayModel
+                        {
+                            EmployeeId = employeeDictFromJObject.GetValueOrDefault("employee_id", "").ToString() ?? "",
+                            FirstName = employeeDictFromJObject.GetValueOrDefault("first_name", "").ToString() ?? "",
+                            LastName = employeeDictFromJObject.GetValueOrDefault("last_name", "").ToString() ?? "",
+                            PhotoPath = employeeDictFromJObject.GetValueOrDefault("photo_path", "").ToString() ?? "",
+                            Role = employeeDictFromJObject.GetValueOrDefault("role", "").ToString() ?? "",
+                            GroupName = groupName
+                        };
+                        employeeModels.Add(employeeModel);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting employee objects to display models");
+            }
+            
+            return employeeModels;
         }
 
 
