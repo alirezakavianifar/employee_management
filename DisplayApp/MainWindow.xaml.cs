@@ -460,7 +460,7 @@ namespace DisplayApp
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             
-            // Group header
+            // Group header with supervisor
             var headerBorder = new Border
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 45)),
@@ -468,15 +468,35 @@ namespace DisplayApp
                 CornerRadius = new CornerRadius(3)
             };
             
-            var headerText = new TextBlock
+            var headerStackPanel = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            
+            // Group name
+            var groupNameText = new TextBlock
             {
                 Text = group.GroupName,
                 Style = Application.Current.FindResource("SubtitleTextStyle") as Style,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                FontWeight = FontWeights.Bold
+                FontWeight = FontWeights.Bold,
+                FontSize = 14
             };
             
-            headerBorder.Child = headerText;
+            // Supervisor name
+            var supervisorText = new TextBlock
+            {
+                Text = !string.IsNullOrEmpty(group.SupervisorName) ? $"سرپرست: {group.SupervisorName}" : "بدون سرپرست",
+                Style = Application.Current.FindResource("BodyTextStyle") as Style,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                Margin = new Thickness(0, 2, 0, 0)
+            };
+            
+            headerStackPanel.Children.Add(groupNameText);
+            headerStackPanel.Children.Add(supervisorText);
+            headerBorder.Child = headerStackPanel;
             Grid.SetRow(headerBorder, 0);
             groupGrid.Children.Add(headerBorder);
             
@@ -489,12 +509,12 @@ namespace DisplayApp
             shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             
             // Evening Shift (Right side in RTL)
-            var eveningBorder = CreateShiftPanel("شیفت عصر", group.EveningShiftEmployees, "#FF6B9BD1");
+            var eveningBorder = CreateShiftPanel("شیفت عصر", group.EveningShiftEmployees, "#FF6B9BD1", group.EveningForemanName);
             Grid.SetColumn(eveningBorder, 0);
             shiftsGrid.Children.Add(eveningBorder);
             
             // Morning Shift (Left side in RTL)
-            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, "#FF81C784");
+            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, "#FF81C784", group.MorningForemanName);
             Grid.SetColumn(morningBorder, 1);
             shiftsGrid.Children.Add(morningBorder);
             
@@ -505,7 +525,7 @@ namespace DisplayApp
             return groupBorder;
         }
         
-        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color)
+        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color, string foremanName = "")
         {
             var shiftBorder = new Border
             {
@@ -519,18 +539,40 @@ namespace DisplayApp
             shiftGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             shiftGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             
-            // Shift title
+            // Shift title with foreman
+            var titleStackPanel = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+            
             var titleText = new TextBlock
             {
                 Text = shiftTitle,
                 Style = Application.Current.FindResource("SubtitleTextStyle") as Style,
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)),
                 FontSize = 12,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5)
+                HorizontalAlignment = HorizontalAlignment.Center
             };
-            Grid.SetRow(titleText, 0);
-            shiftGrid.Children.Add(titleText);
+            
+            // Foreman name
+            if (!string.IsNullOrEmpty(foremanName))
+            {
+                var foremanText = new TextBlock
+                {
+                    Text = $"سرکارگر: {foremanName}",
+                    Style = Application.Current.FindResource("BodyTextStyle") as Style,
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 2, 0, 0)
+                };
+                titleStackPanel.Children.Add(foremanText);
+            }
+            
+            titleStackPanel.Children.Add(titleText);
+            Grid.SetRow(titleStackPanel, 0);
+            shiftGrid.Children.Add(titleStackPanel);
             
             // Employees scroll viewer
             var scrollViewer = new ScrollViewer
@@ -549,44 +591,28 @@ namespace DisplayApp
             itemsPanel.VisualTree = uniformGridFactory;
             itemsControl.ItemsPanel = itemsPanel;
             
-            // Set data template
-            var dataTemplate = new DataTemplate();
-            var borderFactory = new FrameworkElementFactory(typeof(Border));
-            borderFactory.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(60, 60, 60)));
-            borderFactory.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(102, 102, 102)));
-            borderFactory.SetValue(Border.BorderThicknessProperty, new Thickness(1));
-            borderFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
-            borderFactory.SetValue(Border.PaddingProperty, new Thickness(5));
-            borderFactory.SetValue(Border.MarginProperty, new Thickness(2));
-            borderFactory.SetValue(Border.WidthProperty, 70.0);
-            borderFactory.SetValue(Border.HeightProperty, 90.0);
-            
-            var stackPanelFactory = new FrameworkElementFactory(typeof(StackPanel));
-            stackPanelFactory.SetValue(StackPanel.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            
-            var imageFactory = new FrameworkElementFactory(typeof(Image));
-            imageFactory.SetValue(Image.WidthProperty, 35.0);
-            imageFactory.SetValue(Image.HeightProperty, 35.0);
-            imageFactory.SetValue(Image.StretchProperty, Stretch.Uniform);
-            imageFactory.SetBinding(Image.SourceProperty, new Binding("PhotoPath") { Converter = Application.Current.FindResource("ImagePathConverter") as IValueConverter });
-            
-            var nameTextFactory = new FrameworkElementFactory(typeof(TextBlock));
-            nameTextFactory.SetBinding(TextBlock.TextProperty, new Binding("FullName"));
-            nameTextFactory.SetValue(TextBlock.ForegroundProperty, Brushes.White);
-            nameTextFactory.SetValue(TextBlock.FontSizeProperty, 9.0);
-            nameTextFactory.SetValue(TextBlock.FontWeightProperty, FontWeights.Bold);
-            nameTextFactory.SetValue(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            nameTextFactory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.Wrap);
-            nameTextFactory.SetValue(TextBlock.MarginProperty, new Thickness(0, 2, 0, 0));
-            
-            stackPanelFactory.AppendChild(imageFactory);
-            stackPanelFactory.AppendChild(nameTextFactory);
-            borderFactory.AppendChild(stackPanelFactory);
-            dataTemplate.VisualTree = borderFactory;
-            itemsControl.ItemTemplate = dataTemplate;
-            
-            // Set items source
-            itemsControl.ItemsSource = employees;
+            // Create employee cards programmatically to ensure shield overlay is included
+            foreach (var employee in employees)
+            {
+                // Convert EmployeeDisplayModel to dictionary format expected by CreateEmployeeCard
+                var employeeData = new Dictionary<string, object>
+                {
+                    { "employee_id", employee.EmployeeId },
+                    { "first_name", employee.FirstName },
+                    { "last_name", employee.LastName },
+                    { "photo_path", employee.PhotoPath },
+                    { "role", employee.Role },
+                    { "shield_color", employee.ShieldColor },
+                    { "show_shield", employee.ShowShield },
+                    { "sticker_paths", employee.StickerPaths ?? new List<string>() },
+                    { "medal_badge_path", employee.MedalBadgePath },
+                    { "personnel_id", employee.PersonnelId }
+                };
+                
+                // Create card with shield overlay using the same method as other cards
+                var employeeCard = CreateEmployeeCard(employeeData, "");
+                itemsControl.Items.Add(employeeCard);
+            }
             
             scrollViewer.Content = itemsControl;
             Grid.SetRow(scrollViewer, 1);
@@ -665,73 +691,405 @@ namespace DisplayApp
                 employeeData.GetValueOrDefault("first_name", "").ToString(),
                 employeeData.GetValueOrDefault("employee_id", "").ToString());
             
-            // Both shifts use the same size
-            double sizeMultiplier = 1.0;
+            // Badge dimensions
+            double badgeWidth = 80;
+            double badgeHeight = 100;
+            double borderThickness = 4; // Thick blue border
+            double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
+            double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
+            double shieldOverlap = badgeHeight * 0.12; // Shield overlaps ~12% of boundary
             
+            // Create main badge container with blue border
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8 * sizeMultiplier),
-                Margin = new Thickness(3 * sizeMultiplier),
-                Width = 80 * sizeMultiplier,
-                Height = 100 * sizeMultiplier
+                Background = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)), // Blue border
+                BorderThickness = new Thickness(borderThickness),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(3),
+                Width = badgeWidth,
+                Height = badgeHeight,
+                ClipToBounds = true,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
             };
             
-            var stackPanel = new StackPanel
+            // Create grid to hold photo and name areas
+            var badgeGrid = new Grid
             {
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            badgeGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(largeRectHeight, GridUnitType.Pixel) });
+            badgeGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(smallRectHeight, GridUnitType.Pixel) });
+            
+            // Large rectangle (top 2/3) - Photo area
+            var photoContainer = new Grid
+            {
+                Background = Brushes.White,
+                ClipToBounds = true,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
             };
             
-            // Employee photo
+            // Employee photo - properly centered
             var image = new Image
             {
-                Width = 40 * sizeMultiplier,
-                Height = 40 * sizeMultiplier,
-                Stretch = Stretch.Uniform
+                Stretch = Stretch.UniformToFill, // Fill and crop to center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
             if (employeeData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
             {
                 try
                 {
-                    var bitmap = new BitmapImage(new Uri(photoPath.ToString(), UriKind.Absolute));
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
                     image.Source = bitmap;
                 }
                 catch
                 {
-                    image.Source = CreateEmployeePlaceholderImage(40 * sizeMultiplier);
+                    image.Source = CreateEmployeePlaceholderImage(largeRectHeight);
                 }
             }
             else
             {
-                image.Source = CreateEmployeePlaceholderImage(40 * sizeMultiplier);
+                image.Source = CreateEmployeePlaceholderImage(largeRectHeight);
             }
             
-            // Employee name (first and last name)
+            photoContainer.Children.Add(image);
+            Grid.SetRow(photoContainer, 0);
+            badgeGrid.Children.Add(photoContainer);
+            
+            // Small rectangle (bottom 1/3) - Name area (white background)
+            var nameContainer = new Grid
+            {
+                Background = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            
+            // Employee name
             var firstName = employeeData.GetValueOrDefault("first_name", "").ToString();
             var lastName = employeeData.GetValueOrDefault("last_name", "").ToString();
             var fullName = $"{firstName} {lastName}".Trim();
-            _logger.LogInformation("Using full name: '{FullName}'", fullName);
+            var personnelId = employeeData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             
+            // Display name with personnel ID if available
+            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
+            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
+            
+            // White text with strong black outline for visibility on white background
             var nameText = new TextBlock
             {
-                Text = fullName,
+                Text = displayName,
                 Foreground = Brushes.White,
-                FontSize = 10 * sizeMultiplier,
+                FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Tahoma"),
                 HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 3 * sizeMultiplier, 0, 0)
+                Margin = new Thickness(0), // No margin to ensure proper centering
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Black,
+                    BlurRadius = 4,
+                    ShadowDepth = 0,
+                    Opacity = 1.0
+                } // Strong black outline effect (ShadowDepth=0 creates outline, not shadow)
             };
             
-            stackPanel.Children.Add(image);
-            stackPanel.Children.Add(nameText);
+            nameContainer.Children.Add(nameText);
+            Grid.SetRow(nameContainer, 1);
+            badgeGrid.Children.Add(nameContainer);
             
-            card.Child = stackPanel;
+            // Shield icon centered on chest area of photo (in the photo container) - only if show_shield is true
+            // Check if shield should be displayed (default to true for backward compatibility)
+            var showShield = true; // Default to true
+            if (employeeData.TryGetValue("show_shield", out var showShieldObj))
+            {
+                if (showShieldObj is bool showShieldBool)
+                {
+                    showShield = showShieldBool;
+                }
+                else if (bool.TryParse(showShieldObj?.ToString(), out bool showShieldParsed))
+                {
+                    showShield = showShieldParsed;
+                }
+            }
+            
+            if (showShield)
+            {
+                var shieldSize = badgeWidth * 0.28; // Optimized shield size for good visibility
+                
+                // Get shield color from employee data (default to Blue)
+                var shieldColorName = employeeData.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue";
+                var shieldColor = GetShieldColor(shieldColorName);
+                
+                // Create a golden shield with the selected color as the main fill, matching classic shield appearance
+                // Use a gradient from lighter gold at top to the selected color at bottom for depth
+                var shieldGradient = new LinearGradientBrush
+                {
+                    StartPoint = new System.Windows.Point(0.5, 0),
+                    EndPoint = new System.Windows.Point(0.5, 1)
+                };
+                
+                // For Yellow, use golden gradient; for others, blend gold with selected color
+                if (shieldColorName.Equals("Yellow", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Pure golden gradient for yellow
+                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 220, 0), 0.0)); // Bright gold at top
+                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 200, 0), 0.5)); // Medium gold
+                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(230, 180, 0), 1.0)); // Darker gold at bottom
+                }
+                else
+                {
+                    // Blend from gold to selected color for visual appeal
+                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 215, 0), 0.0)); // Gold at top
+                    // Calculate blended color with clamping to ensure values are within byte range (0-255)
+                    var blendedR = Math.Max(0, Math.Min(255, (int)(255 * 0.3 + shieldColor.R * 0.7)));
+                    var blendedG = Math.Max(0, Math.Min(255, (int)(215 * 0.3 + shieldColor.G * 0.7)));
+                    var blendedB = Math.Max(0, Math.Min(255, (int)(0 * 0.3 + shieldColor.B * 0.7)));
+                    shieldGradient.GradientStops.Add(new GradientStop(
+                        Color.FromRgb((byte)blendedR, (byte)blendedG, (byte)blendedB), 0.5)); // Blend in middle
+                    shieldGradient.GradientStops.Add(new GradientStop(shieldColor, 1.0)); // Selected color at bottom
+                }
+                
+                // Create shield positioned in the lower-middle part of the photo (chest area)
+                var shieldPath = new System.Windows.Shapes.Path
+                {
+                    Data = CreateShieldGeometry(),
+                    Fill = shieldGradient,
+                    Stroke = new SolidColorBrush(Color.FromRgb(40, 40, 40)), // Dark outline (black/dark brown) like in image
+                    StrokeThickness = 2.5, // Prominent but not too thick outline
+                    StrokeLineJoin = PenLineJoin.Round, // Smooth corners
+                    Width = shieldSize,
+                    Height = shieldSize,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(0, largeRectHeight * 0.5, 0, 0), // Position at 50% down (chest area)
+                    RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
+                    Stretch = Stretch.Uniform, // Maintain aspect ratio
+                    Effect = new System.Windows.Media.Effects.DropShadowEffect
+                    {
+                        Color = Colors.Black,
+                        Direction = 270,
+                        ShadowDepth = 1.5,
+                        BlurRadius = 2,
+                        Opacity = 0.4
+                    } // Subtle shadow for depth and separation from background
+                };
+                
+                // Add shield to photo container AFTER image so it renders on top
+                // This ensures the shield appears above the photo
+                photoContainer.Children.Add(shieldPath);
+                // Set high z-index to ensure it's always on top
+                Panel.SetZIndex(shieldPath, 100);
+            }
+            
+            // Add stickers on the right side of the photo (inside the image frame, displayed vertically)
+            if (employeeData.TryGetValue("sticker_paths", out var stickerPathsObj) && stickerPathsObj != null)
+            {
+                List<string> stickerPaths = new List<string>();
+                if (stickerPathsObj is List<object> stickerList)
+                {
+                    stickerPaths = stickerList.Select(s => s?.ToString() ?? "")
+                        .Where(s => !string.IsNullOrEmpty(s) && File.Exists(s))
+                        .ToList();
+                }
+                else if (stickerPathsObj is List<string> stringList)
+                {
+                    stickerPaths = stringList.Where(s => !string.IsNullOrEmpty(s) && File.Exists(s)).ToList();
+                }
+                
+                if (stickerPaths.Count > 0)
+                {
+                    // Create a vertical StackPanel for stickers on the right side
+                    var stickersPanel = new StackPanel
+                    {
+                        Orientation = Orientation.Vertical,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 2, 0), // Small margin from right edge
+                        Background = Brushes.Transparent
+                    };
+                    
+                    // Add each sticker image
+                    double stickerSize = badgeWidth * 0.15; // Stickers are smaller than shield
+                    foreach (var stickerPath in stickerPaths)
+                    {
+                        try
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.UriSource = new Uri(stickerPath, UriKind.Absolute);
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+                            
+                            var stickerImage = new Image
+                            {
+                                Source = bitmap,
+                                Width = stickerSize,
+                                Height = stickerSize,
+                                Stretch = Stretch.Uniform,
+                                Margin = new Thickness(0, 1, 0, 1), // Small vertical spacing between stickers
+                                HorizontalAlignment = HorizontalAlignment.Right,
+                                VerticalAlignment = VerticalAlignment.Center
+                            };
+                            
+                            stickersPanel.Children.Add(stickerImage);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to load sticker image from {StickerPath}", stickerPath);
+                            // Continue with next sticker if one fails to load
+                        }
+                    }
+                    
+                    // Add stickers panel to photo container
+                    photoContainer.Children.Add(stickersPanel);
+                    Panel.SetZIndex(stickersPanel, 90); // Above photo but below shield
+                }
+            }
+            
+            // Add medal/badge above the image, on the right side, with sufficient spacing
+            if (employeeData.TryGetValue("medal_badge_path", out var medalBadgePathObj) && 
+                !string.IsNullOrEmpty(medalBadgePathObj?.ToString()))
+            {
+                var medalBadgePath = medalBadgePathObj.ToString();
+                
+                if (!string.IsNullOrEmpty(medalBadgePath) && File.Exists(medalBadgePath))
+                {
+                    try
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = new Uri(medalBadgePath, UriKind.Absolute);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        
+                        // Medal/badge size - smaller than shield but visible
+                        double medalSize = badgeWidth * 0.25; // 25% of badge width
+                        
+                        var medalImage = new Image
+                        {
+                            Source = bitmap,
+                            Width = medalSize,
+                            Height = medalSize,
+                            Stretch = Stretch.Uniform, // Maintain aspect ratio
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            VerticalAlignment = VerticalAlignment.Top,
+                            // Position: above the image, on the right side, with spacing from worker's face/body
+                            // Top margin: small spacing from top edge
+                            // Right margin: small spacing from right edge
+                            Margin = new Thickness(0, largeRectHeight * 0.1, badgeWidth * 0.05, 0), // 10% from top, 5% from right
+                            RenderTransformOrigin = new System.Windows.Point(0.5, 0.5)
+                        };
+                        
+                        // Add subtle shadow effect for better visibility
+                        medalImage.Effect = new System.Windows.Media.Effects.DropShadowEffect
+                        {
+                            Color = Colors.Black,
+                            Direction = 270,
+                            ShadowDepth = 2,
+                            BlurRadius = 3,
+                            Opacity = 0.5
+                        };
+                        
+                        // Add medal to photo container
+                        photoContainer.Children.Add(medalImage);
+                        // Set high z-index to ensure it's visible above photo and stickers, but below shield
+                        Panel.SetZIndex(medalImage, 95);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to load medal/badge image from {MedalBadgePath}", medalBadgePath);
+                        // Continue without medal if it fails to load
+                    }
+                }
+            }
+            
+            card.Child = badgeGrid;
             return card;
+        }
+        
+        private Geometry CreateShieldGeometry()
+        {
+            // Create shield shape geometry (rounded top, pointed bottom)
+            // Using normalized coordinates (0-100 scale) that will be scaled by the Path's Width/Height
+            var geometry = new PathGeometry();
+            var figure = new PathFigure
+            {
+                StartPoint = new Point(25, 5), // Top left of rounded arc
+                IsClosed = true
+            };
+            
+            // Top rounded arc (left to right)
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(75, 5), // Top right
+                Size = new Size(25, 25), // Arc size for smooth curve
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+            
+            // Right side down to middle
+            figure.Segments.Add(new LineSegment(new Point(90, 35), true));
+            // Right side to bottom point
+            figure.Segments.Add(new LineSegment(new Point(50, 95), true)); // Bottom center point
+            // Left side back up
+            figure.Segments.Add(new LineSegment(new Point(10, 35), true));
+            // Left side back to start (closes the path)
+            // Note: The path is already closed, so this line might be redundant, but it ensures proper closure
+            
+            geometry.Figures.Add(figure);
+            geometry.Freeze(); // Freeze for better performance
+            return geometry;
+        }
+
+        private Color GetShieldColor(string colorName)
+        {
+            // Map color name to Color object (default to Blue)
+            switch (colorName.ToLower())
+            {
+                case "red":
+                    return Color.FromRgb(255, 0, 0);
+                case "blue":
+                    return Color.FromRgb(0, 0, 255);
+                case "yellow":
+                    return Color.FromRgb(255, 255, 0);
+                case "black":
+                    return Color.FromRgb(0, 0, 0);
+                default:
+                    return Color.FromRgb(0, 0, 255); // Default Blue
+            }
+        }
+
+        private bool GetShowShieldFromDict(Dictionary<string, object> employeeDict)
+        {
+            // Get show_shield from dictionary (default to true for backward compatibility)
+            if (employeeDict.TryGetValue("show_shield", out var showShieldObj))
+            {
+                if (showShieldObj is bool showShieldBool)
+                {
+                    return showShieldBool;
+                }
+                else if (bool.TryParse(showShieldObj?.ToString(), out bool showShieldParsed))
+                {
+                    return showShieldParsed;
+                }
+            }
+            return true; // Default to true if not specified
         }
 
         private BitmapImage CreateEmployeePlaceholderImage(double size = 50)
@@ -756,6 +1114,77 @@ namespace DisplayApp
             renderTargetBitmap.Freeze();
             
             return ConvertToBitmapImage(renderTargetBitmap);
+        }
+
+        private System.Windows.Shapes.Path CreateShieldBadge(double size, string colorName = "Blue")
+        {
+            // Create shield shape using Path geometry
+            // Shield shape: rounded top, pointed bottom (classic shield)
+            var shieldPath = new System.Windows.Shapes.Path
+            {
+                Width = size,
+                Height = size,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Opacity = 0.6, // Semi-transparent for frame effect
+                Stretch = Stretch.Uniform
+            };
+
+            // Define shield geometry using normalized coordinates (0-100 scale for easier calculation)
+            // This will be scaled by the Path's Width/Height
+            var geometry = new PathGeometry();
+            var figure = new PathFigure
+            {
+                StartPoint = new Point(25, 5), // Top left curve start
+                IsClosed = true
+            };
+
+            // Top rounded arc (left to right) - creates the rounded top of the shield
+            figure.Segments.Add(new ArcSegment
+            {
+                Point = new Point(75, 5), // Top right
+                Size = new Size(25, 25), // Arc size for smooth curve
+                SweepDirection = SweepDirection.Clockwise,
+                IsLargeArc = false
+            });
+
+            // Right side down to middle
+            figure.Segments.Add(new LineSegment(new Point(90, 35), true));
+            // Right side to point
+            figure.Segments.Add(new LineSegment(new Point(50, 95), true)); // Bottom point (center)
+
+            // Left side back up
+            figure.Segments.Add(new LineSegment(new Point(10, 35), true));
+            // Left side back to start
+            figure.Segments.Add(new LineSegment(new Point(25, 5), true));
+
+            geometry.Figures.Add(figure);
+
+            shieldPath.Data = geometry;
+            
+            // Set color based on shield color name
+            Color shieldColor = Color.FromRgb(0, 0, 255); // Default Blue
+            switch (colorName.ToLower())
+            {
+                case "red":
+                    shieldColor = Color.FromRgb(255, 0, 0);
+                    break;
+                case "blue":
+                    shieldColor = Color.FromRgb(0, 0, 255);
+                    break;
+                case "yellow":
+                    shieldColor = Color.FromRgb(255, 255, 0);
+                    break;
+                case "black":
+                    shieldColor = Color.FromRgb(0, 0, 0);
+                    break;
+            }
+            
+            shieldPath.Fill = new SolidColorBrush(shieldColor);
+            shieldPath.Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)); // Light gray border for definition
+            shieldPath.StrokeThickness = 1.5;
+
+            return shieldPath;
         }
 
         private void UpdateAbsencePanel(Dictionary<string, object> reportData)
@@ -839,8 +1268,12 @@ namespace DisplayApp
             var firstName = absenceData.GetValueOrDefault("first_name", "").ToString();
             var lastName = absenceData.GetValueOrDefault("last_name", "").ToString();
             var fullName = $"{firstName} {lastName}".Trim();
+            var personnelId = absenceData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             var employeeId = absenceData.GetValueOrDefault("employee_id", "").ToString();
             var photoPath = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            
+            // Display name with personnel ID if available
+            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
             
             _logger.LogInformation("Employee first_name: '{FirstName}', employee_id: '{EmployeeId}'", firstName, employeeId);
             _logger.LogInformation("Using full name: '{FullName}'", fullName);
@@ -894,7 +1327,7 @@ namespace DisplayApp
             // Add name below photo
             var nameText = new TextBlock
             {
-                Text = fullName,
+                Text = displayName,
                 Foreground = Brushes.White,
                 FontSize = 9,
                 FontWeight = FontWeights.Bold,
@@ -1288,55 +1721,73 @@ namespace DisplayApp
             {
                 var groupName = groupData.GetValueOrDefault("name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
                 var groupDescription = groupData.GetValueOrDefault("description", "")?.ToString() ?? "";
+                var supervisorName = groupData.GetValueOrDefault("supervisor_name", "")?.ToString() ?? "";
                 
                 _logger.LogInformation("Creating group display model for: {GroupName}", groupName);
                 
                 var groupModel = new DisplayApp.Models.GroupDisplayModel
                 {
                     GroupName = groupName,
-                    GroupDescription = groupDescription
+                    GroupDescription = groupDescription,
+                    SupervisorName = supervisorName
                 };
                 
-                // Get morning shift employees
+                // Get morning shift employees and foreman
                 if (groupData.TryGetValue("morning_shift", out var morningShiftObj))
                 {
-                    if (morningShiftObj is Dictionary<string, object> morningShift)
+                    Dictionary<string, object>? morningShift = null;
+                    if (morningShiftObj is Dictionary<string, object> morningShiftDict)
                     {
+                        morningShift = morningShiftDict;
+                    }
+                    else if (morningShiftObj is JObject morningShiftJObject)
+                    {
+                        morningShift = ConvertJObjectToDictionary(morningShiftJObject);
+                    }
+                    
+                    if (morningShift != null)
+                    {
+                        // Get employees
                         if (morningShift.TryGetValue("assigned_employees", out var morningEmployees) && morningEmployees is List<object> morningEmpList)
                         {
                             groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, groupName);
                             _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmpList.Count, groupName);
-                        }
-                    }
-                    else if (morningShiftObj is JObject morningShiftJObject)
-                    {
-                        var morningShiftDict = ConvertJObjectToDictionary(morningShiftJObject);
-                        if (morningShiftDict.TryGetValue("assigned_employees", out var morningEmployees) && morningEmployees is List<object> morningEmpList)
-                        {
-                            groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, groupName);
-                            _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmpList.Count, groupName);
+                            
+                            // Get foreman name from team_leader_id
+                            if (morningShift.TryGetValue("team_leader_id", out var morningForemanId) && !string.IsNullOrEmpty(morningForemanId?.ToString()))
+                            {
+                                groupModel.MorningForemanName = GetEmployeeNameById(morningForemanId.ToString(), morningEmpList);
+                            }
                         }
                     }
                 }
                 
-                // Get evening shift employees
+                // Get evening shift employees and foreman
                 if (groupData.TryGetValue("evening_shift", out var eveningShiftObj))
                 {
-                    if (eveningShiftObj is Dictionary<string, object> eveningShift)
+                    Dictionary<string, object>? eveningShift = null;
+                    if (eveningShiftObj is Dictionary<string, object> eveningShiftDict)
                     {
+                        eveningShift = eveningShiftDict;
+                    }
+                    else if (eveningShiftObj is JObject eveningShiftJObject)
+                    {
+                        eveningShift = ConvertJObjectToDictionary(eveningShiftJObject);
+                    }
+                    
+                    if (eveningShift != null)
+                    {
+                        // Get employees
                         if (eveningShift.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
                         {
                             groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
                             _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
-                        }
-                    }
-                    else if (eveningShiftObj is JObject eveningShiftJObject)
-                    {
-                        var eveningShiftDict = ConvertJObjectToDictionary(eveningShiftJObject);
-                        if (eveningShiftDict.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
-                        {
-                            groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
-                            _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
+                            
+                            // Get foreman name from team_leader_id
+                            if (eveningShift.TryGetValue("team_leader_id", out var eveningForemanId) && !string.IsNullOrEmpty(eveningForemanId?.ToString()))
+                            {
+                                groupModel.EveningForemanName = GetEmployeeNameById(eveningForemanId.ToString(), eveningEmpList);
+                            }
                         }
                     }
                 }
@@ -1356,6 +1807,7 @@ namespace DisplayApp
             {
                 var groupName = groupData.GetValueOrDefault("Name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
                 var groupDescription = groupData.GetValueOrDefault("Description", "")?.ToString() ?? "";
+                var supervisorName = groupData.GetValueOrDefault("SupervisorName", "")?.ToString() ?? "";
                 
                 _logger.LogInformation("Creating group display model from parsed data for: {GroupName} (ID: {GroupId})", groupName, groupId);
                 _logger.LogInformation("Group data keys: {Keys}", string.Join(", ", groupData.Keys));
@@ -1363,7 +1815,8 @@ namespace DisplayApp
                 var groupModel = new DisplayApp.Models.GroupDisplayModel
                 {
                     GroupName = groupName,
-                    GroupDescription = groupDescription
+                    GroupDescription = groupDescription,
+                    SupervisorName = supervisorName
                 };
                 
                 // Parse morning shift from JSON string
@@ -1429,6 +1882,18 @@ namespace DisplayApp
                                 var morningEmployees = GetEmployeesByIds(validIds, reportData);
                                 groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmployees, groupName);
                                 _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmployees.Count, groupName);
+                                
+                                // Get foreman name from TeamLeaderId
+                                if (morningShiftData.TryGetValue("TeamLeaderId", out var morningForemanId) && !string.IsNullOrEmpty(morningForemanId?.ToString()))
+                                {
+                                    var foremanEmployee = GetEmployeesByIds(new List<object> { morningForemanId }, reportData);
+                                    if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                    {
+                                        var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                        var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                        groupModel.MorningForemanName = $"{firstName} {lastName}".Trim();
+                                    }
+                                }
                             }
                             else
                             {
@@ -1514,6 +1979,18 @@ namespace DisplayApp
                                 var eveningEmployees = GetEmployeesByIds(validIds, reportData);
                                 groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmployees, groupName);
                                 _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmployees.Count, groupName);
+                                
+                                // Get foreman name from TeamLeaderId
+                                if (eveningShiftData.TryGetValue("TeamLeaderId", out var eveningForemanId) && !string.IsNullOrEmpty(eveningForemanId?.ToString()))
+                                {
+                                    var foremanEmployee = GetEmployeesByIds(new List<object> { eveningForemanId }, reportData);
+                                    if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                    {
+                                        var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                        var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                        groupModel.EveningForemanName = $"{firstName} {lastName}".Trim();
+                                    }
+                                }
                             }
                             else
                             {
@@ -1596,6 +2073,41 @@ namespace DisplayApp
             return employees;
         }
 
+        private string GetEmployeeNameById(string employeeId, List<object> employeeList)
+        {
+            try
+            {
+                foreach (var empObj in employeeList)
+                {
+                    Dictionary<string, object>? empData = null;
+                    if (empObj is Dictionary<string, object> empDict)
+                    {
+                        empData = empDict;
+                    }
+                    else if (empObj is JObject empJObject)
+                    {
+                        empData = ConvertJObjectToDictionary(empJObject);
+                    }
+                    
+                    if (empData != null)
+                    {
+                        var empId = empData.GetValueOrDefault("employee_id", "")?.ToString() ?? "";
+                        if (empId == employeeId)
+                        {
+                            var firstName = empData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                            var lastName = empData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                            return $"{firstName} {lastName}".Trim();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employee name by ID: {EmployeeId}", employeeId);
+            }
+            return "";
+        }
+
         private List<EmployeeDisplayModel> ConvertToEmployeeDisplayModels(List<object> employeeObjects, string groupName = "")
         {
             var employeeModels = new List<EmployeeDisplayModel>();
@@ -1606,6 +2118,20 @@ namespace DisplayApp
                 {
                     if (employeeObj is Dictionary<string, object> employeeDict)
                     {
+                        // Extract sticker paths
+                        var stickerPaths = new List<string>();
+                        if (employeeDict.TryGetValue("sticker_paths", out var stickerPathsObj))
+                        {
+                            if (stickerPathsObj is List<object> stickerList)
+                            {
+                                stickerPaths = stickerList.Select(s => s?.ToString() ?? "").Where(s => !string.IsNullOrEmpty(s)).ToList();
+                            }
+                            else if (stickerPathsObj is Newtonsoft.Json.Linq.JArray jArray)
+                            {
+                                stickerPaths = jArray.ToObject<List<string>>() ?? new List<string>();
+                            }
+                        }
+                        
                         var employeeModel = new EmployeeDisplayModel
                         {
                             EmployeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString() ?? "",
@@ -1613,13 +2139,33 @@ namespace DisplayApp
                             LastName = employeeDict.GetValueOrDefault("last_name", "").ToString() ?? "",
                             PhotoPath = employeeDict.GetValueOrDefault("photo_path", "").ToString() ?? "",
                             Role = employeeDict.GetValueOrDefault("role", "").ToString() ?? "",
-                            GroupName = groupName
+                            GroupName = groupName,
+                            ShieldColor = employeeDict.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
+                            ShowShield = GetShowShieldFromDict(employeeDict),
+                            StickerPaths = stickerPaths,
+                            MedalBadgePath = employeeDict.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
+                            PersonnelId = employeeDict.GetValueOrDefault("personnel_id", "").ToString() ?? ""
                         };
                         employeeModels.Add(employeeModel);
                     }
                     else if (employeeObj is JObject employeeJObject)
                     {
                         var employeeDictFromJObject = ConvertJObjectToDictionary(employeeJObject);
+                        
+                        // Extract sticker paths
+                        var stickerPaths = new List<string>();
+                        if (employeeDictFromJObject.TryGetValue("sticker_paths", out var stickerPathsObj))
+                        {
+                            if (stickerPathsObj is List<object> stickerList)
+                            {
+                                stickerPaths = stickerList.Select(s => s?.ToString() ?? "").Where(s => !string.IsNullOrEmpty(s)).ToList();
+                            }
+                            else if (stickerPathsObj is Newtonsoft.Json.Linq.JArray jArray)
+                            {
+                                stickerPaths = jArray.ToObject<List<string>>() ?? new List<string>();
+                            }
+                        }
+                        
                         var employeeModel = new EmployeeDisplayModel
                         {
                             EmployeeId = employeeDictFromJObject.GetValueOrDefault("employee_id", "").ToString() ?? "",
@@ -1627,7 +2173,12 @@ namespace DisplayApp
                             LastName = employeeDictFromJObject.GetValueOrDefault("last_name", "").ToString() ?? "",
                             PhotoPath = employeeDictFromJObject.GetValueOrDefault("photo_path", "").ToString() ?? "",
                             Role = employeeDictFromJObject.GetValueOrDefault("role", "").ToString() ?? "",
-                            GroupName = groupName
+                            GroupName = groupName,
+                            ShieldColor = employeeDictFromJObject.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
+                            ShowShield = GetShowShieldFromDict(employeeDictFromJObject),
+                            StickerPaths = stickerPaths,
+                            MedalBadgePath = employeeDictFromJObject.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
+                            PersonnelId = employeeDictFromJObject.GetValueOrDefault("personnel_id", "").ToString() ?? ""
                         };
                         employeeModels.Add(employeeModel);
                     }

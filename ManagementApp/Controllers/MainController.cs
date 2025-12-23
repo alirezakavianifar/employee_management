@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Shared.Models;
 using Shared.Services;
 using Shared.Utils;
+using ManagementApp.Services;
 
 namespace ManagementApp.Controllers
 {
@@ -20,6 +21,9 @@ namespace ManagementApp.Controllers
         private SyncManager _syncManager;
         private readonly ILogger<MainController> _logger;
         private DateTime _lastCapacityChange = DateTime.MinValue;
+        private System.Threading.Timer? _rotationTimer;
+        private DateTime _lastRotationCheck = DateTime.MinValue;
+        private BadgeGeneratorService _badgeGenerator;
 
         // Data structures
         public Dictionary<string, Employee> Employees { get; private set; } = new();
@@ -41,6 +45,11 @@ namespace ManagementApp.Controllers
         public event Action? SettingsUpdated;
         public event Action? SyncTriggered;
 
+        public void NotifySettingsUpdated()
+        {
+            SettingsUpdated?.Invoke();
+        }
+
         public MainController(string dataDir = "Data")
         {
             // Use configuration system to get data directory
@@ -49,10 +58,12 @@ namespace ManagementApp.Controllers
             _jsonHandler = new JsonHandler(_dataDir);
             _syncManager = new SyncManager(_dataDir);
             _logger = LoggingService.CreateLogger<MainController>();
+            _badgeGenerator = new BadgeGeneratorService();
 
             InitializeSettings();
             LoadData();
             SetupSync();
+            SetupRotationScheduler();
             
             // Subscribe to configuration changes
             Shared.Utils.AppConfigHelper.ConfigurationChanged += OnConfigurationChanged;
@@ -66,7 +77,8 @@ namespace ManagementApp.Controllers
                 { "morning_capacity", 15 },
                 { "evening_capacity", 15 },
                 { "shared_folder_path", _dataDir },
-                { "managers", new List<object>() }
+                { "managers", new List<object>() },
+                { "badge_template_path", Path.Combine(_dataDir, "BadgeTemplate.png") }
             };
         }
 
@@ -74,6 +86,43 @@ namespace ManagementApp.Controllers
         {
             _syncManager.AddSyncCallback(OnSyncTriggered);
             _syncManager.StartSync();
+        }
+
+        private void SetupRotationScheduler()
+        {
+            // Check for rotation every hour
+            _rotationTimer = new System.Threading.Timer(CheckRotationSchedule, null, TimeSpan.Zero, TimeSpan.FromHours(1));
+        }
+
+        private void CheckRotationSchedule(object? state)
+        {
+            try
+            {
+                if (Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled && enabled)
+                {
+                    var today = DateTime.Now;
+                    var rotationDay = Settings.GetValueOrDefault("auto_rotate_day", "Saturday").ToString() ?? "Saturday";
+                    
+                    // Check if today is the rotation day and we haven't rotated today
+                    if (today.DayOfWeek.ToString() == rotationDay && _lastRotationCheck.Date < today.Date)
+                    {
+                        _logger.LogInformation("Automatic shift rotation triggered for {Day}", rotationDay);
+                        
+                        // Rotate shifts for all active groups
+                        foreach (var group in ShiftGroupManager.GetActiveShiftGroups())
+                        {
+                            SwapShifts(group.GroupId);
+                        }
+                        
+                        _lastRotationCheck = today;
+                        SaveData();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking rotation schedule");
+            }
         }
 
         private void LoadData()
@@ -307,6 +356,47 @@ namespace ManagementApp.Controllers
 
                     var employee = new Employee(employeeId, firstName, lastName, roleId, shiftGroupId, photoPath, isManagerBool);
 
+                    // Load new properties (shield_color, show_shield, sticker_paths, medal_badge_path, personnel_id)
+                    if (employeeDict.TryGetValue("shield_color", out var shieldColorObj))
+                    {
+                        employee.ShieldColor = shieldColorObj?.ToString() ?? "Blue";
+                    }
+                    
+                    if (employeeDict.TryGetValue("show_shield", out var showShieldObj))
+                    {
+                        if (showShieldObj is bool showShieldBool)
+                        {
+                            employee.ShowShield = showShieldBool;
+                        }
+                        else if (bool.TryParse(showShieldObj?.ToString(), out bool showShieldParsed))
+                        {
+                            employee.ShowShield = showShieldParsed;
+                        }
+                    }
+                    // Default to true if not specified (for backward compatibility)
+                    
+                    if (employeeDict.TryGetValue("sticker_paths", out var stickerPathsObj))
+                    {
+                        if (stickerPathsObj is List<object> stickerList)
+                        {
+                            employee.StickerPaths = stickerList.Select(s => s?.ToString() ?? "").Where(s => !string.IsNullOrEmpty(s)).ToList();
+                        }
+                        else if (stickerPathsObj is Newtonsoft.Json.Linq.JArray jArray)
+                        {
+                            employee.StickerPaths = jArray.ToObject<List<string>>() ?? new List<string>();
+                        }
+                    }
+                    
+                    if (employeeDict.TryGetValue("medal_badge_path", out var medalBadgePathObj))
+                    {
+                        employee.MedalBadgePath = medalBadgePathObj?.ToString() ?? "";
+                    }
+                    
+                    if (employeeDict.TryGetValue("personnel_id", out var personnelIdObj))
+                    {
+                        employee.PersonnelId = personnelIdObj?.ToString() ?? "";
+                    }
+
                     // Set creation/update times if available, with validation for Persian calendar
                     if (employeeDict.ContainsKey("created_at"))
                     {
@@ -449,6 +539,22 @@ namespace ManagementApp.Controllers
                 _logger.LogInformation("Shift Groups JSON: {ShiftGroupsJson}", shiftGroupsJson);
                 
                 ShiftGroupManager = ShiftGroupManager.FromJson(shiftGroupsJson, Employees);
+                
+                // Migration: Copy default group team leader to ShiftManager shifts if they don't have one
+                var defaultGroup = ShiftGroupManager.GetShiftGroup("default");
+                if (defaultGroup != null && !string.IsNullOrEmpty(defaultGroup.TeamLeaderId))
+                {
+                    if (string.IsNullOrEmpty(ShiftManager.MorningShift.TeamLeaderId))
+                    {
+                        ShiftManager.MorningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
+                        _logger.LogInformation("Migrated default group team leader to morning shift");
+                    }
+                    if (string.IsNullOrEmpty(ShiftManager.EveningShift.TeamLeaderId))
+                    {
+                        ShiftManager.EveningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
+                        _logger.LogInformation("Migrated default group team leader to evening shift");
+                    }
+                }
                 
                 // Log shift group assignments after loading
                 var totalGroups = ShiftGroupManager.GetAllShiftGroups().Count;
@@ -621,12 +727,17 @@ namespace ManagementApp.Controllers
             {
                 // Create shifts data in the format expected by Display App
                 // Include both default shifts and shift group data
+                // Get team leader from each shift individually (per-shift foremen)
+                var morningTeamLeaderId = ShiftManager.MorningShift.TeamLeaderId ?? string.Empty;
+                var eveningTeamLeaderId = ShiftManager.EveningShift.TeamLeaderId ?? string.Empty;
+                
                 var shiftsData = new Dictionary<string, object>
                 {
                     { "morning", new Dictionary<string, object>
                         {
                             { "shift_type", "morning" },
                             { "capacity", ShiftManager.MorningShift.Capacity },
+                            { "team_leader_id", morningTeamLeaderId },
                             { "assigned_employees", ShiftManager.MorningShift.AssignedEmployees
                                 .Where(emp => emp != null)
                                 .Select(emp => emp.ToDictionary())
@@ -639,6 +750,7 @@ namespace ManagementApp.Controllers
                         {
                             { "shift_type", "evening" },
                             { "capacity", ShiftManager.EveningShift.Capacity },
+                            { "team_leader_id", eveningTeamLeaderId },
                             { "assigned_employees", ShiftManager.EveningShift.AssignedEmployees
                                 .Where(emp => emp != null)
                                 .Select(emp => emp.ToDictionary())
@@ -701,6 +813,10 @@ namespace ManagementApp.Controllers
                     return new Dictionary<string, object>();
                 }
 
+                // Get team leaders from each shift individually (per-shift foremen)
+                var morningTeamLeaderId = selectedGroup.MorningShift.TeamLeaderId ?? string.Empty;
+                var eveningTeamLeaderId = selectedGroup.EveningShift.TeamLeaderId ?? string.Empty;
+                
                 var groupData = new Dictionary<string, object>
                 {
                     { "group_id", selectedGroup.GroupId },
@@ -714,6 +830,7 @@ namespace ManagementApp.Controllers
                         {
                             { "shift_type", "morning" },
                             { "capacity", selectedGroup.MorningCapacity },
+                            { "team_leader_id", morningTeamLeaderId },
                             { "assigned_employees", selectedGroup.MorningShift.AssignedEmployees
                                 .Where(emp => emp != null)
                                 .Select(emp => emp.ToDictionary())
@@ -726,6 +843,7 @@ namespace ManagementApp.Controllers
                         {
                             { "shift_type", "evening" },
                             { "capacity", selectedGroup.EveningCapacity },
+                            { "team_leader_id", eveningTeamLeaderId },
                             { "assigned_employees", selectedGroup.EveningShift.AssignedEmployees
                                 .Where(emp => emp != null)
                                 .Select(emp => emp.ToDictionary())
@@ -908,12 +1026,12 @@ namespace ManagementApp.Controllers
         }
 
         // Shift Group Management Methods
-        public bool AddShiftGroup(string groupId, string name, string description = "", string color = "#4CAF50", 
+        public bool AddShiftGroup(string groupId, string name, string description = "", string supervisorName = "", string color = "#4CAF50", 
                                  int morningCapacity = 15, int eveningCapacity = 15)
         {
             try
             {
-                var success = ShiftGroupManager.AddShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity);
+                var success = ShiftGroupManager.AddShiftGroup(groupId, name, description, supervisorName, color, morningCapacity, eveningCapacity);
                 if (success)
                 {
                     ShiftGroupsUpdated?.Invoke();
@@ -930,13 +1048,13 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
+        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, string? supervisorName = null,
                                     string? color = null, int? morningCapacity = null, int? eveningCapacity = null, 
                                     bool? isActive = null)
         {
             try
             {
-                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity, isActive);
+                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, supervisorName, color, morningCapacity, eveningCapacity, isActive);
                 if (success)
                 {
                     ShiftGroupsUpdated?.Invoke();
@@ -1025,12 +1143,36 @@ namespace ManagementApp.Controllers
         }
 
         // Employee Management Methods
-        public bool AddEmployee(string firstName, string lastName, string roleId = "employee", string shiftGroupId = "default", string photoPath = "", bool isManager = false)
+        public bool AddEmployee(string firstName, string lastName, string roleId = "employee", string shiftGroupId = "default", string photoPath = "", bool isManager = false,
+                               string shieldColor = "Blue", bool showShield = true, List<string>? stickerPaths = null, string medalBadgePath = "", string personnelId = "")
         {
             try
             {
                 var employeeId = $"emp_{Employees.Count}_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
                 var employee = new Employee(employeeId, firstName, lastName, roleId, shiftGroupId, photoPath, isManager);
+                employee.ShieldColor = shieldColor;
+                employee.ShowShield = showShield;
+                employee.StickerPaths = stickerPaths ?? new List<string>();
+                employee.MedalBadgePath = medalBadgePath;
+                employee.PersonnelId = personnelId;
+
+                // Create worker folder structure
+                var workerFolder = GetWorkerFolderPath(firstName, lastName);
+                if (!Directory.Exists(workerFolder))
+                {
+                    Directory.CreateDirectory(workerFolder);
+                    _logger.LogInformation("Created worker folder: {Folder}", workerFolder);
+                }
+
+                // If photo path is provided and file exists, copy it to worker folder
+                if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
+                {
+                    var photoFileName = $"{firstName}_{lastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}{Path.GetExtension(photoPath)}";
+                    var destPhotoPath = Path.Combine(workerFolder, photoFileName);
+                    File.Copy(photoPath, destPhotoPath, true);
+                    employee.PhotoPath = destPhotoPath;
+                    _logger.LogInformation("Copied photo to worker folder: {Path}", destPhotoPath);
+                }
 
                 Employees[employeeId] = employee;
                 EmployeesUpdated?.Invoke();
@@ -1047,7 +1189,8 @@ namespace ManagementApp.Controllers
             }
         }
 
-        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null)
+        public bool UpdateEmployee(string employeeId, string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null,
+                                  string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null)
         {
             try
             {
@@ -1055,7 +1198,65 @@ namespace ManagementApp.Controllers
                     return false;
 
                 var employee = Employees[employeeId];
-                employee.Update(firstName, lastName, roleId, shiftGroupId, photoPath, isManager);
+                var oldFirstName = employee.FirstName;
+                var oldLastName = employee.LastName;
+                var newFirstName = firstName ?? oldFirstName;
+                var newLastName = lastName ?? oldLastName;
+
+                // Update worker folder if name changed
+                if ((firstName != null || lastName != null) && (oldFirstName != newFirstName || oldLastName != newLastName))
+                {
+                    var oldFolder = GetWorkerFolderPath(oldFirstName, oldLastName);
+                    var newFolder = GetWorkerFolderPath(newFirstName, newLastName);
+                    
+                    if (Directory.Exists(oldFolder) && oldFolder != newFolder)
+                    {
+                        if (Directory.Exists(newFolder))
+                        {
+                            // Move files from old folder to new folder
+                            foreach (var file in Directory.GetFiles(oldFolder))
+                            {
+                                var fileName = Path.GetFileName(file);
+                                var destPath = Path.Combine(newFolder, fileName);
+                                File.Copy(file, destPath, true);
+                            }
+                            // Optionally delete old folder after moving
+                            // Directory.Delete(oldFolder, true);
+                        }
+                        else
+                        {
+                            Directory.Move(oldFolder, newFolder);
+                        }
+                        _logger.LogInformation("Updated worker folder from {OldFolder} to {NewFolder}", oldFolder, newFolder);
+                    }
+                    else if (!Directory.Exists(newFolder))
+                    {
+                        Directory.CreateDirectory(newFolder);
+                        _logger.LogInformation("Created new worker folder: {Folder}", newFolder);
+                    }
+                }
+
+                // Handle photo path update - copy to worker folder if new photo provided
+                if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
+                {
+                    var workerFolder = GetWorkerFolderPath(newFirstName, newLastName);
+                    if (!Directory.Exists(workerFolder))
+                    {
+                        Directory.CreateDirectory(workerFolder);
+                    }
+                    
+                    // Check if photo is already in worker folder
+                    if (!photoPath.StartsWith(workerFolder, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var photoFileName = $"{newFirstName}_{newLastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}{Path.GetExtension(photoPath)}";
+                        var destPhotoPath = Path.Combine(workerFolder, photoFileName);
+                        File.Copy(photoPath, destPhotoPath, true);
+                        photoPath = destPhotoPath;
+                        _logger.LogInformation("Copied photo to worker folder: {Path}", destPhotoPath);
+                    }
+                }
+
+                employee.Update(firstName, lastName, roleId, shiftGroupId, photoPath, isManager, shieldColor, showShield, stickerPaths, medalBadgePath, personnelId);
 
                 EmployeesUpdated?.Invoke();
                 SaveData();
@@ -1340,6 +1541,13 @@ namespace ManagementApp.Controllers
 
                 ShiftManager.SetCapacity(capacity);
                 
+                // Update all shift groups' capacities to match the new global capacity
+                foreach (var group in ShiftGroupManager.GetAllShiftGroups())
+                {
+                    group.Update(morningCapacity: capacity, eveningCapacity: capacity);
+                    _logger.LogInformation("Updated shift group {GroupId} capacity to {Capacity}", group.GroupId, capacity);
+                }
+                
                 _logger.LogInformation("After SetCapacity: {Capacity}", ShiftManager.Capacity);
 
                 // Save the data to persist the capacity change
@@ -1348,6 +1556,7 @@ namespace ManagementApp.Controllers
                 _logger.LogInformation("Data saved, capacity is now {Capacity}", ShiftManager.Capacity);
 
                 SettingsUpdated?.Invoke();
+                ShiftGroupsUpdated?.Invoke(); // Notify that shift groups were updated
                 
                 // Restart sync manager after a delay
                 System.Threading.Tasks.Task.Delay(5000).ContinueWith(_ => _syncManager.StartSync());
@@ -1862,6 +2071,245 @@ namespace ManagementApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in debug data persistence");
+            }
+        }
+
+        public string GetWorkerFolderPath(string firstName, string lastName)
+        {
+            var workersDir = Path.Combine(_dataDir, "Workers");
+            if (!Directory.Exists(workersDir))
+            {
+                Directory.CreateDirectory(workersDir);
+            }
+            var folderName = $"{firstName}_{lastName}";
+            return Path.Combine(workersDir, folderName);
+        }
+
+        public (string? FirstName, string? LastName) DetectNameFromFolder(string filePath)
+        {
+            try
+            {
+                var directory = Path.GetDirectoryName(filePath);
+                if (string.IsNullOrEmpty(directory))
+                    return (null, null);
+
+                var folderName = Path.GetFileName(directory);
+                var workersDir = Path.Combine(_dataDir, "Workers");
+                
+                // Check if file is in a Workers subfolder
+                if (directory.StartsWith(workersDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = folderName.Split('_');
+                    if (parts.Length >= 2)
+                    {
+                        return (parts[0], parts[1]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error detecting name from folder path: {Path}", filePath);
+            }
+            
+            return (null, null);
+        }
+
+        public string? DetectPersonnelIdFromFilename(string filePath)
+        {
+            try
+            {
+                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                if (string.IsNullOrEmpty(fileName))
+                    return null;
+
+                var directory = Path.GetDirectoryName(filePath);
+                if (string.IsNullOrEmpty(directory))
+                    return null;
+
+                var workersDir = Path.Combine(_dataDir, "Workers");
+                
+                // Check if file is in a Workers subfolder
+                if (directory.StartsWith(workersDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Expected format: FirstName_LastName_PersonnelID
+                    // Example: Ali_Rezaei_123.jpg -> Ali_Rezaei_123 -> extract 123
+                    var parts = fileName.Split('_');
+                    if (parts.Length >= 3)
+                    {
+                        // The last part should be the personnel ID
+                        var personnelId = parts[parts.Length - 1];
+                        // Validate that it's a numeric value (personnel ID)
+                        if (!string.IsNullOrEmpty(personnelId) && personnelId.All(char.IsDigit))
+                        {
+                            return personnelId;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error detecting personnel ID from filename: {Path}", filePath);
+            }
+            
+            return null;
+        }
+
+        public bool SwapShifts(string? groupId = null)
+        {
+            try
+            {
+                var targetGroupId = groupId ?? "default";
+                var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
+                if (group == null)
+                    return false;
+
+                group.SwapShifts();
+                ShiftsUpdated?.Invoke();
+                SaveData();
+                _logger.LogInformation("Swapped shifts for group {GroupId}", targetGroupId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error swapping shifts");
+                return false;
+            }
+        }
+
+        public bool SetTeamLeader(string shiftType, string employeeId, string? groupId = null)
+        {
+            try
+            {
+                var targetGroupId = groupId ?? "default";
+                var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
+                if (group == null)
+                    return false;
+
+                group.SetTeamLeader(shiftType, employeeId);
+                ShiftsUpdated?.Invoke();
+                SaveData();
+                _logger.LogInformation("Set team leader for {ShiftType} shift in group {GroupId}", shiftType, targetGroupId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting team leader");
+                return false;
+            }
+        }
+
+        public Employee? GetTeamLeader(string shiftType, string? groupId = null)
+        {
+            try
+            {
+                var targetGroupId = groupId ?? "default";
+                var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
+                if (group == null)
+                    return null;
+
+                return group.GetTeamLeader(shiftType, Employees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting team leader");
+                return null;
+            }
+        }
+
+        // Badge Generation Methods
+        public string GetBadgeTemplatePath()
+        {
+            if (Settings.TryGetValue("badge_template_path", out var path) && path is string templatePath)
+            {
+                return templatePath;
+            }
+            // Default path
+            return Path.Combine(_dataDir, "BadgeTemplate.png");
+        }
+
+        public bool SetBadgeTemplatePath(string path)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(path))
+                {
+                    _logger.LogWarning("Badge template path cannot be empty");
+                    return false;
+                }
+
+                Settings["badge_template_path"] = path;
+                SaveData();
+                _logger.LogInformation("Badge template path set to: {Path}", path);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting badge template path");
+                return false;
+            }
+        }
+
+        public string? GenerateEmployeeBadge(string employeeId, string? outputPath = null)
+        {
+            try
+            {
+                if (!Employees.ContainsKey(employeeId))
+                {
+                    _logger.LogWarning("Employee not found: {EmployeeId}", employeeId);
+                    return null;
+                }
+
+                var employee = Employees[employeeId];
+
+                // Validate employee has photo
+                if (string.IsNullOrEmpty(employee.PhotoPath) || !File.Exists(employee.PhotoPath))
+                {
+                    _logger.LogWarning("Employee {EmployeeId} does not have a valid photo", employeeId);
+                    return null;
+                }
+
+                // Get badge template path
+                var templatePath = GetBadgeTemplatePath();
+                if (string.IsNullOrEmpty(templatePath) || !File.Exists(templatePath))
+                {
+                    _logger.LogError("Badge template not found: {TemplatePath}", templatePath);
+                    ShowErrorDialog("خطا", $"قالب کارت شناسایی یافت نشد: {templatePath}");
+                    return null;
+                }
+
+                // Determine output path
+                if (string.IsNullOrEmpty(outputPath))
+                {
+                    var workerFolder = GetWorkerFolderPath(employee.FirstName, employee.LastName);
+                    if (!Directory.Exists(workerFolder))
+                    {
+                        Directory.CreateDirectory(workerFolder);
+                    }
+                    var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+                    outputPath = Path.Combine(workerFolder, $"{employee.FirstName}_{employee.LastName}_badge_{timestamp}.png");
+                }
+
+                // Generate badge
+                var employeeName = employee.FullName;
+                var success = _badgeGenerator.GenerateBadge(templatePath, employee.PhotoPath, employeeName, outputPath);
+
+                if (success)
+                {
+                    _logger.LogInformation("Badge generated successfully for employee {EmployeeId}: {OutputPath}", employeeId, outputPath);
+                    return outputPath;
+                }
+                else
+                {
+                    _logger.LogError("Failed to generate badge for employee {EmployeeId}", employeeId);
+                    ShowErrorDialog("خطا", "خطا در تولید کارت شناسایی");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating badge for employee {EmployeeId}", employeeId);
+                ShowErrorDialog("خطا", $"خطا در تولید کارت شناسایی: {ex.Message}");
+                return null;
             }
         }
 

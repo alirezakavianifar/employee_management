@@ -256,14 +256,20 @@ namespace ManagementApp.Views
                 _logger.LogInformation("LoadEmployees: {AvailableCount} employees available for shift assignment", availableEmployees.Count);
                 ShiftEmployeeListBox.ItemsSource = availableEmployees;
                 
-                // Set up drag functionality for each employee item
-                foreach (var employee in availableEmployees)
+                // Attach handlers when containers are generated
+                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
                 {
-                    if (employee != null && ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromItem(employee) is ListBoxItem item)
+                    AttachDragHandlers();
+                }
+                else
+                {
+                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += (s, e) =>
                     {
-                        item.PreviewMouseLeftButtonDown += (s, e) => Employee_PreviewMouseLeftButtonDown(s, e, employee);
-                        item.MouseMove += (s, e) => Employee_MouseMove(s, e, employee);
-                    }
+                        if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                        {
+                            AttachDragHandlers();
+                        }
+                    };
                 }
                 
                 _logger.LogInformation("LoadEmployees: Completed successfully");
@@ -359,7 +365,8 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog(_controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
+                                                         dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
                     if (success)
                     {
                         LoadEmployees();
@@ -387,7 +394,8 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog(_selectedEmployee, _controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
+                                                           dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
                     if (success)
                     {
                         LoadEmployees();
@@ -539,8 +547,77 @@ namespace ManagementApp.Views
 
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    // Update employee photo path
-                    _controller.UpdateEmployee(_selectedEmployee.EmployeeId, photoPath: openFileDialog.FileName);
+                    // Detect name from folder and personnel ID from filename if photo is in a worker folder
+                    var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(openFileDialog.FileName);
+                    var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(openFileDialog.FileName);
+                    
+                    string? updatePersonnelId = null;
+                    
+                    // If personnel ID detected and different from current, ask user if they want to update
+                    if (detectedPersonnelId != null)
+                    {
+                        if (string.IsNullOrEmpty(_selectedEmployee.PersonnelId))
+                        {
+                            // Auto-fill if empty
+                            updatePersonnelId = detectedPersonnelId;
+                        }
+                        else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
+                        {
+                            var result = MessageBox.Show(
+                                $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
+                                "تشخیص کد پرسنلی",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Question);
+                            
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                updatePersonnelId = detectedPersonnelId;
+                            }
+                        }
+                    }
+                    
+                    // If name detected and different from current, ask user if they want to update
+                    if (detectedFirstName != null && detectedLastName != null)
+                    {
+                        if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
+                        {
+                            var result = MessageBox.Show(
+                                $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
+                                "تشخیص نام از پوشه",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Question);
+                            
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    firstName: detectedFirstName, 
+                                    lastName: detectedLastName, 
+                                    photoPath: openFileDialog.FileName,
+                                    personnelId: updatePersonnelId);
+                            }
+                            else
+                            {
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    photoPath: openFileDialog.FileName,
+                                    personnelId: updatePersonnelId);
+                            }
+                        }
+                        else
+                        {
+                            _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                photoPath: openFileDialog.FileName,
+                                personnelId: updatePersonnelId);
+                        }
+                    }
+                    else
+                    {
+                        // Update employee photo path (will be copied to worker folder automatically)
+                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                            photoPath: openFileDialog.FileName,
+                            personnelId: updatePersonnelId);
+                    }
+                    
+                    LoadEmployees();
                     LoadEmployeeDetails(_selectedEmployee);
                     UpdateStatus("عکس کارمند بروزرسانی شد");
                 }
@@ -549,6 +626,62 @@ namespace ManagementApp.Views
             {
                 _logger.LogError(ex, "Error selecting photo");
                 MessageBox.Show($"خطا در انتخاب عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void GenerateBadge_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_selectedEmployee == null)
+                {
+                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Validate employee has photo
+                if (string.IsNullOrEmpty(_selectedEmployee.PhotoPath) || !_selectedEmployee.HasPhoto())
+                {
+                    MessageBox.Show("کارمند انتخاب شده عکس ندارد. لطفاً ابتدا عکس کارمند را انتخاب کنید.", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Generate badge
+                var badgePath = _controller.GenerateEmployeeBadge(_selectedEmployee.EmployeeId);
+
+                if (!string.IsNullOrEmpty(badgePath))
+                {
+                    MessageBox.Show($"کارت شناسایی با موفقیت تولید شد:\n{badgePath}", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                    UpdateStatus("کارت شناسایی تولید شد");
+                    
+                    // Optionally display the generated badge
+                    try
+                    {
+                        if (File.Exists(badgePath))
+                        {
+                            var badgeBitmap = new BitmapImage();
+                            badgeBitmap.BeginInit();
+                            badgeBitmap.UriSource = new Uri(badgePath, UriKind.Absolute);
+                            badgeBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            badgeBitmap.EndInit();
+                            badgeBitmap.Freeze();
+                            EmployeePhoto.Source = badgeBitmap;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not display generated badge in preview");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("خطا در تولید کارت شناسایی. لطفاً مطمئن شوید که قالب کارت شناسایی در مسیر صحیح قرار دارد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating badge");
+                MessageBox.Show($"خطا در تولید کارت شناسایی: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -695,41 +828,6 @@ namespace ManagementApp.Views
             }
         }
 
-        private void LoadDisplayGroups()
-        {
-            try
-            {
-                var shiftGroups = _controller.GetAllShiftGroups();
-                DisplayGroupComboBox.Items.Clear();
-                
-                foreach (var group in shiftGroups)
-                {
-                    var item = new ComboBoxItem
-                    {
-                        Content = group.Name,
-                        Tag = group.GroupId,
-                        ToolTip = group.Description
-                    };
-                    DisplayGroupComboBox.Items.Add(item);
-                }
-                
-                // Select the currently selected display group
-                var currentDisplayGroup = _controller.GetSelectedDisplayGroupId();
-                if (DisplayGroupComboBox.Items.Count > 0)
-                {
-                    var selectedGroup = DisplayGroupComboBox.Items.Cast<ComboBoxItem>()
-                        .FirstOrDefault(item => item.Tag?.ToString() == currentDisplayGroup);
-                    DisplayGroupComboBox.SelectedItem = selectedGroup ?? DisplayGroupComboBox.Items[0];
-                }
-                
-                _logger.LogInformation("Loaded {Count} display groups, selected: {SelectedGroup}", 
-                    shiftGroups.Count, currentDisplayGroup);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading display groups");
-            }
-        }
 
         private void ShiftGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -740,6 +838,12 @@ namespace ManagementApp.Views
                     _logger.LogInformation("Shift group changed to: {GroupId}", groupId);
                     LoadShiftSlots();
                     UpdateShiftStatistics();
+                    
+                    // Load auto-rotation setting
+                    if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
+                    {
+                        AutoRotateCheckBox.IsChecked = enabled;
+                    }
                 }
             }
             catch (Exception ex)
@@ -748,41 +852,12 @@ namespace ManagementApp.Views
             }
         }
 
-        private void DisplayGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                if (DisplayGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    _logger.LogInformation("Display group changed to: {GroupId}", groupId);
-                    
-                    // Set the selected display group in the controller
-                    var success = _controller.SetSelectedDisplayGroup(groupId);
-                    if (success)
-                    {
-                        UpdateStatus($"گروه نمایش به '{selectedItem.Content}' تغییر یافت");
-                    }
-                    else
-                    {
-                        MessageBox.Show($"خطا در تغییر گروه نمایش", "خطا", 
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling display group selection change");
-                MessageBox.Show($"خطا در تغییر گروه نمایش: {ex.Message}", "خطا", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         private void LoadShifts()
         {
             try
             {
                 LoadShiftGroups();
-                LoadDisplayGroups();
                 LoadShiftSlots();
                 UpdateShiftStatistics();
                 
@@ -1126,12 +1201,178 @@ namespace ManagementApp.Views
             }
         }
 
+        private void SwapShifts_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? groupId = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+
+                var result = MessageBox.Show("آیا از جابجایی شیفت‌های صبح و عصر اطمینان دارید؟", 
+                    "تأیید جابجایی", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (_controller.SwapShifts(groupId))
+                    {
+                        LoadShiftSlots();
+                        UpdateShiftStatistics();
+                        UpdateStatus("شیفت‌ها با موفقیت جابجا شدند");
+                    }
+                    else
+                    {
+                        MessageBox.Show("خطا در جابجایی شیفت‌ها", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error swapping shifts");
+                MessageBox.Show($"خطا در جابجایی شیفت‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+        private void AutoRotateCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Store auto-rotation setting
+                _controller.Settings["auto_rotate_shifts"] = true;
+                _controller.Settings["auto_rotate_day"] = "Saturday"; // Default to Saturday
+                _controller.NotifySettingsUpdated();
+                _controller.SaveData();
+                UpdateStatus("جابجایی خودکار شیفت‌ها فعال شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enabling auto-rotation");
+            }
+        }
+
+        private void AutoRotateCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _controller.Settings["auto_rotate_shifts"] = false;
+                _controller.NotifySettingsUpdated();
+                _controller.SaveData();
+                UpdateStatus("جابجایی خودکار شیفت‌ها غیرفعال شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error disabling auto-rotation");
+            }
+        }
+
         #endregion
 
         #region Drag and Drop
 
         private Point _dragStartPoint;
         private Employee? _draggedEmployee;
+
+        private void AttachDragHandlers()
+        {
+            try
+            {
+                for (int i = 0; i < ShiftEmployeeListBox.Items.Count; i++)
+                {
+                    if (ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromIndex(i) is ListBoxItem item)
+                    {
+                        var employee = item.DataContext as Employee;
+                        if (employee != null)
+                        {
+                            // Find the Border in the template using VisualTreeHelper
+                            Border? border = FindVisualChild<Border>(item);
+                            if (border != null && border.Name == "EmployeeCardBorder")
+                            {
+                                border.Tag = employee;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error attaching drag handlers");
+            }
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T result)
+                {
+                    return result;
+                }
+                var childOfChild = FindVisualChild<T>(child);
+                if (childOfChild != null)
+                {
+                    return childOfChild;
+                }
+            }
+            return null;
+        }
+
+        private void EmployeeItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is Employee employee)
+            {
+                _dragStartPoint = e.GetPosition(null);
+                _draggedEmployee = employee;
+            }
+        }
+
+        private void EmployeeItem_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (sender is Border border && border.Tag is Employee employee)
+                {
+                    if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee == employee)
+                    {
+                        var currentPoint = e.GetPosition(null);
+                        var diff = _dragStartPoint - currentPoint;
+
+                        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                            Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                        {
+                            var dragData = new DataObject(typeof(Employee), employee);
+                            DragDrop.DoDragDrop(border, dragData, DragDropEffects.Move);
+                            _draggedEmployee = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in employee mouse move");
+            }
+        }
+
+        private void EmployeeItem_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (sender is Border border)
+            {
+                border.Background = new SolidColorBrush(Color.FromArgb(30, 0, 120, 215));
+                border.BorderBrush = Brushes.DodgerBlue;
+            }
+        }
+
+        private void EmployeeItem_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (sender is Border border)
+            {
+                border.Background = Brushes.White;
+                border.BorderBrush = new SolidColorBrush(Color.FromRgb(204, 204, 204));
+            }
+        }
 
         private void Employee_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e, Employee employee)
         {
@@ -1191,6 +1432,28 @@ namespace ManagementApp.Views
                     e.Effects = DragDropEffects.Move;
                     (sender as Border)!.Background = Brushes.LightBlue;
                 }
+                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            e.Effects = DragDropEffects.Copy;
+                            (sender as Border)!.Background = Brushes.LightGreen;
+                        }
+                        else
+                        {
+                            e.Effects = DragDropEffects.None;
+                        }
+                    }
+                    else
+                    {
+                        e.Effects = DragDropEffects.None;
+                    }
+                }
                 else
                 {
                     e.Effects = DragDropEffects.None;
@@ -1230,11 +1493,256 @@ namespace ManagementApp.Views
                         }
                     }
                 }
+                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    // Handle photo file drop - detect employee name from folder or create new employee
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            // Try to detect employee name from folder and personnel ID from filename
+                            var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(file);
+                            var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(file);
+                            
+                            if (detectedFirstName != null && detectedLastName != null)
+                            {
+                                // Find employee by name
+                                var employee = _controller.GetAllEmployees()
+                                    .FirstOrDefault(e => e.FirstName == detectedFirstName && e.LastName == detectedLastName);
+                                
+                                if (employee != null)
+                                {
+                                    // Update employee photo and personnel ID if detected, then assign to shift
+                                    _controller.UpdateEmployee(employee.EmployeeId, 
+                                        photoPath: file,
+                                        personnelId: detectedPersonnelId);
+                                    
+                                    string? groupId = null;
+                                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                                    {
+                                        groupId = selectedGroupId;
+                                    }
+                                    
+                                    var success = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
+                                    if (success)
+                                    {
+                                        LoadShiftSlots();
+                                        UpdateShiftStatistics();
+                                        LoadEmployees();
+                                        UpdateStatus($"عکس کارمند {employee.FullName} به‌روزرسانی شد و به شیفت تخصیص داده شد");
+                                    }
+                                }
+                                else
+                                {
+                                    // Create new employee automatically from folder name
+                                    var result = MessageBox.Show(
+                                        $"کارمند {detectedFirstName} {detectedLastName} یافت نشد.\nآیا می‌خواهید کارمند جدیدی با این نام ایجاد شود؟",
+                                        "ایجاد کارمند جدید",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        var newEmployee = _controller.AddEmployee(
+                                            detectedFirstName, 
+                                            detectedLastName, 
+                                            photoPath: file,
+                                            personnelId: detectedPersonnelId ?? "");
+                                        
+                                        if (newEmployee)
+                                        {
+                                            // Find the newly created employee
+                                            var createdEmployee = _controller.GetAllEmployees()
+                                                .FirstOrDefault(e => e.FirstName == detectedFirstName && e.LastName == detectedLastName);
+                                            
+                                            if (createdEmployee != null)
+                                            {
+                                                string? groupId = null;
+                                                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                                                {
+                                                    groupId = selectedGroupId;
+                                                }
+                                                
+                                                var success = _controller.AssignEmployeeToShift(createdEmployee, shiftType, slotIndex, groupId);
+                                                if (success)
+                                                {
+                                                    LoadShiftSlots();
+                                                    UpdateShiftStatistics();
+                                                    LoadEmployees();
+                                                    UpdateStatus($"کارمند جدید {detectedFirstName} {detectedLastName} ایجاد شد و به شیفت تخصیص داده شد");
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        UpdateStatus($"کارمند {detectedFirstName} {detectedLastName} یافت نشد.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                UpdateStatus("نام کارمند از پوشه تشخیص داده نشد. لطفاً عکس را در پوشه Workers/FirstName_LastName/ قرار دهید.");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in slot drop");
+                    MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+        }
+
+        private void EmployeePhoto_DragOver(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            e.Effects = DragDropEffects.Copy;
+                            if (sender is Border border)
+                            {
+                                border.BorderBrush = Brushes.LightGreen;
+                            }
+                        }
+                        else
+                        {
+                            e.Effects = DragDropEffects.None;
+                        }
+                    }
+                    else
+                    {
+                        e.Effects = DragDropEffects.None;
+                    }
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in slot drop");
-                MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                _logger.LogError(ex, "Error in employee photo drag over");
+            }
+        }
+
+        private void EmployeePhoto_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (sender is Border border)
+                {
+                    border.BorderBrush = Brushes.Gray;
+                }
+
+                if (_selectedEmployee == null)
+                {
+                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            // Detect name from folder and personnel ID from filename if possible
+                            var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(file);
+                            var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(file);
+                            
+                            string? updatePersonnelId = null;
+                            
+                            // If personnel ID detected and different from current, ask user if they want to update
+                            if (detectedPersonnelId != null)
+                            {
+                                if (string.IsNullOrEmpty(_selectedEmployee.PersonnelId))
+                                {
+                                    // Auto-fill if empty
+                                    updatePersonnelId = detectedPersonnelId;
+                                }
+                                else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
+                                {
+                                    var result = MessageBox.Show(
+                                        $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
+                                        "تشخیص کد پرسنلی",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        updatePersonnelId = detectedPersonnelId;
+                                    }
+                                }
+                            }
+                            
+                            if (detectedFirstName != null && detectedLastName != null)
+                            {
+                                if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
+                                {
+                                    var result = MessageBox.Show(
+                                        $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
+                                        "تشخیص نام از پوشه",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                            firstName: detectedFirstName, 
+                                            lastName: detectedLastName, 
+                                            photoPath: file,
+                                            personnelId: updatePersonnelId);
+                                    }
+                                    else
+                                    {
+                                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                            photoPath: file,
+                                            personnelId: updatePersonnelId);
+                                    }
+                                }
+                                else
+                                {
+                                    _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                        photoPath: file,
+                                        personnelId: updatePersonnelId);
+                                }
+                            }
+                            else
+                            {
+                                // Name could not be detected from folder, just update photo and personnel ID
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    photoPath: file,
+                                    personnelId: updatePersonnelId);
+                            }
+                            
+                            LoadEmployees();
+                            LoadEmployeeDetails(_selectedEmployee); // Refresh employee details view
+                            LoadEmployeeDetails(_selectedEmployee);
+                            UpdateStatus("عکس کارمند بروزرسانی شد");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in employee photo drop");
+                MessageBox.Show($"خطا در افزودن عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -2482,7 +2990,8 @@ namespace ManagementApp.Views
                         _logger.LogInformation("Report content length: {Length}", ReportPreviewTextBlock.Text?.Length ?? 0);
                         _logger.LogInformation("Assigned to: {AssignedTo}", assignedTo);
                         
-                        var success = _pdfService.ExportReportToPdf(ReportPreviewTextBlock.Text, filePath, reportTitle, assignedTo);
+                        var reportContent = ReportPreviewTextBlock.Text ?? string.Empty;
+                        var success = _pdfService.ExportReportToPdf(reportContent, filePath, reportTitle, assignedTo);
                         
                         if (success)
                         {
@@ -2571,7 +3080,6 @@ namespace ManagementApp.Views
             {
                 // Refresh shift group selection ComboBox
                 LoadShiftGroups();
-                LoadDisplayGroups();
                 
                 // Refresh shift-related data when shift groups are updated
                 LoadShiftSlots();
