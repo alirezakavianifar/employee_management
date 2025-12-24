@@ -46,7 +46,9 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
 
@@ -85,8 +87,18 @@
                         </Grid>
                     </GroupBox>
 
+                    <!-- Splitter 1 -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Employee Details -->
-                    <GroupBox Grid.Column="1" Header="جزئیات کارمند" Margin="5">
+                    <GroupBox Grid.Column="2" Header="جزئیات کارمند" Margin="5">
                         <Grid x:Name="EmployeeDetailsGrid" Margin="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -128,8 +140,18 @@
                         </Grid>
                     </GroupBox>
 
+                    <!-- Splitter 2 -->
+                    <GridSplitter Grid.Column="3" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="2" Header="مدیریت غیبت" Margin="5">
+                    <GroupBox Grid.Column="4" Header="مدیریت غیبت" Margin="5">
                         <StackPanel Margin="10">
                             <Label Content="نوع غیبت:"/>
                             <ComboBox x:Name="AbsenceTypeComboBox" Margin="0,5">
@@ -175,7 +197,9 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
 
@@ -219,8 +243,18 @@
                         </ListBox>
                     </GroupBox>
 
+                    <!-- Splitter 1 -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Shift Assignment -->
-                    <GroupBox Grid.Column="1" Header="تخصیص شیفت" Margin="5">
+                    <GroupBox Grid.Column="2" Header="تخصیص شیفت" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -297,8 +331,18 @@
                         </Grid>
                     </GroupBox>
 
+                    <!-- Splitter 2 -->
+                    <GridSplitter Grid.Column="3" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Absence List -->
-                    <GroupBox Grid.Column="2" Header="کارمندان غایب" Margin="5">
+                    <GroupBox Grid.Column="4" Header="کارمندان غایب" Margin="5">
                         <ListBox x:Name="AbsentEmployeeListBox" 
                                 DisplayMemberPath="FullName"
                                 Margin="5"/>
@@ -310,6 +354,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
 
@@ -346,8 +391,18 @@
                         </Grid>
                     </GroupBox>
 
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Task Details -->
-                    <GroupBox Grid.Column="1" Header="جزئیات وظیفه" Margin="5">
+                    <GroupBox Grid.Column="2" Header="جزئیات وظیفه" Margin="5">
                         <Grid x:Name="TaskDetailsGrid" Margin="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -458,6 +513,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
 
@@ -498,8 +554,18 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Report Preview -->
-                    <GroupBox Grid.Column="1" Header="پیش‌نمایش گزارش" Margin="5">
+                    <GroupBox Grid.Column="2" Header="پیش‌نمایش گزارش" Margin="5">
                         <ScrollViewer>
                             <TextBlock x:Name="ReportPreviewTextBlock" 
                                       FontFamily="Tahoma" 
@@ -515,6 +581,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
 
@@ -582,8 +649,18 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
                     <!-- Settings Information -->
-                    <GroupBox Grid.Column="1" Header="اطلاعات سیستم" Margin="5">
+                    <GroupBox Grid.Column="2" Header="اطلاعات سیستم" Margin="5">
                         <StackPanel Margin="10">
                             <Label Content="وضعیت همگام‌سازی:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <TextBlock x:Name="SyncStatusTextBlock" 
