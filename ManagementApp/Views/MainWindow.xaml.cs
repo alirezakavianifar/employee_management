@@ -886,23 +886,6 @@ namespace ManagementApp.Views
             }
         }
 
-        private void DisplayGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                if (DisplayGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    _controller.SelectedDisplayGroupId = groupId;
-                    _controller.SaveData();
-                    UpdateStatus($"گروه نمایش به {selectedItem.Content} تغییر کرد");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling display group selection change");
-            }
-        }
-
         private void LoadShifts()
         {
             try
