@@ -19,7 +19,7 @@ namespace ManagementApp.Views
         public string GroupId => _originalGroup?.GroupId ?? $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
         public new string Name => NameTextBox?.Text?.Trim() ?? "";
         public string Description => DescriptionTextBox?.Text?.Trim() ?? "";
-        public string Color => ColorTextBox?.Text?.Trim() ?? "#4CAF50";
+        public string Color => ColorHexTextBlock?.Text?.Trim() ?? "#4CAF50";
         public int MorningCapacity => 15;
         public int EveningCapacity => 15;
         public bool IsGroupActive => true;
@@ -87,8 +87,7 @@ namespace ManagementApp.Views
                     NameTextBox.Text = "گروه جدید";
                 if (DescriptionTextBox != null)
                     DescriptionTextBox.Text = "توضیحات گروه";
-                if (ColorTextBox != null)
-                    ColorTextBox.Text = "#4CAF50";
+                UpdateColorDisplay("#4CAF50");
             }
             catch (Exception ex)
             {
@@ -188,23 +187,8 @@ namespace ManagementApp.Views
                     _logger?.LogWarning("DescriptionTextBox is null");
                 }
 
-                if (ColorTextBox != null)
-                {
-                    try
-                    {
-                        ColorTextBox.Text = safeColor;
-                        _logger?.LogInformation("Set ColorTextBox.Text to: {Text}", safeColor);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger?.LogError(ex, "Error setting ColorTextBox.Text");
-                        throw;
-                    }
-                }
-                else
-                {
-                    _logger?.LogWarning("ColorTextBox is null");
-                }
+                UpdateColorDisplay(safeColor);
+                _logger?.LogInformation("Set color display to: {Text}", safeColor);
 
                 // Load foreman selections
                 if (_controller != null)
@@ -291,6 +275,52 @@ namespace ManagementApp.Views
         {
             DialogResult = false;
             Close();
+        }
+
+        private void ColorPickerButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var currentColor = Color;
+                var colorDialog = new ColorPalettePopup(currentColor)
+                {
+                    Owner = this
+                };
+
+                if (colorDialog.ShowDialog() == true)
+                {
+                    UpdateColorDisplay(colorDialog.SelectedColor);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error opening color palette");
+                MessageBox.Show($"خطا در باز کردن پالت رنگ: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void UpdateColorDisplay(string colorHex)
+        {
+            try
+            {
+                if (ColorPreviewBorder != null && ColorHexTextBlock != null)
+                {
+                    var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex);
+                    ColorPreviewBorder.Background = new System.Windows.Media.SolidColorBrush(color);
+                    ColorHexTextBlock.Text = colorHex;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error updating color display");
+                // Fallback to default color
+                if (ColorPreviewBorder != null && ColorHexTextBlock != null)
+                {
+                    var defaultColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#4CAF50");
+                    ColorPreviewBorder.Background = new System.Windows.Media.SolidColorBrush(defaultColor);
+                    ColorHexTextBlock.Text = "#4CAF50";
+                }
+            }
         }
     }
 }
