@@ -253,6 +253,12 @@
                                 <Button Content="تغییر ظرفیت" Click="ChangeCapacity_Click" Margin="5,0"/>
                                 <Button Content="پاک کردن شیفت صبح" Click="ClearMorningShift_Click" Margin="5,0"/>
                                 <Button Content="پاک کردن شیفت عصر" Click="ClearEveningShift_Click" Margin="5,0"/>
+                                <Button Content="جابجایی شیفت‌ها" Click="SwapShifts_Click" Margin="5,0"/>
+                                <CheckBox x:Name="AutoRotateCheckBox" 
+                                          Content="جابجایی خودکار هر شنبه" 
+                                          Checked="AutoRotateCheckBox_Checked" 
+                                          Unchecked="AutoRotateCheckBox_Unchecked"
+                                          Margin="10,0,5,0" VerticalAlignment="Center"/>
                             </StackPanel>
 
                             <!-- Shift Slots -->

@@ -2166,8 +2166,7 @@ namespace ManagementApp.Controllers
                 if (group == null)
                     return false;
 
-                // Note: SwapShifts functionality not yet implemented on ShiftGroup
-                // group.SwapShifts();
+                group.SwapShifts();
                 ShiftsUpdated?.Invoke();
                 SaveData();
                 _logger.LogInformation("Swapped shifts for group {GroupId}", targetGroupId);

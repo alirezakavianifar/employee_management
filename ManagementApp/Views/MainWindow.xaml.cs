@@ -911,6 +911,19 @@ namespace ManagementApp.Views
                 LoadShiftSlots();
                 UpdateShiftStatistics();
                 
+                // Initialize auto-rotate checkbox state from settings
+                if (AutoRotateCheckBox != null)
+                {
+                    if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
+                    {
+                        AutoRotateCheckBox.IsChecked = enabled;
+                    }
+                    else
+                    {
+                        AutoRotateCheckBox.IsChecked = false;
+                    }
+                }
+                
                 // Load absent employees
                 var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
                 var absentEmployees = _controller.GetAllEmployees().Where(emp => 

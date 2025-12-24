@@ -155,6 +155,30 @@ namespace Shared.Models
             shift?.ClearShift();
         }
 
+        public void SwapShifts()
+        {
+            // Ensure shifts are initialized
+            if (MorningShift == null)
+                MorningShift = new Shift("morning", MorningCapacity);
+            if (EveningShift == null)
+                EveningShift = new Shift("evening", EveningCapacity);
+            
+            // Swap AssignedEmployees lists
+            var tempEmployees = new List<Employee?>(MorningShift.AssignedEmployees);
+            MorningShift.AssignedEmployees = new List<Employee?>(EveningShift.AssignedEmployees);
+            EveningShift.AssignedEmployees = tempEmployees;
+            
+            // Swap TeamLeaderId values
+            var tempTeamLeader = MorningShift.TeamLeaderId;
+            MorningShift.TeamLeaderId = EveningShift.TeamLeaderId;
+            EveningShift.TeamLeaderId = tempTeamLeader;
+            
+            // Update timestamps
+            MorningShift.UpdatedAt = DateTime.Now;
+            EveningShift.UpdatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
+        }
+
         public void SetTeamLeader(string shiftType, string employeeId)
         {
             // Ensure shifts are initialized before accessing them
