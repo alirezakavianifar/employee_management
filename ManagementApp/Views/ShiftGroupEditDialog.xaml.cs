@@ -116,13 +116,13 @@ namespace ManagementApp.Views
                 if (MorningForemanComboBox != null)
                 {
                     MorningForemanComboBox.ItemsSource = employeeList;
-                    MorningForemanComboBox.DisplayMemberPath = "FullName";
+                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
                 if (EveningForemanComboBox != null)
                 {
                     EveningForemanComboBox.ItemsSource = employeeList;
-                    EveningForemanComboBox.DisplayMemberPath = "FullName";
+                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
                 _logger?.LogInformation("Loaded {Count} employees for foreman selection", employees.Count);
@@ -216,24 +216,24 @@ namespace ManagementApp.Views
                     if (MorningForemanComboBox != null)
                     {
                         MorningForemanComboBox.ItemsSource = employeeList;
-                        MorningForemanComboBox.DisplayMemberPath = "FullName";
+                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
                     }
 
                     if (EveningForemanComboBox != null)
                     {
                         EveningForemanComboBox.ItemsSource = employeeList;
-                        EveningForemanComboBox.DisplayMemberPath = "FullName";
+                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
                     }
 
                     // Set morning foreman
-                    if (MorningForemanComboBox != null && !string.IsNullOrEmpty(_originalGroup.MorningShift.TeamLeaderId))
+                    if (MorningForemanComboBox != null && _originalGroup.MorningShift != null && !string.IsNullOrEmpty(_originalGroup.MorningShift.TeamLeaderId))
                     {
                         var morningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.MorningShift.TeamLeaderId);
                         MorningForemanComboBox.SelectedItem = morningForeman;
                     }
 
                     // Set evening foreman
-                    if (EveningForemanComboBox != null && !string.IsNullOrEmpty(_originalGroup.EveningShift.TeamLeaderId))
+                    if (EveningForemanComboBox != null && _originalGroup.EveningShift != null && !string.IsNullOrEmpty(_originalGroup.EveningShift.TeamLeaderId))
                     {
                         var eveningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.EveningShift.TeamLeaderId);
                         EveningForemanComboBox.SelectedItem = eveningForeman;

@@ -349,35 +349,43 @@ namespace ManagementApp.Views
                 var dialog = new ShiftGroupEditDialog(_selectedGroup, _controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.UpdateShiftGroup(
-                        _selectedGroup.GroupId,
+                    // Store group ID before UpdateShiftGroup in case _selectedGroup reference becomes stale
+                    var groupId = _selectedGroup?.GroupId;
+                    if (string.IsNullOrEmpty(groupId))
+                    {
+                        MessageBox.Show("خطا: شناسه گروه نامعتبر است", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
+                    var success = _controller?.UpdateShiftGroup(
+                        groupId,
                         dialog.Name,
                         dialog.Description,
                         "", // supervisorName (not used)
                         dialog.Color,
                         dialog.MorningCapacity,
                         dialog.EveningCapacity,
-                        dialog.IsGroupActive);
+                        dialog.IsGroupActive) ?? false;
                     
-                    if (success)
+                    if (success && _controller != null)
                     {
                         // Set foremen for each shift
                         if (!string.IsNullOrEmpty(dialog.MorningForemanId))
                         {
-                            _controller.SetTeamLeader("morning", dialog.MorningForemanId, _selectedGroup.GroupId);
+                            _controller.SetTeamLeader("morning", dialog.MorningForemanId, groupId);
                         }
                         else
                         {
-                            _controller.SetTeamLeader("morning", string.Empty, _selectedGroup.GroupId);
+                            _controller.SetTeamLeader("morning", string.Empty, groupId);
                         }
 
                         if (!string.IsNullOrEmpty(dialog.EveningForemanId))
                         {
-                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, _selectedGroup.GroupId);
+                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
                         }
                         else
                         {
-                            _controller.SetTeamLeader("evening", string.Empty, _selectedGroup.GroupId);
+                            _controller.SetTeamLeader("evening", string.Empty, groupId);
                         }
                         
                         LoadGroups();
