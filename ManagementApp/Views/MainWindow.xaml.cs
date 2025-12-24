@@ -33,10 +33,16 @@ namespace ManagementApp.Views
         private readonly PdfReportService _pdfService;
         private Employee? _selectedEmployee;
         private Shared.Models.Task? _selectedTask;
+        
+        // Converter instance as property for XAML binding
+        public ManagementApp.Converters.EmployeePhotoConverter EmployeePhotoConverter { get; } = new ManagementApp.Converters.EmployeePhotoConverter();
 
         public MainWindow()
         {
             InitializeComponent();
+            
+            // Add EmployeePhotoConverter to resources using the property instance
+            Resources["EmployeePhotoConverter"] = EmployeePhotoConverter;
             
             _controller = new MainController();
             _logger = LoggingService.CreateLogger<MainWindow>();
@@ -122,6 +128,10 @@ namespace ManagementApp.Views
                     }
                 };
 
+                // Subscribe to LayoutUpdated to re-attach drag handlers when items are regenerated
+                // This ensures handlers are attached after tab switches or other UI updates
+                ShiftEmployeeListBox.LayoutUpdated += ShiftEmployeeListBox_LayoutUpdated;
+
                 _logger.LogInformation("UI initialized successfully");
             }
             catch (Exception ex)
@@ -198,6 +208,10 @@ namespace ManagementApp.Views
         {
             try
             {
+                // #region agent log
+                File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:197\",\"message\":\"LoadData called, about to call LoadEmployees\",\"data\":{{}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}}\n");
+                // #endregion
                 LoadEmployees();
                 LoadShifts();
                 LoadAbsences();
@@ -208,6 +222,10 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
+                // #region agent log
+                File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:209\",\"message\":\"LoadData exception\",\"data\":{{\"error\":\"{ex.Message}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}}\n");
+                // #endregion
                 _logger.LogError(ex, "Error loading data");
                 UpdateStatus("خطا در بارگذاری داده‌ها");
             }
@@ -257,20 +275,35 @@ namespace ManagementApp.Views
                 ShiftEmployeeListBox.ItemsSource = availableEmployees;
                 
                 // Attach handlers when containers are generated
-                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                // Use Dispatcher.BeginInvoke to ensure UI is fully rendered
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    AttachDragHandlers();
-                }
-                else
-                {
-                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += (s, e) =>
+                    try
                     {
                         if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
                         {
                             AttachDragHandlers();
                         }
-                    };
-                }
+                        else
+                        {
+                            // Subscribe to status changed event
+                            EventHandler? statusChangedHandler = null;
+                            statusChangedHandler = (s, e) =>
+                            {
+                                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                                {
+                                    AttachDragHandlers();
+                                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged -= statusChangedHandler;
+                                }
+                            };
+                            ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += statusChangedHandler;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error in Dispatcher.BeginInvoke for AttachDragHandlers");
+                    }
+                }), DispatcherPriority.Loaded);
                 
                 _logger.LogInformation("LoadEmployees: Completed successfully");
             }
@@ -840,10 +873,11 @@ namespace ManagementApp.Views
                     UpdateShiftStatistics();
                     
                     // Load auto-rotation setting
-                    if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
-                    {
-                        AutoRotateCheckBox.IsChecked = enabled;
-                    }
+                    // Note: AutoRotateCheckBox not yet implemented in XAML
+                    // if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
+                    // {
+                    //     AutoRotateCheckBox.IsChecked = enabled;
+                    // }
                 }
             }
             catch (Exception ex)
@@ -852,6 +886,22 @@ namespace ManagementApp.Views
             }
         }
 
+        private void DisplayGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (DisplayGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                {
+                    _controller.SelectedDisplayGroupId = groupId;
+                    _controller.SaveData();
+                    UpdateStatus($"گروه نمایش به {selectedItem.Content} تغییر کرد");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling display group selection change");
+            }
+        }
 
         private void LoadShifts()
         {
@@ -1055,6 +1105,7 @@ namespace ManagementApp.Views
             // Enable drop functionality
             border.AllowDrop = true;
             border.DragOver += (s, e) => Slot_DragOver(s, e, shiftType, slotIndex);
+            border.DragLeave += (s, e) => Slot_DragLeave(s, e, shiftType, slotIndex);
             border.Drop += (s, e) => Slot_Drop(s, e, shiftType, slotIndex);
             
             // Add click functionality for easier assignment
@@ -1279,6 +1330,12 @@ namespace ManagementApp.Views
         {
             try
             {
+                _logger.LogInformation("AttachDragHandlers: Starting to attach handlers for {Count} items", ShiftEmployeeListBox.Items.Count);
+                
+                int itemsProcessed = 0;
+                int bordersFound = 0;
+                int handlersAttached = 0;
+                
                 for (int i = 0; i < ShiftEmployeeListBox.Items.Count; i++)
                 {
                     if (ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromIndex(i) is ListBoxItem item)
@@ -1286,19 +1343,253 @@ namespace ManagementApp.Views
                         var employee = item.DataContext as Employee;
                         if (employee != null)
                         {
+                            itemsProcessed++;
+                            
                             // Find the Border in the template using VisualTreeHelper
                             Border? border = FindVisualChild<Border>(item);
+                            
                             if (border != null && border.Name == "EmployeeCardBorder")
                             {
+                                bordersFound++;
                                 border.Tag = employee;
+                                
+                                // Set image source for employee photo
+                                Image? image = FindVisualChild<Image>(border);
+                                if (image != null)
+                                {
+                                    image.Source = EmployeePhotoConverter.Convert(employee, typeof(ImageSource), null, System.Globalization.CultureInfo.CurrentCulture) as ImageSource;
+                                }
+                                
+                                // Remove existing handlers to prevent duplicates
+                                border.PreviewMouseLeftButtonDown -= EmployeeItem_PreviewMouseLeftButtonDown;
+                                border.MouseMove -= EmployeeItem_MouseMove;
+                                border.MouseEnter -= EmployeeItem_MouseEnter;
+                                border.MouseLeave -= EmployeeItem_MouseLeave;
+                                
+                                // Attach drag event handlers to Border
+                                border.PreviewMouseLeftButtonDown += EmployeeItem_PreviewMouseLeftButtonDown;
+                                border.MouseMove += EmployeeItem_MouseMove;
+                                border.MouseEnter += EmployeeItem_MouseEnter;
+                                border.MouseLeave += EmployeeItem_MouseLeave;
+                                
+                                handlersAttached++;
+                                _logger.LogDebug("AttachDragHandlers: Attached handlers to border for employee {EmployeeName}", employee.FullName);
                             }
+                            else
+                            {
+                                // Fallback: attach to ListBoxItem if Border not found
+                                item.Tag = employee;
+                                item.PreviewMouseLeftButtonDown -= ListBoxItem_PreviewMouseLeftButtonDown;
+                                item.PreviewMouseLeftButtonDown += ListBoxItem_PreviewMouseLeftButtonDown;
+                                item.MouseMove -= ListBoxItem_MouseMove;
+                                item.MouseMove += ListBoxItem_MouseMove;
+                                
+                                _logger.LogDebug("AttachDragHandlers: Attached handlers to ListBoxItem (fallback) for employee {EmployeeName}", employee.FullName);
+                            }
+                        }
+                    }
+                }
+                
+                _logger.LogInformation("AttachDragHandlers: Completed - {ItemsProcessed} items processed, {BordersFound} borders found, {HandlersAttached} handlers attached", 
+                    itemsProcessed, bordersFound, handlersAttached);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error attaching drag handlers");
+            }
+        }
+
+        private void ShiftEmployeeListBox_LayoutUpdated(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Re-attach handlers whenever layout is updated (e.g., after tab switches)
+                // This ensures handlers are always attached when items are regenerated
+                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                    System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                {
+                    // Use BeginInvoke to ensure this happens after layout is complete
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        AttachDragHandlers();
+                    }), DispatcherPriority.Loaded);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_LayoutUpdated");
+            }
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                // When shift management tab (index 1) is selected, ensure handlers are attached
+                if (MainTabControl.SelectedIndex == 1) // Shift management tab
+                {
+                    _logger.LogInformation("MainTabControl: Shift management tab selected, ensuring drag handlers are attached");
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                            System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                        {
+                            AttachDragHandlers();
+                        }
+                        else
+                        {
+                            // Subscribe to status changed event if containers aren't ready yet
+                            EventHandler? statusChangedHandler = null;
+                            statusChangedHandler = (s, ev) =>
+                            {
+                                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                                    System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                                {
+                                    AttachDragHandlers();
+                                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged -= statusChangedHandler;
+                                }
+                            };
+                            ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += statusChangedHandler;
+                        }
+                    }), DispatcherPriority.Loaded);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in MainTabControl_SelectionChanged");
+            }
+        }
+        
+        private void ShiftEmployeeListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // #region agent log
+            _logger.LogInformation("ShiftEmployeeListBox_PreviewMouseLeftButtonDown fired");
+            // #endregion
+            
+            var listBox = sender as ListBox;
+            if (listBox == null) return;
+            
+            var hitTestResult = VisualTreeHelper.HitTest(listBox, e.GetPosition(listBox));
+            if (hitTestResult?.VisualHit == null) return;
+            
+            // Find the ListBoxItem that was clicked
+            DependencyObject? current = hitTestResult.VisualHit;
+            while (current != null && current != listBox)
+            {
+                if (current is ListBoxItem item)
+                {
+                    var employee = item.DataContext as Employee ?? item.Tag as Employee;
+                    if (employee != null)
+                    {
+                        _dragStartPoint = e.GetPosition(null);
+                        _draggedEmployee = employee;
+                        // #region agent log
+                        _logger.LogInformation("Drag start point set for employee: {EmployeeName}", employee.FullName);
+                        // #endregion
+                        return;
+                    }
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+        }
+        
+        private void ShiftEmployeeListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee != null)
+                {
+                    var currentPoint = e.GetPosition(null);
+                    var diff = _dragStartPoint - currentPoint;
+
+                    if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+                        // #region agent log
+                        _logger.LogInformation("Starting DoDragDrop for employee: {EmployeeName}", _draggedEmployee.FullName);
+                        // #endregion
+                        
+                        var dragData = new DataObject(typeof(Employee), _draggedEmployee);
+                        var result = DragDrop.DoDragDrop(ShiftEmployeeListBox, dragData, DragDropEffects.Move);
+                        
+                        // #region agent log
+                        _logger.LogInformation("DoDragDrop completed with result: {Result}", result);
+                        // #endregion
+                        
+                        _draggedEmployee = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // #region agent log
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_MouseMove");
+                // #endregion
+            }
+        }
+        
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // #region agent log
+            try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_PreviewMouseLeftButtonDown\",\"message\":\"ListBoxItem PreviewMouseLeftButtonDown fired\",\"data\":{{\"senderType\":\"{sender?.GetType().Name}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}}\n"); } catch {}
+            // #endregion
+            
+            if (sender is ListBoxItem item && item.Tag is Employee employee)
+            {
+                _dragStartPoint = e.GetPosition(null);
+                _draggedEmployee = employee;
+                // #region agent log
+                try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_PreviewMouseLeftButtonDown\",\"message\":\"ListBoxItem drag start point set\",\"data\":{{\"employeeName\":\"{employee.FullName?.Replace("\"", "\\\"") ?? "null"}\",\"x\":{_dragStartPoint.X},\"y\":{_dragStartPoint.Y}}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}}\n"); } catch {}
+                // #endregion
+            }
+        }
+        
+        private void ListBoxItem_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (sender is ListBoxItem item && item.Tag is Employee employee)
+                {
+                    if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee == employee)
+                    {
+                        var currentPoint = e.GetPosition(null);
+                        var diff = _dragStartPoint - currentPoint;
+
+                        // #region agent log
+                        try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                            $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_MouseMove\",\"message\":\"ListBoxItem MouseMove with button pressed\",\"data\":{{\"diffX\":{diff.X},\"diffY\":{diff.Y},\"minDistance\":{SystemParameters.MinimumHorizontalDragDistance}}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n"); } catch {}
+                        // #endregion
+
+                        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                            Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                        {
+                            // #region agent log
+                            try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_MouseMove\",\"message\":\"Starting DoDragDrop from ListBoxItem\",\"data\":{{\"employeeName\":\"{employee.FullName?.Replace("\"", "\\\"") ?? "null"}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n"); } catch {}
+                            // #endregion
+                            
+                            var dragData = new DataObject(typeof(Employee), employee);
+                            var result = DragDrop.DoDragDrop(item, dragData, DragDropEffects.Move);
+                            
+                            // #region agent log
+                            try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_MouseMove\",\"message\":\"DoDragDrop completed from ListBoxItem\",\"data\":{{\"result\":\"{result}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n"); } catch {}
+                            // #endregion
+                            
+                            _draggedEmployee = null;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error attaching drag handlers");
+                // #region agent log
+                try { File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:ListBoxItem_MouseMove\",\"message\":\"ListBoxItem MouseMove exception\",\"data\":{{\"error\":\"{ex.Message?.Replace("\"", "\\\"") ?? "null"}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n"); } catch {}
+                // #endregion
+                _logger.LogError(ex, "Error in ListBoxItem mouse move");
             }
         }
 
@@ -1322,10 +1613,26 @@ namespace ManagementApp.Views
 
         private void EmployeeItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // #region agent log
+            File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1354\",\"message\":\"PreviewMouseLeftButtonDown fired\",\"data\":{{\"senderType\":\"{sender?.GetType().Name}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}}\n");
+            // #endregion
+            
             if (sender is Border border && border.Tag is Employee employee)
             {
                 _dragStartPoint = e.GetPosition(null);
                 _draggedEmployee = employee;
+                // #region agent log
+                File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1359\",\"message\":\"Drag start point set\",\"data\":{{\"employeeName\":\"{employee.FullName}\",\"x\":{_dragStartPoint.X},\"y\":{_dragStartPoint.Y}}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}}\n");
+                // #endregion
+            }
+            else
+            {
+                // #region agent log
+                File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1361\",\"message\":\"PreviewMouseLeftButtonDown - invalid sender or tag\",\"data\":{{\"isBorder\":{(sender is Border)},\"hasTag\":{(sender is Border border2 && border2.Tag != null)}}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}}\n");
+                // #endregion
             }
         }
 
@@ -1340,11 +1647,27 @@ namespace ManagementApp.Views
                         var currentPoint = e.GetPosition(null);
                         var diff = _dragStartPoint - currentPoint;
 
+                        // #region agent log
+                        File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                            $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1369\",\"message\":\"MouseMove with button pressed\",\"data\":{{\"diffX\":{diff.X},\"diffY\":{diff.Y},\"minDistance\":{SystemParameters.MinimumHorizontalDragDistance}}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n");
+                        // #endregion
+
                         if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
                             Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
                         {
+                            // #region agent log
+                            File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1377\",\"message\":\"Starting DoDragDrop\",\"data\":{{\"employeeName\":\"{employee.FullName}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n");
+                            // #endregion
+                            
                             var dragData = new DataObject(typeof(Employee), employee);
-                            DragDrop.DoDragDrop(border, dragData, DragDropEffects.Move);
+                            var result = DragDrop.DoDragDrop(border, dragData, DragDropEffects.Move);
+                            
+                            // #region agent log
+                            File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                                $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1379\",\"message\":\"DoDragDrop completed\",\"data\":{{\"result\":\"{result}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n");
+                            // #endregion
+                            
                             _draggedEmployee = null;
                         }
                     }
@@ -1352,6 +1675,10 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
+                // #region agent log
+                File.AppendAllText(@"d:\projects\employee_management_csharp\.cursor\debug.log", 
+                    $"{{\"id\":\"log_{DateTime.Now.Ticks}\",\"timestamp\":{DateTimeOffset.Now.ToUnixTimeMilliseconds()},\"location\":\"MainWindow.xaml.cs:1385\",\"message\":\"MouseMove exception\",\"data\":{{\"error\":\"{ex.Message}\"}},\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"C\"}}\n");
+                // #endregion
                 _logger.LogError(ex, "Error in employee mouse move");
             }
         }
@@ -1427,41 +1754,75 @@ namespace ManagementApp.Views
         {
             try
             {
-                if (e.Data.GetDataPresent(typeof(Employee)))
+                if (sender is Border border)
                 {
-                    e.Effects = DragDropEffects.Move;
-                    (sender as Border)!.Background = Brushes.LightBlue;
-                }
-                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                {
-                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                    if (files != null && files.Length > 0)
+                    if (e.Data.GetDataPresent(typeof(Employee)))
                     {
-                        var file = files[0];
-                        var ext = Path.GetExtension(file).ToLower();
-                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        e.Effects = DragDropEffects.Move;
+                        border.Background = Brushes.LightBlue;
+                        border.BorderBrush = Brushes.DodgerBlue;
+                        border.BorderThickness = new Thickness(2);
+                    }
+                    else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                    {
+                        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        if (files != null && files.Length > 0)
                         {
-                            e.Effects = DragDropEffects.Copy;
-                            (sender as Border)!.Background = Brushes.LightGreen;
+                            var file = files[0];
+                            var ext = Path.GetExtension(file).ToLower();
+                            if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                            {
+                                e.Effects = DragDropEffects.Copy;
+                                border.Background = Brushes.LightGreen;
+                                border.BorderBrush = Brushes.Green;
+                                border.BorderThickness = new Thickness(2);
+                            }
+                            else
+                            {
+                                e.Effects = DragDropEffects.None;
+                                border.Background = Brushes.LightGray;
+                                border.BorderBrush = Brushes.Gray;
+                                border.BorderThickness = new Thickness(1);
+                            }
                         }
                         else
                         {
                             e.Effects = DragDropEffects.None;
+                            border.Background = Brushes.LightGray;
+                            border.BorderBrush = Brushes.Gray;
+                            border.BorderThickness = new Thickness(1);
                         }
                     }
                     else
                     {
                         e.Effects = DragDropEffects.None;
+                        border.Background = Brushes.LightGray;
+                        border.BorderBrush = Brushes.Gray;
+                        border.BorderThickness = new Thickness(1);
                     }
-                }
-                else
-                {
-                    e.Effects = DragDropEffects.None;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in slot drag over");
+            }
+        }
+
+        private void Slot_DragLeave(object sender, DragEventArgs e, string shiftType, int slotIndex)
+        {
+            try
+            {
+                if (sender is Border border)
+                {
+                    // Reset background and border to default
+                    border.Background = Brushes.LightGray;
+                    border.BorderBrush = Brushes.Gray;
+                    border.BorderThickness = new Thickness(1);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in slot drag leave");
             }
         }
 

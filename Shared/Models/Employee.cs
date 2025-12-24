@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -15,6 +16,13 @@ namespace Shared.Models
         public bool IsManager { get; set; } = false;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        
+        // Extended properties
+        public string ShieldColor { get; set; } = "Blue";
+        public bool ShowShield { get; set; } = true;
+        public List<string> StickerPaths { get; set; } = new List<string>();
+        public string MedalBadgePath { get; set; } = string.Empty;
+        public string PersonnelId { get; set; } = string.Empty;
 
         // Backward compatibility property
         [JsonIgnore]
@@ -84,7 +92,8 @@ namespace Shared.Models
             return string.Empty;
         }
 
-        public void Update(string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null)
+        public void Update(string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null, 
+                          string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null)
         {
             if (!string.IsNullOrEmpty(firstName))
                 FirstName = firstName;
@@ -98,6 +107,16 @@ namespace Shared.Models
                 PhotoPath = photoPath;
             if (isManager.HasValue)
                 IsManager = isManager.Value;
+            if (!string.IsNullOrEmpty(shieldColor))
+                ShieldColor = shieldColor;
+            if (showShield.HasValue)
+                ShowShield = showShield.Value;
+            if (stickerPaths != null)
+                StickerPaths = stickerPaths;
+            if (!string.IsNullOrEmpty(medalBadgePath))
+                MedalBadgePath = medalBadgePath;
+            if (!string.IsNullOrEmpty(personnelId))
+                PersonnelId = personnelId;
             
             UpdatedAt = DateTime.Now;
         }
@@ -140,7 +159,12 @@ namespace Shared.Models
                 { "photo_path", PhotoPath },
                 { "is_manager", IsManager },
                 { "created_at", CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
-                { "updated_at", UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) }
+                { "updated_at", UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
+                { "shield_color", ShieldColor },
+                { "show_shield", ShowShield },
+                { "sticker_paths", StickerPaths ?? new List<string>() },
+                { "medal_badge_path", MedalBadgePath },
+                { "personnel_id", PersonnelId }
             };
         }
     }

@@ -37,6 +37,8 @@ D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\refint\DisplayApp
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.pdb
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.genruntimeconfig.cache
 D:\projects\New folder (8)\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\app_config.json
+D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\display_config.json
 D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.exe
 D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.deps.json
 D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\DisplayApp.runtimeconfig.json
@@ -64,6 +66,7 @@ D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\MainW
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\App.baml
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\MainWindow.g.cs
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\App.g.cs
+D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_Content.g.cs
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_MarkupCompile.cache
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.g.resources
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.GeneratedMSBuildEditorConfig.editorconfig
@@ -76,6 +79,3 @@ D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\refin
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.pdb
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.genruntimeconfig.cache
 D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
-D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\display_config.json
-D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_Content.g.cs
-D:\projects\employee_management_csharp\DisplayApp\bin\Debug\net8.0-windows\Config\app_config.json

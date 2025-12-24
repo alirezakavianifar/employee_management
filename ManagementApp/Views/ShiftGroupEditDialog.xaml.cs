@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.Services;
+using ManagementApp.Controllers;
 
 namespace ManagementApp.Views
 {
@@ -10,26 +13,31 @@ namespace ManagementApp.Views
     {
         private readonly ILogger<ShiftGroupEditDialog> _logger;
         private readonly ShiftGroup? _originalGroup;
+        private readonly MainController? _controller;
 
         // Properties for accessing form data
-        public string GroupId => $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
+        public string GroupId => _originalGroup?.GroupId ?? $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
         public new string Name => NameTextBox?.Text?.Trim() ?? "";
         public string Description => DescriptionTextBox?.Text?.Trim() ?? "";
         public string Color => ColorTextBox?.Text?.Trim() ?? "#4CAF50";
         public int MorningCapacity => 15;
         public int EveningCapacity => 15;
         public bool IsGroupActive => true;
+        public string MorningForemanId => (MorningForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
+        public string EveningForemanId => (EveningForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
 
-        public ShiftGroupEditDialog()
+        public ShiftGroupEditDialog(MainController? controller = null)
         {
             try
             {
                 InitializeComponent();
+                _controller = controller;
                 _logger = LoggingService.CreateLogger<ShiftGroupEditDialog>();
                 Title = "افزودن گروه شیفت جدید";
                 
                 // Set default values after initialization
                 SetDefaultValues();
+                LoadEmployees();
             }
             catch (Exception ex)
             {
@@ -39,7 +47,7 @@ namespace ManagementApp.Views
             }
         }
 
-        public ShiftGroupEditDialog(ShiftGroup group) : this()
+        public ShiftGroupEditDialog(ShiftGroup group, MainController? controller = null) : this(controller)
         {
             _originalGroup = group;
             Title = "ویرایش گروه شیفت";
@@ -85,6 +93,43 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error setting default values");
+            }
+        }
+
+        private void LoadEmployees()
+        {
+            try
+            {
+                if (_controller == null)
+                {
+                    _logger?.LogWarning("Controller is null, cannot load employees");
+                    return;
+                }
+
+                var employees = _controller.GetAllEmployees();
+                if (employees == null)
+                    employees = new List<Employee>();
+
+                // Foremen are required, so don't add null option
+                var employeeList = employees.ToList();
+
+                if (MorningForemanComboBox != null)
+                {
+                    MorningForemanComboBox.ItemsSource = employeeList;
+                    MorningForemanComboBox.DisplayMemberPath = "FullName";
+                }
+
+                if (EveningForemanComboBox != null)
+                {
+                    EveningForemanComboBox.ItemsSource = employeeList;
+                    EveningForemanComboBox.DisplayMemberPath = "FullName";
+                }
+
+                _logger?.LogInformation("Loaded {Count} employees for foreman selection", employees.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error loading employees");
             }
         }
 
@@ -161,6 +206,40 @@ namespace ManagementApp.Views
                     _logger?.LogWarning("ColorTextBox is null");
                 }
 
+                // Load foreman selections
+                if (_controller != null)
+                {
+                    var employees = _controller.GetAllEmployees();
+                    var employeeList = employees.ToList();
+
+                    // Ensure ComboBoxes have the employee list
+                    if (MorningForemanComboBox != null)
+                    {
+                        MorningForemanComboBox.ItemsSource = employeeList;
+                        MorningForemanComboBox.DisplayMemberPath = "FullName";
+                    }
+
+                    if (EveningForemanComboBox != null)
+                    {
+                        EveningForemanComboBox.ItemsSource = employeeList;
+                        EveningForemanComboBox.DisplayMemberPath = "FullName";
+                    }
+
+                    // Set morning foreman
+                    if (MorningForemanComboBox != null && !string.IsNullOrEmpty(_originalGroup.MorningShift.TeamLeaderId))
+                    {
+                        var morningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.MorningShift.TeamLeaderId);
+                        MorningForemanComboBox.SelectedItem = morningForeman;
+                    }
+
+                    // Set evening foreman
+                    if (EveningForemanComboBox != null && !string.IsNullOrEmpty(_originalGroup.EveningShift.TeamLeaderId))
+                    {
+                        var eveningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.EveningShift.TeamLeaderId);
+                        EveningForemanComboBox.SelectedItem = eveningForeman;
+                    }
+                }
+
                 _logger?.LogInformation("Successfully loaded group data");
             }
             catch (Exception ex)
@@ -179,6 +258,22 @@ namespace ManagementApp.Views
                 {
                     MessageBox.Show("لطفاً نام گروه را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
                     NameTextBox?.Focus();
+                    return;
+                }
+
+                // Validate that morning foreman is selected
+                if (string.IsNullOrEmpty(MorningForemanId))
+                {
+                    MessageBox.Show("لطفاً سرپرست شیفت صبح را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MorningForemanComboBox?.Focus();
+                    return;
+                }
+
+                // Validate that evening foreman is selected
+                if (string.IsNullOrEmpty(EveningForemanId))
+                {
+                    MessageBox.Show("لطفاً سرپرست شیفت عصر را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    EveningForemanComboBox?.Focus();
                     return;
                 }
 

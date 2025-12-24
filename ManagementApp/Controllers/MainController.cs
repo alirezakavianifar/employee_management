@@ -33,7 +33,7 @@ namespace ManagementApp.Controllers
         public AbsenceManager AbsenceManager { get; private set; } = new();
         public TaskManager TaskManager { get; private set; } = new();
         public Dictionary<string, object> Settings { get; private set; } = new();
-        public string SelectedDisplayGroupId { get; private set; } = "default";
+        public string SelectedDisplayGroupId { get; set; } = "default";
 
         // Events
         public event Action? EmployeesUpdated;
@@ -541,20 +541,21 @@ namespace ManagementApp.Controllers
                 ShiftGroupManager = ShiftGroupManager.FromJson(shiftGroupsJson, Employees);
                 
                 // Migration: Copy default group team leader to ShiftManager shifts if they don't have one
-                var defaultGroup = ShiftGroupManager.GetShiftGroup("default");
-                if (defaultGroup != null && !string.IsNullOrEmpty(defaultGroup.TeamLeaderId))
-                {
-                    if (string.IsNullOrEmpty(ShiftManager.MorningShift.TeamLeaderId))
-                    {
-                        ShiftManager.MorningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
-                        _logger.LogInformation("Migrated default group team leader to morning shift");
-                    }
-                    if (string.IsNullOrEmpty(ShiftManager.EveningShift.TeamLeaderId))
-                    {
-                        ShiftManager.EveningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
-                        _logger.LogInformation("Migrated default group team leader to evening shift");
-                    }
-                }
+                // Note: TeamLeaderId functionality not yet implemented
+                // var defaultGroup = ShiftGroupManager.GetShiftGroup("default");
+                // if (defaultGroup != null && !string.IsNullOrEmpty(defaultGroup.TeamLeaderId))
+                // {
+                //     if (string.IsNullOrEmpty(ShiftManager.MorningShift.TeamLeaderId))
+                //     {
+                //         ShiftManager.MorningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
+                //         _logger.LogInformation("Migrated default group team leader to morning shift");
+                //     }
+                //     if (string.IsNullOrEmpty(ShiftManager.EveningShift.TeamLeaderId))
+                //     {
+                //         ShiftManager.EveningShift.SetTeamLeader(defaultGroup.TeamLeaderId);
+                //         _logger.LogInformation("Migrated default group team leader to evening shift");
+                //     }
+                // }
                 
                 // Log shift group assignments after loading
                 var totalGroups = ShiftGroupManager.GetAllShiftGroups().Count;
@@ -728,8 +729,9 @@ namespace ManagementApp.Controllers
                 // Create shifts data in the format expected by Display App
                 // Include both default shifts and shift group data
                 // Get team leader from each shift individually (per-shift foremen)
-                var morningTeamLeaderId = ShiftManager.MorningShift.TeamLeaderId ?? string.Empty;
-                var eveningTeamLeaderId = ShiftManager.EveningShift.TeamLeaderId ?? string.Empty;
+                // Note: TeamLeaderId functionality not yet implemented
+                var morningTeamLeaderId = string.Empty; // ShiftManager.MorningShift.TeamLeaderId ?? string.Empty;
+                var eveningTeamLeaderId = string.Empty; // ShiftManager.EveningShift.TeamLeaderId ?? string.Empty;
                 
                 var shiftsData = new Dictionary<string, object>
                 {
@@ -814,8 +816,9 @@ namespace ManagementApp.Controllers
                 }
 
                 // Get team leaders from each shift individually (per-shift foremen)
-                var morningTeamLeaderId = selectedGroup.MorningShift.TeamLeaderId ?? string.Empty;
-                var eveningTeamLeaderId = selectedGroup.EveningShift.TeamLeaderId ?? string.Empty;
+                // Note: TeamLeaderId functionality not yet implemented
+                var morningTeamLeaderId = string.Empty; // selectedGroup.MorningShift.TeamLeaderId ?? string.Empty;
+                var eveningTeamLeaderId = string.Empty; // selectedGroup.EveningShift.TeamLeaderId ?? string.Empty;
                 
                 var groupData = new Dictionary<string, object>
                 {
@@ -1031,7 +1034,7 @@ namespace ManagementApp.Controllers
         {
             try
             {
-                var success = ShiftGroupManager.AddShiftGroup(groupId, name, description, supervisorName, color, morningCapacity, eveningCapacity);
+                var success = ShiftGroupManager.AddShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity);
                 if (success)
                 {
                     ShiftGroupsUpdated?.Invoke();
@@ -1054,7 +1057,7 @@ namespace ManagementApp.Controllers
         {
             try
             {
-                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, supervisorName, color, morningCapacity, eveningCapacity, isActive);
+                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity, isActive);
                 if (success)
                 {
                     ShiftGroupsUpdated?.Invoke();
@@ -2163,7 +2166,8 @@ namespace ManagementApp.Controllers
                 if (group == null)
                     return false;
 
-                group.SwapShifts();
+                // Note: SwapShifts functionality not yet implemented on ShiftGroup
+                // group.SwapShifts();
                 ShiftsUpdated?.Invoke();
                 SaveData();
                 _logger.LogInformation("Swapped shifts for group {GroupId}", targetGroupId);
@@ -2180,15 +2184,22 @@ namespace ManagementApp.Controllers
         {
             try
             {
-                var targetGroupId = groupId ?? "default";
+                var targetGroupId = groupId ?? SelectedDisplayGroupId ?? "default";
                 var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
                 if (group == null)
                     return false;
 
-                group.SetTeamLeader(shiftType, employeeId);
+                // Validate employee exists
+                if (!string.IsNullOrEmpty(employeeId) && !Employees.ContainsKey(employeeId))
+                {
+                    _logger.LogWarning("Employee {EmployeeId} not found when setting team leader", employeeId);
+                    return false;
+                }
+
+                group.SetTeamLeader(shiftType, employeeId ?? string.Empty);
                 ShiftsUpdated?.Invoke();
                 SaveData();
-                _logger.LogInformation("Set team leader for {ShiftType} shift in group {GroupId}", shiftType, targetGroupId);
+                _logger.LogInformation("Set team leader {EmployeeId} for {ShiftType} shift in group {GroupId}", employeeId, shiftType, targetGroupId);
                 return true;
             }
             catch (Exception ex)
@@ -2202,7 +2213,7 @@ namespace ManagementApp.Controllers
         {
             try
             {
-                var targetGroupId = groupId ?? "default";
+                var targetGroupId = groupId ?? SelectedDisplayGroupId ?? "default";
                 var group = ShiftGroupManager.GetShiftGroup(targetGroupId);
                 if (group == null)
                     return null;

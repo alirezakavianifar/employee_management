@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 D:\projects\employee_management_csharp\ManagementApp\App.xaml
-112023486490
+121359791760
 1290796608
-14213466976
-230-1349669354
-Controls\GeorgianDatePicker.xaml;Resources\Colors.xaml;Resources\Fonts.xaml;Resources\Styles.xaml;Views\EmployeeDialog.xaml;Views\MainWindow.xaml;Views\RoleDialog.xaml;Views\RoleEditDialog.xaml;Views\ShiftGroupDialog.xaml;Views\ShiftGroupEditDialog.xaml;Views\TaskDialog.xaml;
+17-1423172042
+2301183065135
+Controls\GeorgianDatePicker.xaml;Controls\NavigationMenu.xaml;Resources\Colors.xaml;Resources\Fonts.xaml;Resources\Styles.xaml;Views\EmployeeDialog.xaml;Views\MainWindow.xaml;Views\RoleDialog.xaml;Views\RoleEditDialog.xaml;Views\ShiftGroupDialog.xaml;Views\ShiftGroupEditDialog.xaml;Views\TaskDialog.xaml;
 
 False
 

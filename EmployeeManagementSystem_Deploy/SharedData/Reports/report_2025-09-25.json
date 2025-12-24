@@ -1,0 +1,149 @@
+﻿{
+  "date": "2025-09-25",
+  "employees": [
+    {
+      "employee_id": "emp_0_1758802432",
+      "first_name": "محمد",
+      "last_name": "معصومی",
+      "role": "supervisor",
+      "role_id": "supervisor",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-25T15:43:52",
+      "updated_at": "2025-09-25T16:14:07"
+    },
+    {
+      "employee_id": "emp_1_1758802482",
+      "first_name": "لاا",
+      "last_name": "لات",
+      "role": "contractor",
+      "role_id": "contractor",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-25T15:44:42",
+      "updated_at": "2025-09-25T16:14:19"
+    }
+  ],
+  "managers": [],
+  "roles": {
+    "roles": [
+      {
+        "role_id": "manager",
+        "name": "مدیر",
+        "description": "مدیر سیستم",
+        "color": "#FF5722",
+        "priority": 100,
+        "is_active": true,
+        "created_at": "2025-09-25T20:21:00",
+        "updated_at": "2025-09-25T20:21:00"
+      },
+      {
+        "role_id": "supervisor",
+        "name": "سرپرست",
+        "description": "سرپرست تیم",
+        "color": "#FF9800",
+        "priority": 80,
+        "is_active": true,
+        "created_at": "2025-09-25T20:21:00",
+        "updated_at": "2025-09-25T20:21:00"
+      },
+      {
+        "role_id": "employee",
+        "name": "کارمند",
+        "description": "کارمند عادی",
+        "color": "#4CAF50",
+        "priority": 50,
+        "is_active": true,
+        "created_at": "2025-09-25T20:21:00",
+        "updated_at": "2025-09-25T20:21:00"
+      },
+      {
+        "role_id": "intern",
+        "name": "کارآموز",
+        "description": "کارآموز",
+        "color": "#2196F3",
+        "priority": 30,
+        "is_active": true,
+        "created_at": "2025-09-25T20:21:00",
+        "updated_at": "2025-09-25T20:21:00"
+      },
+      {
+        "role_id": "contractor",
+        "name": "پیمانکار",
+        "description": "پیمانکار",
+        "color": "#9C27B0",
+        "priority": 20,
+        "is_active": true,
+        "created_at": "2025-09-25T20:21:00",
+        "updated_at": "2025-09-25T20:21:00"
+      }
+    ],
+    "last_modified": "2025-09-25T20:21:56"
+  },
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 15,
+      "assigned_employees": [
+        {
+          "employee_id": "emp_0_1758802432",
+          "first_name": "محمد",
+          "last_name": "معصومی",
+          "role": "supervisor",
+          "role_id": "supervisor",
+          "shift_group_id": "default",
+          "photo_path": "",
+          "is_manager": false,
+          "created_at": "2025-09-25T15:43:52",
+          "updated_at": "2025-09-25T16:14:07"
+        }
+      ]
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 15,
+      "assigned_employees": [
+        {
+          "employee_id": "emp_1_1758802482",
+          "first_name": "لاا",
+          "last_name": "لات",
+          "role": "contractor",
+          "role_id": "contractor",
+          "shift_group_id": "default",
+          "photo_path": "",
+          "is_manager": false,
+          "created_at": "2025-09-25T15:44:42",
+          "updated_at": "2025-09-25T16:14:19"
+        }
+      ]
+    }
+  },
+  "shift_groups": {
+    "DefaultGroupId": "default",
+    "ShiftGroups": {
+      "default": "{\r\n  \"GroupId\": \"default\",\r\n  \"Name\": \"گروه پیش‌فرض\",\r\n  \"Description\": \"گروه پیش‌فرض برای سازگاری با نسخه‌های قبلی\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 15,\r\n  \"EveningCapacity\": 15,\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2025-09-25T20:13:38.2048932+03:30\",\r\n  \"UpdatedAt\": \"2025-09-25T20:13:38.2049354+03:30\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_1_1758802482\\\",\\r\\n    null,\\r\\n    \\\"emp_0_1758802432\\\",\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-09-25T20:13:38.2050124+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-09-25T20:21:56.1142342+03:30\\\"\\r\\n}\",\r\n  \"EveningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"evening\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-09-25T20:13:38.2051027+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-09-25T20:13:38.2051085+03:30\\\"\\r\\n}\"\r\n}",
+      "group_1758818873": "{\r\n  \"GroupId\": \"group_1758818873\",\r\n  \"Name\": \"گروه جدید\",\r\n  \"Description\": \"توضیحات گروه\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 15,\r\n  \"EveningCapacity\": 15,\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2025-09-25T20:17:53.6234303+03:30\",\r\n  \"UpdatedAt\": \"2025-09-25T20:17:53.6234379+03:30\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-09-25T20:17:53.6234947+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-09-25T20:17:53.6234996+03:30\\\"\\r\\n}\",\r\n  \"EveningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"evening\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-09-25T20:17:53.6235056+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-09-25T20:17:53.6235095+03:30\\\"\\r\\n}\"\r\n}"
+    }
+  },
+  "absences": {
+    "مرخصی": [],
+    "بیمار": [],
+    "غایب": []
+  },
+  "tasks": {
+    "Tasks": {
+      "TASK_0001": "{\r\n  \"TaskId\": \"TASK_0001\",\r\n  \"Title\": \"weee\",\r\n  \"Description\": \"\",\r\n  \"Priority\": \"متوسط\",\r\n  \"EstimatedHours\": 1.0,\r\n  \"TargetDate\": \"1404/06/29\",\r\n  \"Status\": \"در حال انجام\",\r\n  \"AssignedEmployees\": [\r\n    \"EMP_008\"\r\n  ],\r\n  \"StartDate\": null,\r\n  \"CompletionDate\": null,\r\n  \"ActualHours\": 0.0,\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-20T21:50:03.1612413+03:30\",\r\n  \"UpdatedAt\": \"2025-09-20T21:50:12.2091706+03:30\"\r\n}"
+    },
+    "NextTaskId": 2
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "D:\\projects\\employee_management_csharp\\SharedData",
+    "managers": []
+  },
+  "last_modified": "2025-09-25T20:21:56"
+}

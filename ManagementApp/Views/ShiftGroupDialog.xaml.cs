@@ -267,90 +267,36 @@ namespace ManagementApp.Views
         {
             try
             {
-                // Create dialog programmatically to avoid XAML issues
-                var dialog = new Window()
+                var dialog = new ShiftGroupEditDialog(_controller);
+                if (dialog.ShowDialog() == true)
                 {
-                    Title = "افزودن گروه شیفت جدید",
-                    Width = 400,
-                    Height = 300,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Owner = this,
-                    ResizeMode = ResizeMode.NoResize
-                };
-
-                var mainGrid = new Grid() { Margin = new Thickness(20) };
-                mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
-                mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
-                mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
-                mainGrid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Star) });
-                mainGrid.RowDefinitions.Add(new RowDefinition() { Height = GridLength.Auto });
-
-                // Name input
-                var nameLabel = new Label() { Content = "نام گروه:", FontWeight = FontWeights.Bold };
-                var nameTextBox = new TextBox() { Height = 25, Margin = new Thickness(0, 5, 0, 15) };
-                nameTextBox.Text = "گروه جدید";
-                
-                Grid.SetRow(nameLabel, 0);
-                Grid.SetRow(nameTextBox, 0);
-                mainGrid.Children.Add(nameLabel);
-                mainGrid.Children.Add(nameTextBox);
-
-                // Description input
-                var descLabel = new Label() { Content = "توضیحات:", FontWeight = FontWeights.Bold };
-                var descTextBox = new TextBox() { Height = 60, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true, Margin = new Thickness(0, 5, 0, 15) };
-                descTextBox.Text = "توضیحات گروه";
-                
-                Grid.SetRow(descLabel, 1);
-                Grid.SetRow(descTextBox, 1);
-                mainGrid.Children.Add(descLabel);
-                mainGrid.Children.Add(descTextBox);
-
-                // Color input
-                var colorLabel = new Label() { Content = "رنگ گروه:", FontWeight = FontWeights.Bold };
-                var colorTextBox = new TextBox() { Height = 25, Margin = new Thickness(0, 5, 0, 15) };
-                colorTextBox.Text = "#4CAF50";
-                
-                Grid.SetRow(colorLabel, 2);
-                Grid.SetRow(colorTextBox, 2);
-                mainGrid.Children.Add(colorLabel);
-                mainGrid.Children.Add(colorTextBox);
-
-                // Buttons
-                var buttonPanel = new StackPanel() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 20, 0, 0) };
-                var okButton = new Button() { Content = "تأیید", Width = 80, Height = 30, Margin = new Thickness(0, 0, 10, 0), IsDefault = true };
-                var cancelButton = new Button() { Content = "لغو", Width = 80, Height = 30, IsCancel = true };
-                
-                buttonPanel.Children.Add(okButton);
-                buttonPanel.Children.Add(cancelButton);
-                
-                Grid.SetRow(buttonPanel, 4);
-                mainGrid.Children.Add(buttonPanel);
-
-                dialog.Content = mainGrid;
-
-                bool? result = null;
-                okButton.Click += (s, args) => { result = true; dialog.Close(); };
-                cancelButton.Click += (s, args) => { result = false; dialog.Close(); };
-
-                dialog.ShowDialog();
-
-                if (result == true && !string.IsNullOrWhiteSpace(nameTextBox.Text))
-                {
-                    var groupName = nameTextBox.Text.Trim();
-                    var groupId = $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
-                    var description = descTextBox.Text?.Trim() ?? "";
-                    var color = colorTextBox.Text?.Trim() ?? "#4CAF50";
+                    var groupName = dialog.Name;
+                    var groupId = dialog.GroupId;
+                    var description = dialog.Description;
+                    var color = dialog.Color;
                     
                     var success = _controller.AddShiftGroup(
                         groupId, 
                         groupName, 
                         description, 
+                        "", // supervisorName (not used)
                         color, 
-                        15, 
-                        15);
+                        dialog.MorningCapacity, 
+                        dialog.EveningCapacity);
                     
                     if (success)
                     {
+                        // Set foremen for each shift
+                        if (!string.IsNullOrEmpty(dialog.MorningForemanId))
+                        {
+                            _controller.SetTeamLeader("morning", dialog.MorningForemanId, groupId);
+                        }
+
+                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        {
+                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
+                        }
+                        
                         LoadGroups();
                         
                         // Auto-select the newly created group
@@ -400,13 +346,14 @@ namespace ManagementApp.Views
                 if (string.IsNullOrEmpty(_selectedGroup.Color))
                     _selectedGroup.Color = "#4CAF50";
 
-                var dialog = new ShiftGroupEditDialog(_selectedGroup);
+                var dialog = new ShiftGroupEditDialog(_selectedGroup, _controller);
                 if (dialog.ShowDialog() == true)
                 {
                     var success = _controller.UpdateShiftGroup(
                         _selectedGroup.GroupId,
                         dialog.Name,
                         dialog.Description,
+                        "", // supervisorName (not used)
                         dialog.Color,
                         dialog.MorningCapacity,
                         dialog.EveningCapacity,
@@ -414,6 +361,25 @@ namespace ManagementApp.Views
                     
                     if (success)
                     {
+                        // Set foremen for each shift
+                        if (!string.IsNullOrEmpty(dialog.MorningForemanId))
+                        {
+                            _controller.SetTeamLeader("morning", dialog.MorningForemanId, _selectedGroup.GroupId);
+                        }
+                        else
+                        {
+                            _controller.SetTeamLeader("morning", string.Empty, _selectedGroup.GroupId);
+                        }
+
+                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        {
+                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, _selectedGroup.GroupId);
+                        }
+                        else
+                        {
+                            _controller.SetTeamLeader("evening", string.Empty, _selectedGroup.GroupId);
+                        }
+                        
                         LoadGroups();
                         MessageBox.Show($"گروه شیفت '{dialog.Name}' با موفقیت بروزرسانی شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
                     }

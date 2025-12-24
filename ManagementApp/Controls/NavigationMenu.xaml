@@ -1,0 +1,54 @@
+<UserControl x:Class="ManagementApp.Controls.NavigationMenu"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="250">
+    <UserControl.Resources>
+        <Style TargetType="TreeViewItem">
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="FontFamily" Value="Tahoma"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E3F2FD"/>
+                    <Setter Property="Foreground" Value="#1976D2"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F5F5F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    
+    <Border BorderBrush="#E0E0E0" BorderThickness="0,0,1,0" Background="#FAFAFA">
+        <TreeView x:Name="NavigationTreeView" 
+                 SelectedItemChanged="NavigationTreeView_SelectedItemChanged"
+                 BorderThickness="0"
+                 Background="Transparent">
+            <!-- Management Category -->
+            <TreeViewItem Header="📁 مدیریت" IsExpanded="True">
+                <TreeViewItem Header="👥 کارمندان" Tag="Employees" x:Name="EmployeesItem"/>
+                <TreeViewItem Header="🕐 شیفت‌ها" Tag="Shifts" x:Name="ShiftsItem"/>
+                <TreeViewItem Header="✅ وظایف" Tag="Tasks" x:Name="TasksItem"/>
+            </TreeViewItem>
+            
+            <!-- Reports Category -->
+            <TreeViewItem Header="📊 گزارش‌گیری" IsExpanded="True">
+                <TreeViewItem Header="📈 تولید گزارش" Tag="Reports" x:Name="ReportsItem"/>
+            </TreeViewItem>
+            
+            <!-- Settings Category -->
+            <TreeViewItem Header="⚙️ تنظیمات" IsExpanded="True">
+                <TreeViewItem Header="📂 داده و ذخیره‌سازی" Tag="Settings_DataStorage" x:Name="SettingsDataStorageItem"/>
+                <TreeViewItem Header="🕐 تنظیمات شیفت" Tag="Settings_ShiftConfig" x:Name="SettingsShiftConfigItem"/>
+                <TreeViewItem Header="🔄 همگام‌سازی" Tag="Settings_Sync" x:Name="SettingsSyncItem"/>
+                <TreeViewItem Header="🎨 ظاهر و نمایش" Tag="Settings_Appearance" x:Name="SettingsAppearanceItem"/>
+                <TreeViewItem Header="ℹ️ اطلاعات سیستم" Tag="Settings_SystemInfo" x:Name="SettingsSystemInfoItem"/>
+            </TreeViewItem>
+        </TreeView>
+    </Border>
+</UserControl>
+

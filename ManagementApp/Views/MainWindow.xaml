@@ -12,7 +12,7 @@
         WindowStartupLocation="CenterScreen">
     
     <Window.Resources>
-        <!-- Remove problematic style references for now -->
+        <!-- EmployeePhotoConverter will be added in code-behind -->
     </Window.Resources>
 
     <Grid>
@@ -41,7 +41,7 @@
         </Border>
 
         <!-- Main Content -->
-        <TabControl Grid.Row="1" Margin="10">
+        <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" SelectionChanged="MainTabControl_SelectionChanged">
             <TabItem Header="مدیریت کارمندان">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -182,10 +182,41 @@
                     <!-- Employee List for Shift Assignment -->
                     <GroupBox Grid.Column="0" Header="کارمندان" Margin="5">
                         <ListBox x:Name="ShiftEmployeeListBox" 
-                                DisplayMemberPath="FullName"
                                 AllowDrop="True"
                                 DragOver="Employee_DragOver"
-                                Margin="5"/>
+                                PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
+                                MouseMove="ShiftEmployeeListBox_MouseMove"
+                                Margin="5">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Name="EmployeeCardBorder"
+                                            Background="White"
+                                            BorderBrush="#CCCCCC"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="8"
+                                            Margin="2"
+                                            Cursor="Hand">
+                                        <StackPanel Orientation="Vertical"
+                                                   HorizontalAlignment="Center">
+                                            <Image x:Name="EmployeePhotoImage"
+                                                   Width="50"
+                                                   Height="50"
+                                                   Stretch="UniformToFill"
+                                                   Margin="0,0,0,5"/>
+                                            <TextBlock Text="{Binding FullName}"
+                                                      FontFamily="Tahoma"
+                                                      FontSize="10"
+                                                      TextAlignment="Center"
+                                                      TextWrapping="Wrap"
+                                                      MaxWidth="100"
+                                                      Foreground="DarkBlue"
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </GroupBox>
 
                     <!-- Shift Assignment -->

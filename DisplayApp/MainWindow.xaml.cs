@@ -1753,10 +1753,15 @@ namespace DisplayApp
                             groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmpList, groupName);
                             _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmpList.Count, groupName);
                             
-                            // Get foreman name from team_leader_id
-                            if (morningShift.TryGetValue("team_leader_id", out var morningForemanId) && !string.IsNullOrEmpty(morningForemanId?.ToString()))
+                            // Get foreman name from team_leader_id (check both snake_case and PascalCase)
+                            object? morningForemanId = null;
+                            if (morningShift.TryGetValue("team_leader_id", out morningForemanId) || 
+                                morningShift.TryGetValue("TeamLeaderId", out morningForemanId))
                             {
-                                groupModel.MorningForemanName = GetEmployeeNameById(morningForemanId.ToString(), morningEmpList);
+                                if (morningForemanId != null && !string.IsNullOrEmpty(morningForemanId.ToString()))
+                                {
+                                    groupModel.MorningForemanName = GetEmployeeNameById(morningForemanId.ToString(), morningEmpList);
+                                }
                             }
                         }
                     }
@@ -1783,10 +1788,15 @@ namespace DisplayApp
                             groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
                             _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
                             
-                            // Get foreman name from team_leader_id
-                            if (eveningShift.TryGetValue("team_leader_id", out var eveningForemanId) && !string.IsNullOrEmpty(eveningForemanId?.ToString()))
+                            // Get foreman name from team_leader_id (check both snake_case and PascalCase)
+                            object? eveningForemanId = null;
+                            if (eveningShift.TryGetValue("team_leader_id", out eveningForemanId) || 
+                                eveningShift.TryGetValue("TeamLeaderId", out eveningForemanId))
                             {
-                                groupModel.EveningForemanName = GetEmployeeNameById(eveningForemanId.ToString(), eveningEmpList);
+                                if (eveningForemanId != null && !string.IsNullOrEmpty(eveningForemanId.ToString()))
+                                {
+                                    groupModel.EveningForemanName = GetEmployeeNameById(eveningForemanId.ToString(), eveningEmpList);
+                                }
                             }
                         }
                     }
@@ -1883,15 +1893,20 @@ namespace DisplayApp
                                 groupModel.MorningShiftEmployees = ConvertToEmployeeDisplayModels(morningEmployees, groupName);
                                 _logger.LogInformation("Found {Count} morning shift employees for group {GroupName}", morningEmployees.Count, groupName);
                                 
-                                // Get foreman name from TeamLeaderId
-                                if (morningShiftData.TryGetValue("TeamLeaderId", out var morningForemanId) && !string.IsNullOrEmpty(morningForemanId?.ToString()))
+                                // Get foreman name from TeamLeaderId (check both PascalCase and snake_case)
+                                object? morningForemanId = null;
+                                if (morningShiftData.TryGetValue("TeamLeaderId", out morningForemanId) || 
+                                    morningShiftData.TryGetValue("team_leader_id", out morningForemanId))
                                 {
-                                    var foremanEmployee = GetEmployeesByIds(new List<object> { morningForemanId }, reportData);
-                                    if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                    if (morningForemanId != null && !string.IsNullOrEmpty(morningForemanId.ToString()))
                                     {
-                                        var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
-                                        var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
-                                        groupModel.MorningForemanName = $"{firstName} {lastName}".Trim();
+                                        var foremanEmployee = GetEmployeesByIds(new List<object> { morningForemanId }, reportData);
+                                        if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                        {
+                                            var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                            var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                            groupModel.MorningForemanName = $"{firstName} {lastName}".Trim();
+                                        }
                                     }
                                 }
                             }
@@ -1980,15 +1995,20 @@ namespace DisplayApp
                                 groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmployees, groupName);
                                 _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmployees.Count, groupName);
                                 
-                                // Get foreman name from TeamLeaderId
-                                if (eveningShiftData.TryGetValue("TeamLeaderId", out var eveningForemanId) && !string.IsNullOrEmpty(eveningForemanId?.ToString()))
+                                // Get foreman name from TeamLeaderId (check both PascalCase and snake_case)
+                                object? eveningForemanId = null;
+                                if (eveningShiftData.TryGetValue("TeamLeaderId", out eveningForemanId) || 
+                                    eveningShiftData.TryGetValue("team_leader_id", out eveningForemanId))
                                 {
-                                    var foremanEmployee = GetEmployeesByIds(new List<object> { eveningForemanId }, reportData);
-                                    if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                    if (eveningForemanId != null && !string.IsNullOrEmpty(eveningForemanId.ToString()))
                                     {
-                                        var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
-                                        var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
-                                        groupModel.EveningForemanName = $"{firstName} {lastName}".Trim();
+                                        var foremanEmployee = GetEmployeesByIds(new List<object> { eveningForemanId }, reportData);
+                                        if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                        {
+                                            var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                            var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                            groupModel.EveningForemanName = $"{firstName} {lastName}".Trim();
+                                        }
                                     }
                                 }
                             }

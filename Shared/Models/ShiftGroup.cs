@@ -143,6 +143,19 @@ namespace Shared.Models
             shift?.ClearShift();
         }
 
+        public void SetTeamLeader(string shiftType, string employeeId)
+        {
+            var shift = GetShift(shiftType);
+            shift?.SetTeamLeader(employeeId);
+            UpdatedAt = DateTime.Now;
+        }
+
+        public Employee? GetTeamLeader(string shiftType, Dictionary<string, Employee> employees)
+        {
+            var shift = GetShift(shiftType);
+            return shift?.GetTeamLeader(employees);
+        }
+
         public int GetTotalAssignedEmployees()
         {
             var morningCount = MorningShift.AssignedEmployees.Count(emp => emp != null);
