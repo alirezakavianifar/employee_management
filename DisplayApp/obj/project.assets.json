@@ -978,11 +978,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\projects\\employee_management_csharp\\DisplayApp\\DisplayApp.csproj",
+      "projectUniqueName": "E:\\projects\\employee_management_csharp\\DisplayApp\\DisplayApp.csproj",
       "projectName": "DisplayApp",
-      "projectPath": "D:\\projects\\employee_management_csharp\\DisplayApp\\DisplayApp.csproj",
+      "projectPath": "E:\\projects\\employee_management_csharp\\DisplayApp\\DisplayApp.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "D:\\projects\\employee_management_csharp\\DisplayApp\\obj\\",
+      "outputPath": "E:\\projects\\employee_management_csharp\\DisplayApp\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -997,8 +997,8 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "projectReferences": {
-            "D:\\projects\\employee_management_csharp\\Shared\\Shared.csproj": {
-              "projectPath": "D:\\projects\\employee_management_csharp\\Shared\\Shared.csproj"
+            "E:\\projects\\employee_management_csharp\\Shared\\Shared.csproj": {
+              "projectPath": "E:\\projects\\employee_management_csharp\\Shared\\Shared.csproj"
             }
           }
         }
@@ -1007,11 +1007,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -1042,7 +1037,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.415/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.121/PortableRuntimeIdentifierGraph.json"
       }
     }
   },

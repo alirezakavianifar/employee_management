@@ -1,8 +1,8 @@
 <Window x:Class="ManagementApp.Views.ShiftGroupEditDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="افزودن گروه شیفت جدید" Height="420" Width="520"
-        MinHeight="360" MinWidth="480"
+        Title="افزودن گروه شیفت جدید" Height="650" Width="520"
+        MinHeight="600" MinWidth="480"
         FlowDirection="RightToLeft"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize">
@@ -30,7 +30,49 @@
         <!-- Color -->
         <StackPanel Grid.Row="2" Margin="0,0,0,15">
             <Label Content="رنگ گروه:" FontWeight="Bold"/>
-            <TextBox x:Name="ColorTextBox" Height="25"/>
+            <Button x:Name="ColorPickerButton" Height="30" Click="ColorPickerButton_Click" HorizontalContentAlignment="Stretch">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="ColorPreviewBorder" Grid.Column="0" Width="40" Height="25" 
+                            BorderBrush="Gray" BorderThickness="1" Margin="5,0,10,0" 
+                            Background="#4CAF50"/>
+                    <TextBlock x:Name="ColorHexTextBlock" Grid.Column="1" Text="#4CAF50" 
+                               VerticalAlignment="Center" HorizontalAlignment="Right" 
+                               Margin="0,0,10,0"/>
+                </Grid>
+            </Button>
+        </StackPanel>
+
+        <!-- Foreman Selection -->
+        <StackPanel Grid.Row="3" Margin="0,0,0,15">
+            <Label Content="سرپرست شیفت‌ها (الزامی):" FontWeight="Bold" Margin="0,0,0,10"/>
+            
+            <!-- Morning Shift Foreman -->
+            <StackPanel Margin="0,0,0,10">
+                <Label Content="سرپرست شیفت صبح (الزامی):" FontSize="12"/>
+                <ComboBox x:Name="MorningForemanComboBox" Height="25">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding FullName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            
+            <!-- Evening Shift Foreman -->
+            <StackPanel>
+                <Label Content="سرپرست شیفت عصر (الزامی):" FontSize="12"/>
+                <ComboBox x:Name="EveningForemanComboBox" Height="25">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding FullName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
         </StackPanel>
 
         <!-- Buttons -->

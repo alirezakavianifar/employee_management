@@ -222,9 +222,9 @@ namespace DisplayApp.Services
                     var transformedShifts = new Dictionary<string, object>();
 
                     // Check if shifts are already in the correct format (new format)
-                    if (shiftsDict.ContainsKey("morning") && shiftsDict.ContainsKey("evening"))
+                    if (shiftsDict.ContainsKey("morning") || shiftsDict.ContainsKey("afternoon"))
                     {
-                        _logger.LogInformation("Processing shifts in new format (morning/evening keys found)");
+                        _logger.LogInformation("Processing shifts in new format (morning/afternoon keys found)");
                         
                         // Check if we have selected_group data (newest format)
                         if (shiftsDict.ContainsKey("selected_group") && shiftsDict["selected_group"] is Dictionary<string, object> selectedGroup)
@@ -241,17 +241,23 @@ namespace DisplayApp.Services
                                 transformedShifts["morning"] = morningShift;
                             }
                             
-                            if (selectedGroup.TryGetValue("evening_shift", out var eveningShiftObj) && eveningShiftObj is Dictionary<string, object> eveningShift)
+                            if (selectedGroup.TryGetValue("afternoon_shift", out var afternoonShiftObj) && afternoonShiftObj is Dictionary<string, object> afternoonShift)
                             {
-                                _logger.LogInformation("Processing evening shift from selected_group");
-                                transformedShifts["evening"] = eveningShift;
+                                _logger.LogInformation("Processing afternoon shift from selected_group");
+                                transformedShifts["afternoon"] = afternoonShift;
+                            }
+
+                            if (selectedGroup.TryGetValue("night_shift", out var nightShiftObj) && nightShiftObj is Dictionary<string, object> nightShift)
+                            {
+                                _logger.LogInformation("Processing night shift from selected_group");
+                                transformedShifts["night"] = nightShift;
                             }
                         }
                         else
                         {
-                            _logger.LogInformation("No selected_group found, using direct morning/evening data");
-                            // Fallback to direct morning/evening data
-                            foreach (var shiftType in new[] { "morning", "evening" })
+                            _logger.LogInformation("No selected_group found, using direct morning/afternoon/night data");
+                            // Fallback to direct morning/afternoon/night data
+                            foreach (var shiftType in new[] { "morning", "afternoon", "night", "evening" })
                             {
                                 if (shiftsDict.TryGetValue(shiftType, out var shiftObj) && shiftObj is Dictionary<string, object> shift)
                                 {
@@ -336,7 +342,7 @@ namespace DisplayApp.Services
                         }
                     }
 
-                    // Transform EveningShift
+                    // Transform EveningShift (legacy - map to afternoon)
                     if (shiftsDict.TryGetValue("EveningShift", out var eveningShiftStr) && eveningShiftStr is string eveningJson)
                     {
                         try
@@ -348,23 +354,73 @@ namespace DisplayApp.Services
                                 var assignedEmployees = GetAssignedEmployees(eveningShiftObj, transformedData);
                                 var eveningShift = new Dictionary<string, object>
                                 {
-                                    { "shift_type", "evening" },
+                                    { "shift_type", "afternoon" },
                                     { "capacity", eveningShiftObj.GetValueOrDefault("Capacity", 15) },
                                     { "assigned_employees", assignedEmployees }
                                 };
-                                transformedShifts["evening"] = eveningShift;
+                                transformedShifts["afternoon"] = eveningShift; // Map to afternoon
                             }
                         }
                         catch (Exception ex)
                         {
                             _logger.LogWarning(ex, "Failed to parse evening shift JSON: {EveningJson}", eveningJson);
+                        }
+                    }
+                    
+                    // Transform AfternoonShift
+                    if (shiftsDict.TryGetValue("AfternoonShift", out var afternoonShiftStr) && afternoonShiftStr is string afternoonJson)
+                    {
+                        try
+                        {
+                            var cleanAfternoonJson = afternoonJson.Replace("\r\n", "").Replace("\n", "").Replace("\r", "");
+                            var afternoonShiftObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(cleanAfternoonJson);
+                            if (afternoonShiftObj != null)
+                            {
+                                var assignedEmployees = GetAssignedEmployees(afternoonShiftObj, transformedData);
+                                var afternoonShift = new Dictionary<string, object>
+                                {
+                                    { "shift_type", "afternoon" },
+                                    { "capacity", afternoonShiftObj.GetValueOrDefault("Capacity", 15) },
+                                    { "assigned_employees", assignedEmployees }
+                                };
+                                transformedShifts["afternoon"] = afternoonShift;
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to parse afternoon shift JSON: {AfternoonJson}", afternoonJson);
+                        }
+                    }
+                    
+                    // Transform NightShift
+                    if (shiftsDict.TryGetValue("NightShift", out var nightShiftStr) && nightShiftStr is string nightJson)
+                    {
+                        try
+                        {
+                            var cleanNightJson = nightJson.Replace("\r\n", "").Replace("\n", "").Replace("\r", "");
+                            var nightShiftObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(cleanNightJson);
+                            if (nightShiftObj != null)
+                            {
+                                var assignedEmployees = GetAssignedEmployees(nightShiftObj, transformedData);
+                                var nightShift = new Dictionary<string, object>
+                                {
+                                    { "shift_type", "night" },
+                                    { "capacity", nightShiftObj.GetValueOrDefault("Capacity", 15) },
+                                    { "assigned_employees", assignedEmployees }
+                                };
+                                transformedShifts["night"] = nightShift;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to parse night shift JSON: {NightJson}", nightJson);
+                        }
+                    }
                     }
 
                     transformedData["shifts"] = transformedShifts;
-                    }
                 }
+            }
 
                 // Transform absences from JSON strings to objects
                 if (originalData.TryGetValue("absences", out var absencesObj))
@@ -575,7 +631,7 @@ namespace DisplayApp.Services
                 }
                 else
                 {
-                    dictionary[property.Name] = property.Value.ToObject<object>();
+                    dictionary[property.Name] = property.Value?.ToObject<object>();
                 }
             }
             
@@ -600,10 +656,10 @@ namespace DisplayApp.Services
                     {
                         if (employeeItem is Dictionary<string, object> employeeDict)
                         {
-                            var employeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString();
-                            var firstName = employeeDict.GetValueOrDefault("first_name", "").ToString();
-                            var lastName = employeeDict.GetValueOrDefault("last_name", "").ToString();
-                            var role = employeeDict.GetValueOrDefault("role", "").ToString().ToLower();
+                            var employeeId = employeeDict.GetValueOrDefault("employee_id", "")?.ToString() ?? "";
+                            var firstName = employeeDict.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                            var lastName = employeeDict.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                            var role = employeeDict.GetValueOrDefault("role", "")?.ToString()?.ToLower() ?? "";
                             
                             _logger.LogInformation("Checking employee: {EmployeeId} - {FirstName} {LastName} (Role: {Role})", 
                                 employeeId, firstName, lastName, role);
@@ -621,7 +677,7 @@ namespace DisplayApp.Services
                                     isManager = isManagerBool;
                                     _logger.LogInformation("Employee {EmployeeId} is_manager (bool): {IsManager}", employeeId, isManager);
                                 }
-                                else if (bool.TryParse(isManagerObj.ToString(), out var isManagerParsed))
+                                else if (isManagerObj != null && bool.TryParse(isManagerObj.ToString(), out var isManagerParsed))
                                 {
                                     isManager = isManagerParsed;
                                     _logger.LogInformation("Employee {EmployeeId} is_manager (parsed): {IsManager}", employeeId, isManager);

@@ -80,8 +80,10 @@ namespace ManagementApp.Views
                         group.Color = "#4CAF50";
                     if (group.MorningCapacity <= 0)
                         group.MorningCapacity = 15;
-                    if (group.EveningCapacity <= 0)
-                        group.EveningCapacity = 15;
+                    if (group.AfternoonCapacity <= 0)
+                        group.AfternoonCapacity = 15;
+                    if (group.NightCapacity <= 0)
+                        group.NightCapacity = 15;
                 }
                 
                 // Clear existing items and add groups manually
@@ -170,7 +172,7 @@ namespace ManagementApp.Views
                 // Capacity info
                 var capacityText = new TextBlock 
                 { 
-                    Text = $"صبح: {group.MorningCapacity} | عصر: {group.EveningCapacity}", 
+                    Text = $"صبح: {group.MorningCapacity} | عصر: {group.AfternoonCapacity} | شب: {group.NightCapacity}", 
                     FontSize = 11, 
                     Foreground = Brushes.DarkBlue 
                 };
@@ -282,7 +284,8 @@ namespace ManagementApp.Views
                         "", // supervisorName (not used)
                         color, 
                         dialog.MorningCapacity, 
-                        dialog.EveningCapacity);
+                        dialog.AfternoonCapacity,
+                        dialog.NightCapacity);
                     
                     if (success)
                     {
@@ -292,9 +295,14 @@ namespace ManagementApp.Views
                             _controller.SetTeamLeader("morning", dialog.MorningForemanId, groupId);
                         }
 
-                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        if (!string.IsNullOrEmpty(dialog.AfternoonForemanId))
                         {
-                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
+                            _controller.SetTeamLeader("afternoon", dialog.AfternoonForemanId, groupId);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(dialog.NightForemanId))
+                        {
+                            _controller.SetTeamLeader("night", dialog.NightForemanId, groupId);
                         }
                         
                         LoadGroups();
@@ -364,7 +372,8 @@ namespace ManagementApp.Views
                         "", // supervisorName (not used)
                         dialog.Color,
                         dialog.MorningCapacity,
-                        dialog.EveningCapacity,
+                        dialog.AfternoonCapacity,
+                        dialog.NightCapacity,
                         dialog.IsGroupActive) ?? false;
                     
                     if (success && _controller != null)
@@ -379,13 +388,22 @@ namespace ManagementApp.Views
                             _controller.SetTeamLeader("morning", string.Empty, groupId);
                         }
 
-                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        if (!string.IsNullOrEmpty(dialog.AfternoonForemanId))
                         {
-                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
+                            _controller.SetTeamLeader("afternoon", dialog.AfternoonForemanId, groupId);
                         }
                         else
                         {
-                            _controller.SetTeamLeader("evening", string.Empty, groupId);
+                            _controller.SetTeamLeader("afternoon", string.Empty, groupId);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(dialog.NightForemanId))
+                        {
+                            _controller.SetTeamLeader("night", dialog.NightForemanId, groupId);
+                        }
+                        else
+                        {
+                            _controller.SetTeamLeader("night", string.Empty, groupId);
                         }
                         
                         LoadGroups();

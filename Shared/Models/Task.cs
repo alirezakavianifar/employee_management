@@ -41,7 +41,7 @@ namespace Shared.Models
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public TaskPriority Priority { get; set; } = TaskPriority.Medium;
-        public double EstimatedHours { get; set; } = 1.0;
+        public double EstimatedHours { get; set; } = 8.0;
         public string TargetDate { get; set; } = string.Empty; // Shamsi date in yyyy/MM/dd format
         public TaskStatus Status { get; set; } = TaskStatus.Pending;
         public List<string> AssignedEmployees { get; set; } = new();
@@ -60,7 +60,7 @@ namespace Shared.Models
         }
 
         public Task(string taskId, string title, string description = "", TaskPriority priority = TaskPriority.Medium,
-                   double estimatedHours = 1.0, string? targetDate = null)
+                   double estimatedHours = 8.0, string? targetDate = null)
         {
             TaskId = taskId;
             Title = title;
@@ -218,7 +218,7 @@ namespace Shared.Models
             [JsonConverter(typeof(PersianEnumConverter<TaskPriority>))]
             public TaskPriority Priority { get; set; } = TaskPriority.Medium;
             
-            public double EstimatedHours { get; set; } = 1.0;
+            public double EstimatedHours { get; set; } = 8.0;
             public string TargetDate { get; set; } = string.Empty;
             
             [JsonConverter(typeof(PersianEnumConverter<TaskStatus>))]

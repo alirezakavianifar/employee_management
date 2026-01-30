@@ -202,10 +202,7 @@
           "Newtonsoft.Json": "13.0.3"
         },
         "runtime": {
-          "Shared.dll": {
-            "assemblyVersion": "1.0.0",
-            "fileVersion": "1.0.0.0"
-          }
+          "Shared.dll": {}
         }
       }
     }

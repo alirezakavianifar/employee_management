@@ -1,6 +1,35 @@
 # Employee Management System - Changelog
 
-## Version 2.2.0 - Group Separation Display (Latest)
+## Version 2.3.0 - Daily Task Progress Tracking (Latest)
+
+### 📊 New Feature: Daily Task Progress Tracking
+- **DailyTaskProgress Model**: New model for tracking daily task completion by group, shift type, and date
+- **Progress Status Management**: ProgressStatus and WeeklyProgressStatus classes for progress analysis
+- **DailyTaskProgressManager**: Manager class for handling progress records with JSON serialization
+- **Group and Shift-based Tracking**: Track progress by group, shift type, and date
+- **Weekly Progress Calculation**: Calculate weekly progress from daily records
+
+### 🔧 Technical Implementation
+- **New Model**: `Shared/Models/DailyTaskProgress.cs` - Complete progress tracking model with manager
+- **Integration**: Progress tracking integrated into MainController with save/load functionality
+- **Data Persistence**: Progress data saved to JSON reports alongside other system data
+- **Progress ID System**: Unique progress IDs in format `{groupId}_{shiftType}_{date}`
+
+### 📁 Files Modified
+- `Shared/Models/DailyTaskProgress.cs` - New model with DailyTaskProgress, ProgressStatus, WeeklyProgressStatus, and DailyTaskProgressManager classes
+- `ManagementApp/Controllers/MainController.cs` - Added DailyTaskProgressManager property and progress tracking methods
+  - `SaveDailyProgress()` - Save progress for a specific group/shift/date
+  - `GetDailyProgress()` - Retrieve daily progress
+  - `GetWeeklyProgress()` - Retrieve weekly progress records
+
+### 🚀 User Experience
+- **Progress Tracking**: Track daily task completion (completed boxes) per group and shift
+- **Weekly Analysis**: Calculate and analyze weekly progress from daily records
+- **Data Integration**: Progress data seamlessly integrated with existing report system
+
+---
+
+## Version 2.2.0 - Group Separation Display
 
 ### 🎨 Major UI Restructure
 - **Group Separation**: Complete redesign of shift display to show each group separately

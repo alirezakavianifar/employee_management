@@ -62,13 +62,14 @@ namespace Shared.Models
             if (File.Exists(PhotoPath))
                 return true;
 
-            // Try relative to data directory
             var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SharedData");
-            var fullPath = Path.Combine(dataDir, "Images", "Staff", Path.GetFileName(PhotoPath));
-            
-            if (File.Exists(fullPath))
+            var fileName = Path.GetFileName(PhotoPath);
+
+            // Try relative to data directory (Images/Staff)
+            var imagesPath = Path.Combine(dataDir, "Images", "Staff", fileName);
+            if (File.Exists(imagesPath))
             {
-                PhotoPath = fullPath;
+                PhotoPath = imagesPath;
                 return true;
             }
 

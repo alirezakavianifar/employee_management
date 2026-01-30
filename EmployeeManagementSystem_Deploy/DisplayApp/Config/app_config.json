@@ -1,8 +1,8 @@
 {
-  "DataDirectory": "../../../../SharedData",
-  "ReportsDirectory": "../../../../SharedData/Reports",
-  "ImagesDirectory": "../../../../SharedData/Images",
-  "LogsDirectory": "../../../../SharedData/Logs",
+  "DataDirectory": "../SharedData",
+  "ReportsDirectory": "../SharedData/Reports",
+  "ImagesDirectory": "../SharedData/Images",
+  "LogsDirectory": "../SharedData/Logs",
   "SyncEnabled": true,
   "SyncIntervalSeconds": 5
 }

@@ -21,10 +21,12 @@ namespace ManagementApp.Views
         public string Description => DescriptionTextBox?.Text?.Trim() ?? "";
         public string Color => ColorHexTextBlock?.Text?.Trim() ?? "#4CAF50";
         public int MorningCapacity => 15;
-        public int EveningCapacity => 15;
+        public int AfternoonCapacity => 15;
+        public int NightCapacity => 15;
         public bool IsGroupActive => true;
         public string MorningForemanId => (MorningForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
-        public string EveningForemanId => (EveningForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
+        public string AfternoonForemanId => (AfternoonForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
+        public string NightForemanId => (NightForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
 
         public ShiftGroupEditDialog(MainController? controller = null)
         {
@@ -118,9 +120,15 @@ namespace ManagementApp.Views
                     // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
-                if (EveningForemanComboBox != null)
+                if (AfternoonForemanComboBox != null)
                 {
-                    EveningForemanComboBox.ItemsSource = employeeList;
+                    AfternoonForemanComboBox.ItemsSource = employeeList;
+                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
+                }
+                
+                if (NightForemanComboBox != null)
+                {
+                    NightForemanComboBox.ItemsSource = employeeList;
                     // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
@@ -203,9 +211,15 @@ namespace ManagementApp.Views
                         // DisplayMemberPath removed - ItemTemplate in XAML handles display
                     }
 
-                    if (EveningForemanComboBox != null)
+                    if (AfternoonForemanComboBox != null)
                     {
-                        EveningForemanComboBox.ItemsSource = employeeList;
+                        AfternoonForemanComboBox.ItemsSource = employeeList;
+                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
+                    }
+                    
+                    if (NightForemanComboBox != null)
+                    {
+                        NightForemanComboBox.ItemsSource = employeeList;
                         // DisplayMemberPath removed - ItemTemplate in XAML handles display
                     }
 
@@ -216,11 +230,18 @@ namespace ManagementApp.Views
                         MorningForemanComboBox.SelectedItem = morningForeman;
                     }
 
-                    // Set evening foreman
-                    if (EveningForemanComboBox != null && _originalGroup.EveningShift != null && !string.IsNullOrEmpty(_originalGroup.EveningShift.TeamLeaderId))
+                    // Set afternoon foreman
+                    if (AfternoonForemanComboBox != null && _originalGroup.AfternoonShift != null && !string.IsNullOrEmpty(_originalGroup.AfternoonShift.TeamLeaderId))
                     {
-                        var eveningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.EveningShift.TeamLeaderId);
-                        EveningForemanComboBox.SelectedItem = eveningForeman;
+                        var afternoonForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.AfternoonShift.TeamLeaderId);
+                        AfternoonForemanComboBox.SelectedItem = afternoonForeman;
+                    }
+                    
+                    // Set night foreman
+                    if (NightForemanComboBox != null && _originalGroup.NightShift != null && !string.IsNullOrEmpty(_originalGroup.NightShift.TeamLeaderId))
+                    {
+                        var nightForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.NightShift.TeamLeaderId);
+                        NightForemanComboBox.SelectedItem = nightForeman;
                     }
                 }
 
@@ -253,11 +274,19 @@ namespace ManagementApp.Views
                     return;
                 }
 
-                // Validate that evening foreman is selected
-                if (string.IsNullOrEmpty(EveningForemanId))
+                // Validate that afternoon foreman is selected
+                if (string.IsNullOrEmpty(AfternoonForemanId))
                 {
                     MessageBox.Show("لطفاً سرپرست شیفت عصر را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    EveningForemanComboBox?.Focus();
+                    AfternoonForemanComboBox?.Focus();
+                    return;
+                }
+                
+                // Validate that night foreman is selected
+                if (string.IsNullOrEmpty(NightForemanId))
+                {
+                    MessageBox.Show("لطفاً سرپرست شیفت شب را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    NightForemanComboBox?.Focus();
                     return;
                 }
 

@@ -6,17 +6,21 @@ namespace DisplayApp.Models
     {
         public string GroupName { get; set; } = "";
         public string GroupDescription { get; set; } = "";
+        public string Color { get; set; } = "#4CAF50"; // Default green color
         public string SupervisorName { get; set; } = "";
         public string MorningForemanName { get; set; } = "";
-        public string EveningForemanName { get; set; } = "";
+        public string AfternoonForemanName { get; set; } = "";
+        public string NightForemanName { get; set; } = "";
         public List<EmployeeDisplayModel> MorningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
-        public List<EmployeeDisplayModel> EveningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
+        public List<EmployeeDisplayModel> AfternoonShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
+        public List<EmployeeDisplayModel> NightShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
     }
 
     public class CombinedDisplayModel
     {
         public List<EmployeeDisplayModel> AllMorningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
-        public List<EmployeeDisplayModel> AllEveningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
+        public List<EmployeeDisplayModel> AllAfternoonShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
+        public List<EmployeeDisplayModel> AllNightShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
         public int TotalGroups { get; set; } = 0;
         public string DisplayTitle { get; set; } = "همه کارکنان";
     }

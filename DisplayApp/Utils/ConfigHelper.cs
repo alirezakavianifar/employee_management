@@ -27,7 +27,9 @@ namespace DisplayApp.Utils
                 if (File.Exists(_configPath))
                 {
                     var jsonString = File.ReadAllText(_configPath);
-                    _config = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString) ?? new Dictionary<string, object>();
+                    var deserialized = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString) ?? new Dictionary<string, object>();
+                    // Convert JsonElement objects to proper Dictionary<string, object> recursively
+                    _config = ConvertJsonElementsToDictionaries(deserialized);
                     _logger.LogInformation("Configuration loaded from {ConfigPath}", _configPath);
                 }
                 else
@@ -41,6 +43,75 @@ namespace DisplayApp.Utils
                 _logger.LogError(ex, "Error loading configuration from {ConfigPath}", _configPath);
                 SetDefaultConfig();
             }
+        }
+
+        private Dictionary<string, object> ConvertJsonElementsToDictionaries(Dictionary<string, object> dict)
+        {
+            var result = new Dictionary<string, object>();
+            foreach (var kvp in dict)
+            {
+                if (kvp.Value is JsonElement jsonElement)
+                {
+                    if (jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        // Recursively convert nested objects
+                        var nestedDict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonElement.GetRawText());
+                        result[kvp.Key] = nestedDict != null ? ConvertJsonElementsToDictionaries(nestedDict) : new Dictionary<string, object>();
+                    }
+                    else if (jsonElement.ValueKind == JsonValueKind.Array)
+                    {
+                        // Handle arrays
+                        var list = new List<object>();
+                        foreach (var item in jsonElement.EnumerateArray())
+                        {
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                var itemDict = JsonSerializer.Deserialize<Dictionary<string, object>>(item.GetRawText());
+                                list.Add(itemDict != null ? ConvertJsonElementsToDictionaries(itemDict) : new Dictionary<string, object>());
+                            }
+                            else
+                            {
+                                // Extract primitive array items based on type
+                                var value = item.ValueKind switch
+                                {
+                                    JsonValueKind.String => item.GetString(),
+                                    JsonValueKind.Number => item.TryGetInt64(out var longVal) ? longVal : (object)item.GetDouble(),
+                                    JsonValueKind.True => true,
+                                    JsonValueKind.False => false,
+                                    JsonValueKind.Null => null,
+                                    _ => item.GetRawText()
+                                };
+                                list.Add(value);
+                            }
+                        }
+                        result[kvp.Key] = list;
+                    }
+                    else
+                    {
+                        // Primitive values - extract based on type
+                        result[kvp.Key] = jsonElement.ValueKind switch
+                        {
+                            JsonValueKind.String => jsonElement.GetString(),
+                            JsonValueKind.Number => jsonElement.TryGetInt64(out var longVal) ? longVal : (object)jsonElement.GetDouble(),
+                            JsonValueKind.True => true,
+                            JsonValueKind.False => false,
+                            JsonValueKind.Null => null,
+                            _ => jsonElement.GetRawText()
+                        };
+                    }
+                }
+                else if (kvp.Value is Dictionary<string, object> nestedDict)
+                {
+                    // Already a dictionary, recursively convert
+                    result[kvp.Key] = ConvertJsonElementsToDictionaries(nestedDict);
+                }
+                else
+                {
+                    // Already a primitive value
+                    result[kvp.Key] = kvp.Value;
+                }
+            }
+            return result;
         }
 
         public void SaveConfig()
@@ -68,7 +139,8 @@ namespace DisplayApp.Utils
                         { "refreshInterval", 30 },
                         { "theme", "dark" },
                         { "fontSize", 14 },
-                        { "language", "fa" }
+                        { "language", "fa" },
+                        { "backgroundColor", "#1a1a1a" }
                     }
                 },
                 {
@@ -171,12 +243,14 @@ namespace DisplayApp.Utils
         public bool GetPersianNumbers() => GetValue<bool>("ui", "persianNumbers", true);
         public bool GetShowTooltips() => GetValue<bool>("ui", "showTooltips", true);
         public string GetAnimationSpeed() => GetValue<string>("ui", "animationSpeed", "normal");
+        public string GetBackgroundColor() => GetValue<string>("display", "backgroundColor", "#1a1a1a");
 
         public void SetRefreshInterval(int value) => SetValue("display", "refreshInterval", value);
         public void SetFullscreen(bool value) => SetValue("display", "fullscreen", value);
         public void SetTheme(string value) => SetValue("display", "theme", value);
         public void SetFontSize(int value) => SetValue("display", "fontSize", value);
         public void SetLanguage(string value) => SetValue("display", "language", value);
+        public void SetBackgroundColor(string value) => SetValue("display", "backgroundColor", value);
         public void SetDataPath(string value) => SetValue("data", "dataPath", value);
         public void SetSyncInterval(int value) => SetValue("data", "syncInterval", value);
         public void SetAutoBackup(bool value) => SetValue("data", "autoBackup", value);

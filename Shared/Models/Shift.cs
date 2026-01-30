@@ -7,7 +7,7 @@ namespace Shared.Models
 {
     public class Shift
     {
-        public string ShiftType { get; set; } = string.Empty; // "morning" or "evening"
+        public string ShiftType { get; set; } = string.Empty; // "morning", "afternoon", or "night"
         public int Capacity { get; set; } = 15;
         public List<Employee?> AssignedEmployees { get; set; } = new();
         public string TeamLeaderId { get; set; } = string.Empty; // Foreman/Team Leader ID
@@ -41,7 +41,9 @@ namespace Shared.Models
         public string DisplayName => ShiftType switch
         {
             "morning" => "صبح",
-            "evening" => "عصر",
+            "afternoon" => "عصر",
+            "evening" => "عصر", // Legacy support - map to afternoon
+            "night" => "شب",
             _ => ShiftType
         };
 
@@ -359,21 +361,24 @@ namespace Shared.Models
     public class ShiftManager
     {
         public Shift MorningShift { get; set; }
-        public Shift EveningShift { get; set; }
-        public int Capacity { get; set; } = 15; // Changed default from 5 to 15
+        public Shift AfternoonShift { get; set; }
+        public Shift NightShift { get; set; }
+        public int Capacity { get; set; } = 15;
 
         public ShiftManager()
         {
-            Capacity = 15; // Changed default from 5 to 15
+            Capacity = 15;
             MorningShift = new Shift("morning", Capacity);
-            EveningShift = new Shift("evening", Capacity);
+            AfternoonShift = new Shift("afternoon", Capacity);
+            NightShift = new Shift("night", Capacity);
         }
 
         public ShiftManager(int capacity = 15)
         {
             Capacity = capacity;
             MorningShift = new Shift("morning", capacity);
-            EveningShift = new Shift("evening", capacity);
+            AfternoonShift = new Shift("afternoon", capacity);
+            NightShift = new Shift("night", capacity);
         }
 
         public void SetCapacity(int newCapacity)
@@ -381,7 +386,8 @@ namespace Shared.Models
             var oldCapacity = Capacity;
             Capacity = newCapacity;
             MorningShift.SetCapacity(newCapacity);
-            EveningShift.SetCapacity(newCapacity);
+            AfternoonShift.SetCapacity(newCapacity);
+            NightShift.SetCapacity(newCapacity);
             
             // Log capacity changes for debugging
             System.Diagnostics.Debug.WriteLine($"ShiftManager.SetCapacity: Changed from {oldCapacity} to {newCapacity}");
@@ -392,7 +398,9 @@ namespace Shared.Models
             return shiftType switch
             {
                 "morning" => MorningShift,
-                "evening" => EveningShift,
+                "afternoon" => AfternoonShift,
+                "evening" => AfternoonShift, // Legacy support
+                "night" => NightShift,
                 _ => null
             };
         }
@@ -447,8 +455,10 @@ namespace Shared.Models
             var shifts = new List<string>();
             if (MorningShift.IsEmployeeAssigned(employee))
                 shifts.Add("morning");
-            if (EveningShift.IsEmployeeAssigned(employee))
-                shifts.Add("evening");
+            if (AfternoonShift.IsEmployeeAssigned(employee))
+                shifts.Add("afternoon");
+            if (NightShift.IsEmployeeAssigned(employee))
+                shifts.Add("night");
             return shifts;
         }
 
@@ -460,7 +470,7 @@ namespace Shared.Models
 
         public override string ToString()
         {
-            return $"ShiftManager(Morning: {MorningShift}, Evening: {EveningShift})";
+            return $"ShiftManager(Morning: {MorningShift}, Afternoon: {AfternoonShift}, Night: {NightShift})";
         }
 
         public static ShiftManager FromJson(string json, Dictionary<string, Employee> employeesDict)
@@ -476,8 +486,17 @@ namespace Shared.Models
                     if (managerData.MorningShift != null)
                         manager.MorningShift = Shift.FromJson(managerData.MorningShift, employeesDict);
                     
-                    if (managerData.EveningShift != null)
-                        manager.EveningShift = Shift.FromJson(managerData.EveningShift, employeesDict);
+                    // Migration: try AfternoonShift first, fallback to EveningShift
+                    if (managerData.AfternoonShift != null)
+                        manager.AfternoonShift = Shift.FromJson(managerData.AfternoonShift, employeesDict);
+                    else if (managerData.EveningShift != null)
+                    {
+                        manager.AfternoonShift = Shift.FromJson(managerData.EveningShift, employeesDict);
+                        manager.AfternoonShift.ShiftType = "afternoon"; // Update type
+                    }
+                    
+                    if (managerData.NightShift != null)
+                        manager.NightShift = Shift.FromJson(managerData.NightShift, employeesDict);
 
                     return manager;
                 }
@@ -504,14 +523,35 @@ namespace Shared.Models
                     }
                 }
                 
-                // Load evening shift
-                if (shiftsData.ContainsKey("evening"))
+                // Migration: Load afternoon shift (try afternoon first, fallback to evening)
+                if (shiftsData.ContainsKey("afternoon"))
+                {
+                    var afternoonData = shiftsData["afternoon"];
+                    if (afternoonData != null)
+                    {
+                        var afternoonJson = JsonConvert.SerializeObject(afternoonData);
+                        manager.AfternoonShift = Shift.FromJson(afternoonJson, employeesDict);
+                    }
+                }
+                else if (shiftsData.ContainsKey("evening"))
                 {
                     var eveningData = shiftsData["evening"];
                     if (eveningData != null)
                     {
                         var eveningJson = JsonConvert.SerializeObject(eveningData);
-                        manager.EveningShift = Shift.FromJson(eveningJson, employeesDict);
+                        manager.AfternoonShift = Shift.FromJson(eveningJson, employeesDict);
+                        manager.AfternoonShift.ShiftType = "afternoon"; // Migrate type
+                    }
+                }
+                
+                // Load night shift
+                if (shiftsData.ContainsKey("night"))
+                {
+                    var nightData = shiftsData["night"];
+                    if (nightData != null)
+                    {
+                        var nightJson = JsonConvert.SerializeObject(nightData);
+                        manager.NightShift = Shift.FromJson(nightJson, employeesDict);
                     }
                 }
                 
@@ -527,7 +567,8 @@ namespace Shared.Models
             var managerData = new ShiftManagerData
             {
                 MorningShift = MorningShift.ToJson(),
-                EveningShift = EveningShift.ToJson(),
+                AfternoonShift = AfternoonShift.ToJson(),
+                NightShift = NightShift.ToJson(),
                 Capacity = Capacity
             };
             return JsonConvert.SerializeObject(managerData, Formatting.Indented);
@@ -536,7 +577,9 @@ namespace Shared.Models
         private class ShiftManagerData
         {
             public string MorningShift { get; set; } = string.Empty;
-            public string EveningShift { get; set; } = string.Empty;
+            public string? AfternoonShift { get; set; } // Nullable for backward compatibility
+            public string? EveningShift { get; set; } // Legacy - for reading old data
+            public string? NightShift { get; set; } // Nullable for backward compatibility
             public int Capacity { get; set; }
         }
     }

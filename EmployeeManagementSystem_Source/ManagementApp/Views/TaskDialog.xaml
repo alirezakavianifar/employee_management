@@ -44,7 +44,7 @@
         </ComboBox>
 
         <Label Grid.Row="3" Grid.Column="0" Content="ساعت تخمینی:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
-        <TextBox Grid.Row="3" Grid.Column="1" x:Name="EstimatedHoursTextBox" Text="1.0" FontFamily="Tahoma" FontSize="12" Margin="10,5,0,5"
+        <TextBox Grid.Row="3" Grid.Column="1" x:Name="EstimatedHoursTextBox" Text="8.0" FontFamily="Tahoma" FontSize="12" Margin="10,5,0,5"
                  PreviewTextInput="EstimatedHoursTextBox_PreviewTextInput"/>
 
         <Label Grid.Row="4" Grid.Column="0" Content="تاریخ هدف:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>

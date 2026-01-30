@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-D:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\
+E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\
 DisplayApp
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\projects\employee_management_csharp\DisplayApp\App.xaml
+E:\projects\employee_management_csharp\DisplayApp\App.xaml
 11407045341
 2-809194796
 13438159112
-2141799619120
+2141730876279
 MainWindow.xaml;
 
 False

@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\DisplayApp\DisplayApp.csproj" />
   </ItemGroup>
 
 </Project>

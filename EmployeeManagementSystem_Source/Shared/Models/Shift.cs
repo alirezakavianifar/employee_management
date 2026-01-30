@@ -10,6 +10,7 @@ namespace Shared.Models
         public string ShiftType { get; set; } = string.Empty; // "morning" or "evening"
         public int Capacity { get; set; } = 15;
         public List<Employee?> AssignedEmployees { get; set; } = new();
+        public string TeamLeaderId { get; set; } = string.Empty; // Foreman/Team Leader ID
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -201,6 +202,21 @@ namespace Shared.Models
             UpdatedAt = DateTime.Now;
         }
 
+        public void SetTeamLeader(string employeeId)
+        {
+            TeamLeaderId = employeeId ?? string.Empty;
+            UpdatedAt = DateTime.Now;
+        }
+
+        public Employee? GetTeamLeader(Dictionary<string, Employee> employees)
+        {
+            if (string.IsNullOrEmpty(TeamLeaderId) || employees == null)
+                return null;
+
+            return employees.ContainsKey(TeamLeaderId) ? employees[TeamLeaderId] : null;
+        }
+
+
         public override string ToString()
         {
             var assignedCount = AssignedEmployees.Count(emp => emp != null);
@@ -232,6 +248,9 @@ namespace Shared.Models
                             shift.AssignedEmployees[i] = employeesDict[empId];
                         }
                     }
+
+                    // Restore team leader ID
+                    shift.TeamLeaderId = shiftData.TeamLeaderId ?? string.Empty;
 
                     shift.CreatedAt = shiftData.CreatedAt;
                     shift.UpdatedAt = shiftData.UpdatedAt;
@@ -319,6 +338,7 @@ namespace Shared.Models
                 ShiftType = ShiftType,
                 Capacity = Capacity,
                 AssignedEmployeeIds = AssignedEmployees.Select(emp => emp?.EmployeeId).ToList(),
+                TeamLeaderId = TeamLeaderId,
                 CreatedAt = CreatedAt,
                 UpdatedAt = UpdatedAt
             };
@@ -330,6 +350,7 @@ namespace Shared.Models
             public string ShiftType { get; set; } = string.Empty;
             public int Capacity { get; set; }
             public List<string?> AssignedEmployeeIds { get; set; } = new();
+            public string TeamLeaderId { get; set; } = string.Empty;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
         }

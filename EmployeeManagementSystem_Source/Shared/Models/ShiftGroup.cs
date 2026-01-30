@@ -72,12 +72,18 @@ namespace Shared.Models
             if (morningCapacity.HasValue)
             {
                 MorningCapacity = morningCapacity.Value;
-                MorningShift.SetCapacity(morningCapacity.Value);
+                if (MorningShift == null)
+                    MorningShift = new Shift("morning", MorningCapacity);
+                else
+                    MorningShift.SetCapacity(morningCapacity.Value);
             }
             if (eveningCapacity.HasValue)
             {
                 EveningCapacity = eveningCapacity.Value;
-                EveningShift.SetCapacity(eveningCapacity.Value);
+                if (EveningShift == null)
+                    EveningShift = new Shift("evening", EveningCapacity);
+                else
+                    EveningShift.SetCapacity(eveningCapacity.Value);
             }
             if (isActive.HasValue)
                 IsActive = isActive.Value;
@@ -87,6 +93,12 @@ namespace Shared.Models
 
         public Shift? GetShift(string shiftType)
         {
+            // Ensure shifts are initialized
+            if (MorningShift == null)
+                MorningShift = new Shift("morning", MorningCapacity);
+            if (EveningShift == null)
+                EveningShift = new Shift("evening", EveningCapacity);
+                
             return shiftType switch
             {
                 "morning" => MorningShift,
@@ -130,9 +142,9 @@ namespace Shared.Models
         public List<string> GetEmployeeShifts(Employee employee)
         {
             var shifts = new List<string>();
-            if (MorningShift.IsEmployeeAssigned(employee))
+            if (MorningShift != null && MorningShift.IsEmployeeAssigned(employee))
                 shifts.Add("morning");
-            if (EveningShift.IsEmployeeAssigned(employee))
+            if (EveningShift != null && EveningShift.IsEmployeeAssigned(employee))
                 shifts.Add("evening");
             return shifts;
         }
@@ -143,10 +155,56 @@ namespace Shared.Models
             shift?.ClearShift();
         }
 
+        public void SwapShifts()
+        {
+            // Ensure shifts are initialized
+            if (MorningShift == null)
+                MorningShift = new Shift("morning", MorningCapacity);
+            if (EveningShift == null)
+                EveningShift = new Shift("evening", EveningCapacity);
+            
+            // Swap AssignedEmployees lists
+            var tempEmployees = new List<Employee?>(MorningShift.AssignedEmployees);
+            MorningShift.AssignedEmployees = new List<Employee?>(EveningShift.AssignedEmployees);
+            EveningShift.AssignedEmployees = tempEmployees;
+            
+            // Swap TeamLeaderId values
+            var tempTeamLeader = MorningShift.TeamLeaderId;
+            MorningShift.TeamLeaderId = EveningShift.TeamLeaderId;
+            EveningShift.TeamLeaderId = tempTeamLeader;
+            
+            // Update timestamps
+            MorningShift.UpdatedAt = DateTime.Now;
+            EveningShift.UpdatedAt = DateTime.Now;
+            UpdatedAt = DateTime.Now;
+        }
+
+        public void SetTeamLeader(string shiftType, string employeeId)
+        {
+            // Ensure shifts are initialized before accessing them
+            if (MorningShift == null)
+                MorningShift = new Shift("morning", MorningCapacity);
+            if (EveningShift == null)
+                EveningShift = new Shift("evening", EveningCapacity);
+                
+            var shift = GetShift(shiftType);
+            if (shift != null)
+            {
+                shift.SetTeamLeader(employeeId);
+            }
+            UpdatedAt = DateTime.Now;
+        }
+
+        public Employee? GetTeamLeader(string shiftType, Dictionary<string, Employee> employees)
+        {
+            var shift = GetShift(shiftType);
+            return shift?.GetTeamLeader(employees);
+        }
+
         public int GetTotalAssignedEmployees()
         {
-            var morningCount = MorningShift.AssignedEmployees.Count(emp => emp != null);
-            var eveningCount = EveningShift.AssignedEmployees.Count(emp => emp != null);
+            var morningCount = MorningShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
+            var eveningCount = EveningShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
             return morningCount + eveningCount;
         }
 

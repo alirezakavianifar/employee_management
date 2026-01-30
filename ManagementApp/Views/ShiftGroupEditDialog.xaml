@@ -4,7 +4,7 @@
         Title="افزودن گروه شیفت جدید" Height="650" Width="520"
         MinHeight="600" MinWidth="480"
         FlowDirection="RightToLeft"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation=" CenterOwner"
         ResizeMode="CanResize">
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -62,10 +62,22 @@
                 </ComboBox>
             </StackPanel>
             
-            <!-- Evening Shift Foreman -->
-            <StackPanel>
+            <!-- Afternoon Shift Foreman -->
+            <StackPanel Margin="0,0,0,10">
                 <Label Content="سرپرست شیفت عصر (الزامی):" FontSize="12"/>
-                <ComboBox x:Name="EveningForemanComboBox" Height="25">
+                <ComboBox x:Name="AfternoonForemanComboBox" Height="25">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding FullName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            
+            <!-- Night Shift Foreman -->
+            <StackPanel>
+                <Label Content="سرپرست شیفت شب (الزامی):" FontSize="12"/>
+                <ComboBox x:Name="NightForemanComboBox" Height="25">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding FullName}" />

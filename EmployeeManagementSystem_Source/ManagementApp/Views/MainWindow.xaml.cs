@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -21,6 +23,13 @@ using Shared.Utils;
 
 namespace ManagementApp.Views
 {
+    public class GroupStatistic
+    {
+        public string GroupName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int EmployeeCount { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         private readonly MainController _controller;
@@ -33,47 +42,87 @@ namespace ManagementApp.Views
         private readonly PdfReportService _pdfService;
         private Employee? _selectedEmployee;
         private Shared.Models.Task? _selectedTask;
+        
+        // Converter instance as property for XAML binding
+        public ManagementApp.Converters.EmployeePhotoConverter EmployeePhotoConverter { get; } = new ManagementApp.Converters.EmployeePhotoConverter();
 
         public MainWindow()
         {
-            InitializeComponent();
-            
-            _controller = new MainController();
+            // Initialize logger first (before InitializeComponent to catch any XAML errors)
             _logger = LoggingService.CreateLogger<MainWindow>();
-            _pdfService = new PdfReportService();
             
-            // Set static instance for dialogs to access
-            Instance = this;
-            
-            // Setup timer for status updates
-            _timer = new DispatcherTimer
+            try
             {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _timer.Tick += Timer_Tick;
-            _timer.Start();
-
-            // Subscribe to controller events
-            _controller.EmployeesUpdated += OnEmployeesUpdated;
-            _controller.RolesUpdated += OnRolesUpdated;
-            _controller.ShiftGroupsUpdated += OnShiftGroupsUpdated;
+                InitializeComponent();
+                _logger.LogInformation("MainWindow: InitializeComponent completed");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MainWindow: Failed during InitializeComponent");
+                MessageBox.Show($"خطا در بارگذاری رابط کاربری:\n\n{ex.Message}\n\nجزئیات:\n{ex}", 
+                    "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw; // Re-throw to let App.xaml.cs handle it
+            }
             
-            // Initialize settings display
-            UpdateSettingsDisplay();
-            _controller.ShiftsUpdated += OnShiftsUpdated;
-            _controller.AbsencesUpdated += OnAbsencesUpdated;
-            _controller.TasksUpdated += OnTasksUpdated;
-            _controller.SettingsUpdated += OnSettingsUpdated;
-            _controller.SyncTriggered += OnSyncTriggered;
+            try
+            {
+                // EmployeePhotoConverter is now defined in XAML resources
+                
+                _controller = new MainController();
+                _logger.LogInformation("MainWindow: MainController created");
+                
+                _pdfService = new PdfReportService();
+                _logger.LogInformation("MainWindow: PdfReportService created");
+                
+                // Set static instance for dialogs to access
+                Instance = this;
+                
+                // Setup timer for status updates
+                _timer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1)
+                };
+                _timer.Tick += Timer_Tick;
+                _timer.Start();
+                _logger.LogInformation("MainWindow: Timer started");
 
-            // Initialize UI
-            InitializeUI();
-            LoadData();
+                // Subscribe to controller events
+                _controller.EmployeesUpdated += OnEmployeesUpdated;
+                _controller.RolesUpdated += OnRolesUpdated;
+                _controller.ShiftGroupsUpdated += OnShiftGroupsUpdated;
+                _controller.AbsencesUpdated += OnDailyPreviewDataUpdated;
+                _controller.ShiftGroupsUpdated += OnDailyPreviewDataUpdated;
+                _logger.LogInformation("MainWindow: Controller events subscribed");
+                
+                // Initialize settings display
+                UpdateSettingsDisplay();
+                _controller.ShiftsUpdated += OnShiftsUpdated;
+                _controller.AbsencesUpdated += OnAbsencesUpdated;
+                _controller.AbsencesUpdated += LoadAbsenceLists; // Refresh absence lists when absences change
+                _controller.TasksUpdated += OnTasksUpdated;
+                _controller.SettingsUpdated += OnSettingsUpdated;
+                _controller.SyncTriggered += OnSyncTriggered;
+                _logger.LogInformation("MainWindow: Settings display updated");
 
-            // Debug data persistence issues
-            _controller.DebugDataPersistence();
+                // Initialize UI
+                InitializeUI();
+                _logger.LogInformation("MainWindow: UI initialized");
+                
+                LoadData();
+                _logger.LogInformation("MainWindow: Data loaded");
 
-            _logger.LogInformation("MainWindow initialized");
+                // Debug data persistence issues
+                _controller.DebugDataPersistence();
+
+                _logger.LogInformation("MainWindow initialized");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "MainWindow: Error during initialization");
+                MessageBox.Show($"خطا در راه‌اندازی پنجره اصلی:\n\n{ex.Message}\n\nجزئیات:\n{ex}", 
+                    "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw; // Re-throw to let App.xaml.cs handle it
+            }
         }
 
         private void InitializeUI()
@@ -94,6 +143,21 @@ namespace ManagementApp.Views
                 
                 // Initialize role ComboBox
                 InitializeRoleComboBox();
+
+                // Initialize daily progress groups
+                LoadDailyProgressGroups();
+                
+                // Set default date to today
+                DailyProgressDatePicker.SelectedDate = GeorgianDateHelper.GetCurrentGeorgianDate();
+                
+                // Subscribe to date picker property changes
+                // Note: GeorgianDatePicker doesn't expose SelectedDateChanged event,
+                // so we'll reload progress when user changes group/shift type or clicks record button
+                // The date change will be picked up when those actions occur
+                
+                // Load initial progress data
+                LoadDailyProgress();
+                LoadWeeklyProgress();
 
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
@@ -121,6 +185,40 @@ namespace ManagementApp.Views
                         FilterEmployees(EmployeeSearchBox.Text);
                     }
                 };
+
+                // Setup shift employee search
+                ShiftEmployeeSearchBox.GotFocus += (s, e) =>
+                {
+                    if (ShiftEmployeeSearchBox.Text == "جستجو...")
+                    {
+                        ShiftEmployeeSearchBox.Text = "";
+                        ShiftEmployeeSearchBox.Foreground = Brushes.Black;
+                    }
+                };
+
+                ShiftEmployeeSearchBox.LostFocus += (s, e) =>
+                {
+                    if (string.IsNullOrEmpty(ShiftEmployeeSearchBox.Text))
+                    {
+                        ShiftEmployeeSearchBox.Text = "جستجو...";
+                        ShiftEmployeeSearchBox.Foreground = Brushes.Gray;
+                    }
+                };
+
+                ShiftEmployeeSearchBox.TextChanged += (s, e) =>
+                {
+                    if (ShiftEmployeeSearchBox.Text != "جستجو...")
+                    {
+                        FilterShiftEmployees(ShiftEmployeeSearchBox.Text);
+                    }
+                };
+
+                // Subscribe to LayoutUpdated to re-attach drag handlers when items are regenerated
+                // This ensures handlers are attached after tab switches or other UI updates
+                ShiftEmployeeListBox.LayoutUpdated += ShiftEmployeeListBox_LayoutUpdated;
+
+                // Initialize rotation configuration
+                InitializeRotationConfiguration();
 
                 _logger.LogInformation("UI initialized successfully");
             }
@@ -194,6 +292,42 @@ namespace ManagementApp.Views
             }
         }
 
+        private void InitializeRotationConfiguration()
+        {
+            try
+            {
+                bool isEnabled = false;
+                
+                // Check if auto-rotation is already enabled
+                if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && 
+                    autoRotate is bool enabled && enabled)
+                {
+                    isEnabled = true;
+                    // Show the expandable section
+                    RotationConfigExpander.Visibility = Visibility.Visible;
+                    RotationConfigExpander.IsExpanded = false; // Start collapsed, user can expand if needed
+                    
+                    // Load rotation settings
+                    LoadRotationSettings();
+                }
+                else
+                {
+                    // Hide the expandable section
+                    RotationConfigExpander.Visibility = Visibility.Collapsed;
+                    RotationConfigExpander.IsExpanded = false;
+                }
+                
+                // Set checkbox state
+                AutoRotateCheckBox.IsChecked = isEnabled;
+                
+                _logger.LogInformation("Rotation configuration initialized");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error initializing rotation configuration");
+            }
+        }
+
         private void LoadData()
         {
             try
@@ -256,15 +390,36 @@ namespace ManagementApp.Views
                 _logger.LogInformation("LoadEmployees: {AvailableCount} employees available for shift assignment", availableEmployees.Count);
                 ShiftEmployeeListBox.ItemsSource = availableEmployees;
                 
-                // Set up drag functionality for each employee item
-                foreach (var employee in availableEmployees)
+                // Attach handlers when containers are generated
+                // Use Dispatcher.BeginInvoke to ensure UI is fully rendered
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    if (employee != null && ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromItem(employee) is ListBoxItem item)
+                    try
                     {
-                        item.PreviewMouseLeftButtonDown += (s, e) => Employee_PreviewMouseLeftButtonDown(s, e, employee);
-                        item.MouseMove += (s, e) => Employee_MouseMove(s, e, employee);
+                        if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                        {
+                            AttachDragHandlers();
+                        }
+                        else
+                        {
+                            // Subscribe to status changed event
+                            EventHandler? statusChangedHandler = null;
+                            statusChangedHandler = (s, e) =>
+                            {
+                                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                                {
+                                    AttachDragHandlers();
+                                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged -= statusChangedHandler;
+                                }
+                            };
+                            ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += statusChangedHandler;
+                        }
                     }
-                }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error in Dispatcher.BeginInvoke for AttachDragHandlers");
+                    }
+                }), DispatcherPriority.Loaded);
                 
                 _logger.LogInformation("LoadEmployees: Completed successfully");
             }
@@ -290,6 +445,62 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error filtering employees");
+            }
+        }
+
+        private void FilterShiftEmployees(string query)
+        {
+            try
+            {
+                var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
+                
+                if (string.IsNullOrEmpty(query) || query == "جستجو...")
+                {
+                    // Reload all available employees for shift assignment
+                    var employees = _controller.GetAllEmployees();
+                    var availableEmployees = new List<Employee>();
+                    
+                    if (_controller.AbsenceManager != null)
+                    {
+                        availableEmployees = employees.Where(emp => 
+                            emp != null && !_controller.AbsenceManager.HasAbsenceForEmployee(emp, todayGeorgian)).ToList();
+                    }
+                    else
+                    {
+                        availableEmployees = employees.Where(emp => emp != null).ToList();
+                    }
+                    
+                    ShiftEmployeeListBox.ItemsSource = availableEmployees;
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        AttachDragHandlers();
+                    }), DispatcherPriority.Loaded);
+                    return;
+                }
+
+                // Filter employees based on search query
+                var allEmployees = _controller.GetAllEmployees();
+                var lowerQuery = query.ToLower();
+                
+                var filtered = allEmployees.Where(emp =>
+                    emp != null &&
+                    (emp.FirstName.ToLower().Contains(lowerQuery) ||
+                     emp.LastName.ToLower().Contains(lowerQuery) ||
+                     emp.FullName.ToLower().Contains(lowerQuery)) &&
+                    (_controller.AbsenceManager == null || 
+                     !_controller.AbsenceManager.HasAbsenceForEmployee(emp, todayGeorgian))).ToList();
+                
+                ShiftEmployeeListBox.ItemsSource = filtered;
+                
+                // Re-attach handlers after filtering
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    AttachDragHandlers();
+                }), DispatcherPriority.Loaded);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error filtering shift employees");
             }
         }
 
@@ -359,7 +570,8 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog(_controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
+                                                         dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
                     if (success)
                     {
                         LoadEmployees();
@@ -387,7 +599,8 @@ namespace ManagementApp.Views
                 var dialog = new EmployeeDialog(_selectedEmployee, _controller);
                 if (dialog.ShowDialog() == true)
                 {
-                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager);
+                    var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
+                                                           dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
                     if (success)
                     {
                         LoadEmployees();
@@ -539,8 +752,77 @@ namespace ManagementApp.Views
 
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    // Update employee photo path
-                    _controller.UpdateEmployee(_selectedEmployee.EmployeeId, photoPath: openFileDialog.FileName);
+                    // Detect name and personnel ID from filename (format: FirstName_LastName_PersonnelId.ext)
+                    var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(openFileDialog.FileName);
+                    var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(openFileDialog.FileName);
+                    
+                    string? updatePersonnelId = null;
+                    
+                    // If personnel ID detected and different from current, ask user if they want to update
+                    if (detectedPersonnelId != null)
+                    {
+                        if (string.IsNullOrEmpty(_selectedEmployee.PersonnelId))
+                        {
+                            // Auto-fill if empty
+                            updatePersonnelId = detectedPersonnelId;
+                        }
+                        else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
+                        {
+                            var result = MessageBox.Show(
+                                $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
+                                "تشخیص کد پرسنلی",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Question);
+                            
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                updatePersonnelId = detectedPersonnelId;
+                            }
+                        }
+                    }
+                    
+                    // If name detected and different from current, ask user if they want to update
+                    if (detectedFirstName != null && detectedLastName != null)
+                    {
+                        if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
+                        {
+                            var result = MessageBox.Show(
+                                $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
+                                "تشخیص نام از پوشه",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Question);
+                            
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    firstName: detectedFirstName, 
+                                    lastName: detectedLastName, 
+                                    photoPath: openFileDialog.FileName,
+                                    personnelId: updatePersonnelId);
+                            }
+                            else
+                            {
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    photoPath: openFileDialog.FileName,
+                                    personnelId: updatePersonnelId);
+                            }
+                        }
+                        else
+                        {
+                            _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                photoPath: openFileDialog.FileName,
+                                personnelId: updatePersonnelId);
+                        }
+                    }
+                    else
+                    {
+                        // Update employee photo path (will be copied to employee images folder automatically)
+                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                            photoPath: openFileDialog.FileName,
+                            personnelId: updatePersonnelId);
+                    }
+                    
+                    LoadEmployees();
                     LoadEmployeeDetails(_selectedEmployee);
                     UpdateStatus("عکس کارمند بروزرسانی شد");
                 }
@@ -549,6 +831,62 @@ namespace ManagementApp.Views
             {
                 _logger.LogError(ex, "Error selecting photo");
                 MessageBox.Show($"خطا در انتخاب عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void GenerateBadge_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_selectedEmployee == null)
+                {
+                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Validate employee has photo
+                if (string.IsNullOrEmpty(_selectedEmployee.PhotoPath) || !_selectedEmployee.HasPhoto())
+                {
+                    MessageBox.Show("کارمند انتخاب شده عکس ندارد. لطفاً ابتدا عکس کارمند را انتخاب کنید.", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Generate badge
+                var badgePath = _controller.GenerateEmployeeBadge(_selectedEmployee.EmployeeId);
+
+                if (!string.IsNullOrEmpty(badgePath))
+                {
+                    MessageBox.Show($"کارت شناسایی با موفقیت تولید شد:\n{badgePath}", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                    UpdateStatus("کارت شناسایی تولید شد");
+                    
+                    // Optionally display the generated badge
+                    try
+                    {
+                        if (File.Exists(badgePath))
+                        {
+                            var badgeBitmap = new BitmapImage();
+                            badgeBitmap.BeginInit();
+                            badgeBitmap.UriSource = new Uri(badgePath, UriKind.Absolute);
+                            badgeBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            badgeBitmap.EndInit();
+                            badgeBitmap.Freeze();
+                            EmployeePhoto.Source = badgeBitmap;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not display generated badge in preview");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("خطا در تولید کارت شناسایی. لطفاً مطمئن شوید که قالب کارت شناسایی در مسیر صحیح قرار دارد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating badge");
+                MessageBox.Show($"خطا در تولید کارت شناسایی: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -602,6 +940,7 @@ namespace ManagementApp.Views
                 {
                     LoadEmployeeAbsences(_selectedEmployee);
                     LoadEmployees(); // Refresh to update shift availability
+                    LoadAbsenceLists(); // Refresh categorized absence lists
                     UpdateStatus($"کارمند {_selectedEmployee.FullName} به عنوان {selectedType} ثبت شد");
                     AbsenceNotesTextBox.Clear();
                 }
@@ -628,6 +967,7 @@ namespace ManagementApp.Views
                 {
                     LoadEmployeeAbsences(_selectedEmployee);
                     LoadEmployees(); // Refresh to update shift availability
+                    LoadAbsenceLists(); // Refresh categorized absence lists
                     UpdateStatus($"غیبت کارمند {_selectedEmployee.FullName} حذف شد");
                 }
             }
@@ -695,41 +1035,6 @@ namespace ManagementApp.Views
             }
         }
 
-        private void LoadDisplayGroups()
-        {
-            try
-            {
-                var shiftGroups = _controller.GetAllShiftGroups();
-                DisplayGroupComboBox.Items.Clear();
-                
-                foreach (var group in shiftGroups)
-                {
-                    var item = new ComboBoxItem
-                    {
-                        Content = group.Name,
-                        Tag = group.GroupId,
-                        ToolTip = group.Description
-                    };
-                    DisplayGroupComboBox.Items.Add(item);
-                }
-                
-                // Select the currently selected display group
-                var currentDisplayGroup = _controller.GetSelectedDisplayGroupId();
-                if (DisplayGroupComboBox.Items.Count > 0)
-                {
-                    var selectedGroup = DisplayGroupComboBox.Items.Cast<ComboBoxItem>()
-                        .FirstOrDefault(item => item.Tag?.ToString() == currentDisplayGroup);
-                    DisplayGroupComboBox.SelectedItem = selectedGroup ?? DisplayGroupComboBox.Items[0];
-                }
-                
-                _logger.LogInformation("Loaded {Count} display groups, selected: {SelectedGroup}", 
-                    shiftGroups.Count, currentDisplayGroup);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading display groups");
-            }
-        }
 
         private void ShiftGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -740,6 +1045,13 @@ namespace ManagementApp.Views
                     _logger.LogInformation("Shift group changed to: {GroupId}", groupId);
                     LoadShiftSlots();
                     UpdateShiftStatistics();
+                    
+                    // Load auto-rotation setting
+                    // Note: AutoRotateCheckBox not yet implemented in XAML
+                    // if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
+                    // {
+                    //     AutoRotateCheckBox.IsChecked = enabled;
+                    // }
                 }
             }
             catch (Exception ex)
@@ -748,49 +1060,29 @@ namespace ManagementApp.Views
             }
         }
 
-        private void DisplayGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                if (DisplayGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    _logger.LogInformation("Display group changed to: {GroupId}", groupId);
-                    
-                    // Set the selected display group in the controller
-                    var success = _controller.SetSelectedDisplayGroup(groupId);
-                    if (success)
-                    {
-                        UpdateStatus($"گروه نمایش به '{selectedItem.Content}' تغییر یافت");
-                    }
-                    else
-                    {
-                        MessageBox.Show($"خطا در تغییر گروه نمایش", "خطا", 
-                            MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling display group selection change");
-                MessageBox.Show($"خطا در تغییر گروه نمایش: {ex.Message}", "خطا", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private void LoadShifts()
         {
             try
             {
                 LoadShiftGroups();
-                LoadDisplayGroups();
                 LoadShiftSlots();
                 UpdateShiftStatistics();
                 
-                // Load absent employees
-                var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
-                var absentEmployees = _controller.GetAllEmployees().Where(emp => 
-                    _controller.AbsenceManager.HasAbsenceForEmployee(emp, todayGeorgian)).ToList();
-                AbsentEmployeeListBox.ItemsSource = absentEmployees;
+                // Initialize auto-rotate checkbox state from settings
+                if (AutoRotateCheckBox != null)
+                {
+                    if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
+                    {
+                        AutoRotateCheckBox.IsChecked = enabled;
+                    }
+                    else
+                    {
+                        AutoRotateCheckBox.IsChecked = false;
+                    }
+                }
+                
+                // Load categorized absence lists
+                LoadAbsenceLists();
             }
             catch (Exception ex)
             {
@@ -829,6 +1121,10 @@ namespace ManagementApp.Views
                 // Update capacity text box to show morning capacity (primary)
                 ShiftCapacityTextBox.Text = morningCapacity.ToString();
                 _logger.LogInformation("LoadShiftSlots: TextBox updated to {Capacity}", morningCapacity);
+
+                // Update supervisor displays
+                UpdateSupervisorDisplay("morning");
+                UpdateSupervisorDisplay("evening");
 
                 // Create morning shift slots in a grid layout
                 var morningGrid = CreateShiftGrid("morning", morningCapacity, selectedGroup);
@@ -883,6 +1179,91 @@ namespace ManagementApp.Views
             return grid;
         }
 
+        private void UpdateSupervisorDisplay(string shiftType)
+        {
+            try
+            {
+                // Get the supervisor content panel
+                StackPanel? supervisorContent = shiftType == "morning" 
+                    ? MorningSupervisorContent 
+                    : EveningSupervisorContent;
+
+                if (supervisorContent == null)
+                    return;
+
+                // Clear existing content
+                supervisorContent.Children.Clear();
+
+                // Get current group ID
+                string? groupId = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+
+                // Get current supervisor
+                var supervisor = _controller.GetTeamLeader(shiftType, groupId);
+
+                if (supervisor != null)
+                {
+                    // Display supervisor with photo and name
+                    var supervisorStackPanel = new StackPanel
+                    {
+                        Orientation = Orientation.Vertical,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+
+                    // Supervisor photo
+                    var image = new Image
+                    {
+                        Width = 60,
+                        Height = 60,
+                        Source = supervisor.GetPhotoImageSource(60),
+                        Stretch = Stretch.UniformToFill,
+                        Margin = new Thickness(0, 0, 0, 5),
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+
+                    // Supervisor name
+                    var nameTextBlock = new TextBlock
+                    {
+                        Text = supervisor.FullName,
+                        FontFamily = new FontFamily("Tahoma"),
+                        FontSize = 11,
+                        FontWeight = FontWeights.Bold,
+                        TextAlignment = TextAlignment.Center,
+                        Foreground = Brushes.DarkBlue,
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+
+                    supervisorStackPanel.Children.Add(image);
+                    supervisorStackPanel.Children.Add(nameTextBlock);
+                    supervisorContent.Children.Add(supervisorStackPanel);
+                }
+                else
+                {
+                    // Display placeholder
+                    var placeholderText = new TextBlock
+                    {
+                        Text = "هیچ سرپرستی انتخاب نشده\n(کارمند را اینجا بکشید)",
+                        FontFamily = new FontFamily("Tahoma"),
+                        FontSize = 10,
+                        TextAlignment = TextAlignment.Center,
+                        Foreground = Brushes.Gray,
+                        TextWrapping = TextWrapping.Wrap,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    supervisorContent.Children.Add(placeholderText);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating supervisor display for {ShiftType}", shiftType);
+            }
+        }
+
         private Border CreateShiftSlot(string shiftType, int slotIndex)
         {
             var border = new Border
@@ -929,6 +1310,14 @@ namespace ManagementApp.Views
 
             if (employee != null)
             {
+                // Wrap employee content in a draggable container
+                var employeeContainer = new Border
+                {
+                    Cursor = Cursors.Hand,
+                    Background = Brushes.Transparent,
+                    Padding = new Thickness(0)
+                };
+
                 // Employee photo
                 var image = new Image
                 {
@@ -955,8 +1344,25 @@ namespace ManagementApp.Views
                     VerticalAlignment = VerticalAlignment.Center
                 };
 
-                stackPanel.Children.Add(image);
-                stackPanel.Children.Add(nameTextBlock);
+                var employeeStackPanel = new StackPanel
+                {
+                    Orientation = Orientation.Vertical,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                employeeStackPanel.Children.Add(image);
+                employeeStackPanel.Children.Add(nameTextBlock);
+
+                employeeContainer.Child = employeeStackPanel;
+
+                // Store employee in Tag for drag operations (shift context is passed via method parameters)
+                employeeContainer.Tag = employee;
+
+                // Add drag handlers to enable dragging employee back to list
+                employeeContainer.PreviewMouseLeftButtonDown += (s, e) => ShiftSlotEmployee_PreviewMouseLeftButtonDown(s, e, employee, shiftType, slotIndex);
+                employeeContainer.MouseMove += (s, e) => ShiftSlotEmployee_MouseMove(s, e, employee, shiftType, slotIndex);
+
+                stackPanel.Children.Add(employeeContainer);
             }
             else
             {
@@ -980,6 +1386,7 @@ namespace ManagementApp.Views
             // Enable drop functionality
             border.AllowDrop = true;
             border.DragOver += (s, e) => Slot_DragOver(s, e, shiftType, slotIndex);
+            border.DragLeave += (s, e) => Slot_DragLeave(s, e, shiftType, slotIndex);
             border.Drop += (s, e) => Slot_Drop(s, e, shiftType, slotIndex);
             
             // Add click functionality for easier assignment
@@ -1126,12 +1533,1505 @@ namespace ManagementApp.Views
             }
         }
 
+        private void SwapShifts_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? groupId = null;
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+
+                var result = MessageBox.Show("آیا از جابجایی شیفت‌های صبح و عصر اطمینان دارید؟", 
+                    "تأیید جابجایی", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (_controller.SwapShifts(groupId))
+                    {
+                        LoadShiftSlots();
+                        UpdateShiftStatistics();
+                        UpdateStatus("شیفت‌ها با موفقیت جابجا شدند");
+                    }
+                    else
+                    {
+                        MessageBox.Show("خطا در جابجایی شیفت‌ها", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error swapping shifts");
+                MessageBox.Show($"خطا در جابجایی شیفت‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+        private void AutoRotateCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Store auto-rotation setting
+                _controller.Settings["auto_rotate_shifts"] = true;
+                
+                // Set default day if not already set
+                if (!_controller.Settings.ContainsKey("auto_rotate_day"))
+                {
+                    _controller.Settings["auto_rotate_day"] = "Saturday";
+                }
+                
+                _controller.NotifySettingsUpdated();
+                _controller.SaveData();
+                
+                // Show and configure the expandable section
+                RotationConfigExpander.Visibility = Visibility.Visible;
+                RotationConfigExpander.IsExpanded = true;
+                
+                // Load rotation settings into UI
+                LoadRotationSettings();
+                
+                UpdateStatus("جابجایی خودکار شیفت‌ها فعال شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enabling auto-rotation");
+            }
+        }
+
+        private void AutoRotateCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _controller.Settings["auto_rotate_shifts"] = false;
+                _controller.NotifySettingsUpdated();
+                _controller.SaveData();
+                
+                // Hide the expandable section
+                RotationConfigExpander.Visibility = Visibility.Collapsed;
+                RotationConfigExpander.IsExpanded = false;
+                
+                UpdateStatus("جابجایی خودکار شیفت‌ها غیرفعال شد");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error disabling auto-rotation");
+            }
+        }
+
+        private void RotationTypeRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            // Weekly rotation is the only option for now
+            // This can be extended in the future for other rotation types
+            UpdateRotationConfigurationUI();
+        }
+
+        private void RotationDayComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (RotationDayComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string dayName)
+                {
+                    _controller.Settings["auto_rotate_day"] = dayName;
+                    _controller.NotifySettingsUpdated();
+                    _controller.SaveData();
+                    
+                    UpdateRotationConfigurationUI();
+                    UpdateStatus($"روز چرخش به {selectedItem.Content} تغییر یافت");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error changing rotation day");
+            }
+        }
+
+        private void LoadRotationSettings()
+        {
+            try
+            {
+                // Initialize day combo box with Persian day names
+                RotationDayComboBox.Items.Clear();
+                
+                // Mapping: Persian day name -> English day name (for storage)
+                var dayMapping = new Dictionary<string, string>
+                {
+                    { "شنبه", "Saturday" },
+                    { "یکشنبه", "Sunday" },
+                    { "دوشنبه", "Monday" },
+                    { "سه‌شنبه", "Tuesday" },
+                    { "چهارشنبه", "Wednesday" },
+                    { "پنج‌شنبه", "Thursday" },
+                    { "جمعه", "Friday" }
+                };
+                
+                var currentDay = _controller.Settings.GetValueOrDefault("auto_rotate_day", "Saturday").ToString() ?? "Saturday";
+                
+                foreach (var day in dayMapping)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = day.Key,
+                        Tag = day.Value
+                    };
+                    RotationDayComboBox.Items.Add(item);
+                    
+                    // Select the current day
+                    if (day.Value == currentDay)
+                    {
+                        RotationDayComboBox.SelectedItem = item;
+                    }
+                }
+                
+                // If no selection was made, select Saturday as default
+                if (RotationDayComboBox.SelectedItem == null && RotationDayComboBox.Items.Count > 0)
+                {
+                    RotationDayComboBox.SelectedIndex = 0; // Saturday
+                }
+                
+                UpdateRotationConfigurationUI();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading rotation settings");
+            }
+        }
+
+        private void UpdateRotationConfigurationUI()
+        {
+            try
+            {
+                if (!_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) || 
+                    !(autoRotate is bool enabled && enabled))
+                {
+                    return;
+                }
+                
+                var rotationDay = _controller.Settings.GetValueOrDefault("auto_rotate_day", "Saturday").ToString() ?? "Saturday";
+                
+                // Get Persian day name for display
+                var dayMapping = new Dictionary<string, string>
+                {
+                    { "Saturday", "شنبه" },
+                    { "Sunday", "یکشنبه" },
+                    { "Monday", "دوشنبه" },
+                    { "Tuesday", "سه‌شنبه" },
+                    { "Wednesday", "چهارشنبه" },
+                    { "Thursday", "پنج‌شنبه" },
+                    { "Friday", "جمعه" }
+                };
+                
+                var persianDayName = dayMapping.GetValueOrDefault(rotationDay, "شنبه");
+                
+                // Update schedule info
+                RotationScheduleInfo.Text = $"شیفت‌ها به صورت خودکار هر هفته در روز {persianDayName} جابجا می‌شوند.";
+                
+                // Calculate and display next rotation date using controller method
+                var nextRotationDate = _controller.GetNextRotationDate();
+                if (nextRotationDate.HasValue)
+                {
+                    var shamsiDate = ShamsiDateHelper.ToShamsiString(nextRotationDate.Value);
+                    var formattedDate = ShamsiDateHelper.FormatForDisplay(shamsiDate);
+                    NextRotationDate.Text = $"چرخش بعدی: {formattedDate} ({persianDayName})";
+                }
+                else
+                {
+                    NextRotationDate.Text = "تاریخ چرخش بعدی محاسبه نشد";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating rotation configuration UI");
+            }
+        }
+
+
         #endregion
 
         #region Drag and Drop
 
         private Point _dragStartPoint;
         private Employee? _draggedEmployee;
+        private string? _draggedShiftType;
+        private string? _draggedGroupId;
+        private int _draggedSlotIndex = -1;
+
+        private bool _isAttachingHandlers = false;
+        
+        private void AttachDragHandlers()
+        {
+            // Prevent infinite loops from LayoutUpdated events
+            if (_isAttachingHandlers)
+                return;
+                
+            try
+            {
+                _isAttachingHandlers = true;
+                
+                for (int i = 0; i < ShiftEmployeeListBox.Items.Count; i++)
+                {
+                    if (ShiftEmployeeListBox.ItemContainerGenerator.ContainerFromIndex(i) is ListBoxItem item)
+                    {
+                        var employee = item.DataContext as Employee;
+                        if (employee != null)
+                        {
+                            // Find the Border in the template using VisualTreeHelper
+                            Border? border = FindVisualChild<Border>(item);
+                            
+                            // Find the Image directly within the ListBoxItem (more reliable than checking Border name)
+                            Image? image = FindVisualChild<Image>(item);
+                            
+                            if (border != null)
+                            {
+                                border.Tag = employee;
+                                
+                                // Set image source for employee photo only if not already set
+                                if (image != null && image.Source == null)
+                                {
+                                    try
+                                    {
+                                        var imageSource = EmployeePhotoConverter.Convert(employee, typeof(ImageSource), null, System.Globalization.CultureInfo.CurrentCulture) as ImageSource;
+                                        image.Source = imageSource;
+                                    }
+                                    catch
+                                    {
+                                        // Silently handle errors - placeholder will show
+                                    }
+                                }
+                                
+                                // Remove existing handlers to prevent duplicates
+                                border.PreviewMouseLeftButtonDown -= EmployeeItem_PreviewMouseLeftButtonDown;
+                                border.MouseMove -= EmployeeItem_MouseMove;
+                                border.MouseEnter -= EmployeeItem_MouseEnter;
+                                border.MouseLeave -= EmployeeItem_MouseLeave;
+                                
+                                // Attach drag event handlers to Border
+                                border.PreviewMouseLeftButtonDown += EmployeeItem_PreviewMouseLeftButtonDown;
+                                border.MouseMove += EmployeeItem_MouseMove;
+                                border.MouseEnter += EmployeeItem_MouseEnter;
+                                border.MouseLeave += EmployeeItem_MouseLeave;
+                            }
+                            else
+                            {
+                                // Fallback: attach to ListBoxItem if Border not found
+                                item.Tag = employee;
+                                item.PreviewMouseLeftButtonDown -= ListBoxItem_PreviewMouseLeftButtonDown;
+                                item.PreviewMouseLeftButtonDown += ListBoxItem_PreviewMouseLeftButtonDown;
+                                item.MouseMove -= ListBoxItem_MouseMove;
+                                item.MouseMove += ListBoxItem_MouseMove;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error attaching drag handlers");
+            }
+            finally
+            {
+                _isAttachingHandlers = false;
+            }
+        }
+
+        private void ShiftEmployeeListBox_LayoutUpdated(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Re-attach handlers whenever layout is updated (e.g., after tab switches)
+                // This ensures handlers are always attached when items are regenerated
+                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                    System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                {
+                    // Use BeginInvoke to ensure this happens after layout is complete
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        AttachDragHandlers();
+                    }), DispatcherPriority.Loaded);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_LayoutUpdated");
+            }
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                // When Employee Management tab (index 0) is selected, load absence lists
+                if (MainTabControl.SelectedIndex == 0) // Employee management tab
+                {
+                    LoadAbsenceLists();
+                }
+                // When shift management tab (index 1) is selected, ensure handlers are attached
+                else if (MainTabControl.SelectedIndex == 1) // Shift management tab
+                {
+                    _logger.LogInformation("MainTabControl: Shift management tab selected, ensuring drag handlers are attached");
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                            System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                        {
+                            AttachDragHandlers();
+                        }
+                        else
+                        {
+                            // Subscribe to status changed event if containers aren't ready yet
+                            EventHandler? statusChangedHandler = null;
+                            statusChangedHandler = (s, ev) =>
+                            {
+                                if (ShiftEmployeeListBox.ItemContainerGenerator.Status == 
+                                    System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+                                {
+                                    AttachDragHandlers();
+                                    ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged -= statusChangedHandler;
+                                }
+                            };
+                            ShiftEmployeeListBox.ItemContainerGenerator.StatusChanged += statusChangedHandler;
+                        }
+                    }), DispatcherPriority.Loaded);
+                }
+                // When daily preview tab is selected, update the preview
+                else if (MainTabControl.SelectedItem is TabItem selectedTab && 
+                         selectedTab.Header?.ToString() == "پیش‌نمایش روزانه")
+                {
+                    UpdateDailyPreview();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in MainTabControl_SelectionChanged");
+            }
+        }
+        
+        private void ShiftEmployeeListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            
+            var listBox = sender as ListBox;
+            if (listBox == null) return;
+            
+            var hitTestResult = VisualTreeHelper.HitTest(listBox, e.GetPosition(listBox));
+            if (hitTestResult?.VisualHit == null) return;
+            
+            // Find the ListBoxItem that was clicked
+            DependencyObject? current = hitTestResult.VisualHit;
+            while (current != null && current != listBox)
+            {
+                if (current is ListBoxItem item)
+                {
+                    var employee = item.DataContext as Employee ?? item.Tag as Employee;
+                    if (employee != null)
+                    {
+                        _dragStartPoint = e.GetPosition(null);
+                        _draggedEmployee = employee;
+                        return;
+                    }
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+        }
+        
+        private void ShiftEmployeeListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee != null)
+                {
+                    var currentPoint = e.GetPosition(null);
+                    var diff = _dragStartPoint - currentPoint;
+
+                    if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+                        var dragData = new DataObject(typeof(Employee), _draggedEmployee);
+                        var result = DragDrop.DoDragDrop(ShiftEmployeeListBox, dragData, DragDropEffects.Move);
+                        _draggedEmployee = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_MouseMove");
+            }
+        }
+
+        private void ShiftEmployeeListBox_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // Reset visual feedback first
+                if (sender is ListBox listBox)
+                {
+                    listBox.BorderBrush = null;
+                    listBox.BorderThickness = new Thickness(0);
+                    
+                    var parent = VisualTreeHelper.GetParent(listBox);
+                    while (parent != null)
+                    {
+                        if (parent is Border border)
+                        {
+                            border.BorderBrush = Brushes.Gray;
+                            border.BorderThickness = new Thickness(1);
+                            border.Background = Brushes.White;
+                            break;
+                        }
+                        parent = VisualTreeHelper.GetParent(parent);
+                    }
+                }
+                
+                // Check if this is an employee being dragged from a shift slot
+                if (e.Data.GetDataPresent(typeof(Employee)))
+                {
+                    var employee = e.Data.GetData(typeof(Employee)) as Employee;
+                    if (employee != null)
+                    {
+                        // Try to get shift context from drag data
+                        string? shiftType = null;
+                        string? groupId = null;
+                        
+                        if (e.Data.GetDataPresent("ShiftType"))
+                        {
+                            shiftType = e.Data.GetData("ShiftType")?.ToString();
+                        }
+                        
+                        if (e.Data.GetDataPresent("GroupId"))
+                        {
+                            groupId = e.Data.GetData("GroupId")?.ToString();
+                        }
+                        
+                        // If shift context is not in drag data, try to find it from controller
+                        if (string.IsNullOrEmpty(shiftType))
+                        {
+                            // Query controller to find which shift the employee is assigned to
+                            var allGroups = _controller.GetAllShiftGroups();
+                            foreach (var group in allGroups)
+                            {
+                                if (group.MorningShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "morning";
+                                    groupId = group.GroupId;
+                                    break;
+                                }
+                                else if (group.EveningShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "evening";
+                                    groupId = group.GroupId;
+                                    break;
+                                }
+                            }
+                            
+                            // Fallback to default shift manager
+                            if (string.IsNullOrEmpty(shiftType))
+                            {
+                                if (_controller.ShiftManager.MorningShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "morning";
+                                }
+                                else if (_controller.ShiftManager.EveningShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "evening";
+                                }
+                            }
+                        }
+                        
+                        // Remove employee from shift if we found the shift type
+                        if (!string.IsNullOrEmpty(shiftType))
+                        {
+                            var success = _controller.RemoveEmployeeFromShift(employee, shiftType, groupId);
+                            if (success)
+                            {
+                                LoadShiftSlots();
+                                UpdateShiftStatistics();
+                                LoadEmployees(); // Refresh employee lists
+                                UpdateStatus($"کارمند {employee.FullName} از شیفت {shiftType} حذف شد و به لیست بازگشت");
+                            }
+                            else
+                            {
+                                UpdateStatus($"خطا در حذف کارمند {employee.FullName} از شیفت");
+                            }
+                        }
+                        else
+                        {
+                            // Employee is not in a shift - check if they're in an absence list
+                            var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
+                            var absences = _controller.AbsenceManager.GetAbsencesByEmployee(employee);
+                            var todayAbsence = absences.FirstOrDefault(a => a.Date == todayGeorgian);
+                            
+                            if (todayAbsence != null)
+                            {
+                                // Remove the absence
+                                var success = _controller.AbsenceManager.RemoveAbsence(todayAbsence);
+                                if (success)
+                                {
+                                    _controller.SaveData();
+                                    LoadAbsenceLists(); // Refresh absence lists
+                                    LoadEmployees(); // Refresh employee lists
+                                    UpdateStatus($"{employee.FullName} به لیست اصلی بازگردانده شد");
+                                }
+                                else
+                                {
+                                    UpdateStatus($"خطا در بازگرداندن {employee.FullName}");
+                                }
+                            }
+                            else
+                            {
+                                // If no specific absence found, try removing all absences for today
+                                var success = _controller.RemoveAbsence(employee);
+                                if (success)
+                                {
+                                    LoadAbsenceLists();
+                                    LoadEmployees();
+                                    UpdateStatus($"{employee.FullName} به لیست اصلی بازگردانده شد");
+                                }
+                                else
+                                {
+                                    UpdateStatus($"کارمند {employee.FullName} در هیچ شیفتی یافت نشد و غیبتی ندارد");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_Drop");
+                MessageBox.Show($"خطا در بازگرداندن کارمند به لیست: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShiftEmployeeListBox_DragEnter(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // Check if this is an employee being dragged from a shift slot (has shift context)
+                if (e.Data.GetDataPresent(typeof(Employee)) && e.Data.GetDataPresent("ShiftType"))
+                {
+                    e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
+                    
+                    // Visual feedback: highlight the list box border
+                    if (sender is ListBox listBox)
+                    {
+                        // Try to find the parent Border or GroupBox for visual feedback
+                        var parent = VisualTreeHelper.GetParent(listBox);
+                        while (parent != null)
+                        {
+                            if (parent is Border border)
+                            {
+                                border.BorderBrush = Brushes.DodgerBlue;
+                                border.BorderThickness = new Thickness(2);
+                                border.Background = new SolidColorBrush(Color.FromArgb(50, 173, 216, 230));
+                                break;
+                            }
+                            if (parent is GroupBox groupBox)
+                            {
+                                // GroupBox doesn't have easy border styling, so we'll use the listbox itself
+                                listBox.BorderBrush = Brushes.DodgerBlue;
+                                listBox.BorderThickness = new Thickness(2);
+                                break;
+                            }
+                            parent = VisualTreeHelper.GetParent(parent);
+                        }
+                    }
+                }
+                else if (e.Data.GetDataPresent(typeof(Employee)))
+                {
+                    // Employee from absence list or other source - allow with visual feedback
+                    e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
+                    
+                    // Visual feedback: highlight the list box border for absence list drags
+                    if (sender is ListBox listBox)
+                    {
+                        // Try to find the parent Border or GroupBox for visual feedback
+                        var parent = VisualTreeHelper.GetParent(listBox);
+                        while (parent != null)
+                        {
+                            if (parent is Border border)
+                            {
+                                border.BorderBrush = Brushes.LightGreen;
+                                border.BorderThickness = new Thickness(2);
+                                border.Background = new SolidColorBrush(Color.FromArgb(50, 144, 238, 144));
+                                break;
+                            }
+                            if (parent is GroupBox groupBox)
+                            {
+                                // GroupBox doesn't have easy border styling, so we'll use the listbox itself
+                                listBox.BorderBrush = Brushes.LightGreen;
+                                listBox.BorderThickness = new Thickness(2);
+                                break;
+                            }
+                            parent = VisualTreeHelper.GetParent(parent);
+                        }
+                    }
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_DragEnter");
+            }
+        }
+
+        private void ShiftEmployeeListBox_DragLeave(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // Reset visual feedback
+                if (sender is ListBox listBox)
+                {
+                    listBox.BorderBrush = null;
+                    listBox.BorderThickness = new Thickness(0);
+                    
+                    // Reset parent border if found
+                    var parent = VisualTreeHelper.GetParent(listBox);
+                    while (parent != null)
+                    {
+                        if (parent is Border border)
+                        {
+                            border.BorderBrush = Brushes.Gray;
+                            border.BorderThickness = new Thickness(1);
+                            border.Background = Brushes.White;
+                            break;
+                        }
+                        parent = VisualTreeHelper.GetParent(parent);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftEmployeeListBox_DragLeave");
+            }
+        }
+
+        #region Supervisor Drag & Drop
+
+        private void SupervisorArea_DragOver(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(typeof(Employee)))
+                {
+                    e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SupervisorArea_DragOver");
+            }
+        }
+
+        private void SupervisorArea_DragEnter(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(typeof(Employee)) && sender is Border border)
+                {
+                    // Highlight the supervisor area
+                    border.Background = new SolidColorBrush(Color.FromArgb(150, 25, 118, 210)); // Darker blue with transparency
+                    border.BorderBrush = Brushes.DarkBlue;
+                    border.BorderThickness = new Thickness(3);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SupervisorArea_DragEnter");
+            }
+        }
+
+        private void SupervisorArea_DragLeave(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (sender is Border border)
+                {
+                    // Reset visual feedback
+                    border.Background = new SolidColorBrush(Color.FromArgb(255, 227, 242, 253)); // Original light blue
+                    border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 25, 118, 210)); // Original blue
+                    border.BorderThickness = new Thickness(2);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SupervisorArea_DragLeave");
+            }
+        }
+
+        private void SupervisorArea_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // Reset visual feedback first
+                if (sender is Border border)
+                {
+                    border.Background = new SolidColorBrush(Color.FromArgb(255, 227, 242, 253));
+                    border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 25, 118, 210));
+                    border.BorderThickness = new Thickness(2);
+                }
+
+                // Get shift type from Tag
+                if (sender is Border supervisorBorder && supervisorBorder.Tag is string shiftType)
+                {
+                    // Extract employee from drag data
+                    if (e.Data.GetDataPresent(typeof(Employee)))
+                    {
+                        var employee = e.Data.GetData(typeof(Employee)) as Employee;
+                        if (employee != null)
+                        {
+                            // Get current group ID
+                            string? groupId = null;
+                            if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                            {
+                                groupId = selectedGroupId;
+                            }
+
+                            // Get current supervisor
+                            var currentSupervisor = _controller.GetTeamLeader(shiftType, groupId);
+
+                            // If there's a current supervisor and they're assigned to the shift, remove them
+                            if (currentSupervisor != null)
+                            {
+                                // Check if current supervisor is assigned to this shift
+                                var selectedGroup = _controller.GetShiftGroup(groupId ?? "default");
+                                if (selectedGroup != null)
+                                {
+                                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
+                                    if (shift != null && shift.IsEmployeeAssigned(currentSupervisor))
+                                    {
+                                        // Remove current supervisor from shift
+                                        var success = _controller.RemoveEmployeeFromShift(currentSupervisor, shiftType, groupId);
+                                        if (success)
+                                        {
+                                            _logger.LogInformation("Removed previous supervisor {SupervisorName} from {ShiftType} shift", 
+                                                currentSupervisor.FullName, shiftType);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Set new supervisor
+                            var setSuccess = _controller.SetTeamLeader(shiftType, employee.EmployeeId, groupId);
+                            if (setSuccess)
+                            {
+                                // Check if new supervisor is assigned to shift
+                                var selectedGroup = _controller.GetShiftGroup(groupId ?? "default");
+                                if (selectedGroup != null)
+                                {
+                                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
+                                    if (shift != null && !shift.IsEmployeeAssigned(employee))
+                                    {
+                                        // Automatically add supervisor to shift if not already assigned
+                                        var assignResult = _controller.AssignEmployeeToShift(employee, shiftType, null, groupId);
+                                        if (assignResult.Success)
+                                        {
+                                            _logger.LogInformation("Automatically added supervisor {SupervisorName} to {ShiftType} shift", 
+                                                employee.FullName, shiftType);
+                                        }
+                                        else if (assignResult.Conflict != null)
+                                        {
+                                            // For supervisor assignment, we'll handle conflicts silently or show a message
+                                            string? targetGroupName = groupId != null ? _controller.ShiftGroupManager.GetShiftGroup(groupId)?.Name : "پیش‌فرض";
+                                            var dialogResult = ShowAssignmentConflictDialog(assignResult.Conflict, employee, targetGroupName ?? "پیش‌فرض", shiftType);
+                                            if (dialogResult == MessageBoxResult.Yes)
+                                            {
+                                                var removed = _controller.RemoveEmployeeFromPreviousAssignment(employee, assignResult.Conflict, groupId);
+                                                if (removed)
+                                                {
+                                                    var retryResult = _controller.AssignEmployeeToShift(employee, shiftType, null, groupId);
+                                                    if (retryResult.Success)
+                                                    {
+                                                        _logger.LogInformation("Automatically added supervisor {SupervisorName} to {ShiftType} shift after conflict resolution", 
+                                                            employee.FullName, shiftType);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Refresh UI
+                                UpdateSupervisorDisplay(shiftType);
+                                LoadShiftSlots();
+                                LoadEmployees();
+                                UpdateShiftStatistics();
+                                UpdateStatus($"کارمند {employee.FullName} به عنوان سرپرست شیفت {shiftType} انتخاب شد");
+                            }
+                            else
+                            {
+                                UpdateStatus($"خطا در انتخاب سرپرست برای شیفت {shiftType}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SupervisorArea_Drop");
+                MessageBox.Show($"خطا در انتخاب سرپرست: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Assignment Conflict Resolution
+
+        private MessageBoxResult ShowAssignmentConflictDialog(AssignmentConflict conflict, Employee employee, string targetGroupName, string targetShiftType)
+        {
+            string message;
+            string title = "تایید تخصیص";
+
+            var targetShiftName = targetShiftType == "morning" ? "صبح" : targetShiftType == "evening" ? "عصر" : targetShiftType;
+
+            switch (conflict.Type)
+            {
+                case ConflictType.Absent:
+                    message = $"کارمند {employee.FullName} به عنوان {conflict.AbsenceType} ثبت شده است.\n\nآیا می‌خواهید غیبت را حذف کرده و کارمند را به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص دهید؟";
+                    break;
+
+                case ConflictType.DifferentShift:
+                    var currentShiftName = conflict.CurrentShiftType == "morning" ? "صبح" : conflict.CurrentShiftType == "evening" ? "عصر" : conflict.CurrentShiftType;
+                    message = $"کارمند {employee.FullName} قبلاً به شیفت {currentShiftName} در این گروه تخصیص داده شده است.\n\nآیا می‌خواهید از شیفت قبلی حذف شده و به شیفت {targetShiftName} تخصیص داده شود؟";
+                    break;
+
+                case ConflictType.DifferentGroup:
+                    message = $"کارمند {employee.FullName} قبلاً به گروه {conflict.CurrentGroupName} تخصیص داده شده است.\n\nآیا می‌خواهید از گروه قبلی حذف شده و به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص داده شود؟";
+                    break;
+
+                default:
+                    message = $"آیا می‌خواهید کارمند {employee.FullName} را به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص دهید؟";
+                    break;
+            }
+
+            return MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        }
+
+        private void HandleAssignmentResult(AssignmentResult result, Employee employee, string shiftType, int? slotIndex, string? groupId, Action? onSuccess = null)
+        {
+            if (result.Success)
+            {
+                // Success - proceed with existing logic
+                if (onSuccess != null)
+                {
+                    onSuccess();
+                }
+                else
+                {
+                    LoadShiftSlots();
+                    UpdateShiftStatistics();
+                    LoadEmployees();
+                    LoadAbsenceLists();
+                    UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                }
+            }
+            else if (result.Conflict != null)
+            {
+                // Conflict detected - show confirmation dialog
+                string? targetGroupName = null;
+                if (groupId != null)
+                {
+                    var targetGroup = _controller.ShiftGroupManager.GetShiftGroup(groupId);
+                    targetGroupName = targetGroup?.Name ?? groupId;
+                }
+                else
+                {
+                    targetGroupName = "پیش‌فرض";
+                }
+
+                var dialogResult = ShowAssignmentConflictDialog(result.Conflict, employee, targetGroupName, shiftType);
+
+                if (dialogResult == MessageBoxResult.Yes)
+                {
+                    // User confirmed - remove from previous assignment and retry
+                    var removed = _controller.RemoveEmployeeFromPreviousAssignment(employee, result.Conflict, groupId);
+                    if (removed)
+                    {
+                        // Retry assignment
+                        var retryResult = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
+                        if (retryResult.Success)
+                        {
+                            if (onSuccess != null)
+                            {
+                                onSuccess();
+                            }
+                            else
+                            {
+                                LoadShiftSlots();
+                                UpdateShiftStatistics();
+                                LoadEmployees();
+                                LoadAbsenceLists();
+                                UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                            }
+                        }
+                        else
+                        {
+                            UpdateStatus($"خطا در تخصیص کارمند {employee.FullName} به شیفت");
+                        }
+                    }
+                    else
+                    {
+                        UpdateStatus($"خطا در حذف تخصیص قبلی کارمند {employee.FullName}");
+                    }
+                }
+                // If user clicked No, do nothing
+            }
+            else if (!string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                // Error occurred
+                UpdateStatus($"خطا: {result.ErrorMessage}");
+            }
+        }
+
+        #endregion
+
+        #region Absence Management Lists
+
+        private List<Employee> GetEmployeesByAbsenceCategory(string category, string date)
+        {
+            try
+            {
+                var absences = _controller.AbsenceManager.GetAbsencesByCategory(category);
+                var employees = absences
+                    .Where(a => a.Date == date)
+                    .Select(a => a.Employee)
+                    .Distinct()
+                    .ToList();
+                return employees;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employees by absence category {Category}", category);
+                return new List<Employee>();
+            }
+        }
+
+        private void LoadAbsenceLists()
+        {
+            try
+            {
+                var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
+
+                // Load Absent employees (غایب)
+                var absentEmployees = GetEmployeesByAbsenceCategory("غایب", todayGeorgian);
+                AbsentEmployeesListBox.ItemsSource = absentEmployees;
+                AbsentEmployeesExpander.Header = $"کارمندان غایب ({absentEmployees.Count})";
+
+                // Load Sick employees (بیمار)
+                var sickEmployees = GetEmployeesByAbsenceCategory("بیمار", todayGeorgian);
+                SickEmployeesListBox.ItemsSource = sickEmployees;
+                SickEmployeesExpander.Header = $"کارمندان بیمار ({sickEmployees.Count})";
+
+                // Load Leave employees (مرخصی)
+                var leaveEmployees = GetEmployeesByAbsenceCategory("مرخصی", todayGeorgian);
+                LeaveEmployeesListBox.ItemsSource = leaveEmployees;
+                LeaveEmployeesExpander.Header = $"کارمندان مرخصی ({leaveEmployees.Count})";
+
+                // Update Employee Management section lists
+                EmployeeManagementAbsentListBox.ItemsSource = absentEmployees;
+                EmployeeManagementAbsentExpander.Header = $"کارمندان غایب ({absentEmployees.Count})";
+
+                EmployeeManagementSickListBox.ItemsSource = sickEmployees;
+                EmployeeManagementSickExpander.Header = $"کارمندان بیمار ({sickEmployees.Count})";
+
+                EmployeeManagementLeaveListBox.ItemsSource = leaveEmployees;
+                EmployeeManagementLeaveExpander.Header = $"کارمندان مرخصی ({leaveEmployees.Count})";
+
+                _logger.LogInformation("Loaded absence lists - Absent: {AbsentCount}, Sick: {SickCount}, Leave: {LeaveCount}", 
+                    absentEmployees.Count, sickEmployees.Count, leaveEmployees.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading absence lists");
+            }
+        }
+
+        private void AbsenceEmployeeListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (sender is ListBox listBox)
+                {
+                    var item = GetItemFromListBox(listBox, e.GetPosition(listBox));
+                    if (item != null && listBox.ItemContainerGenerator.ContainerFromItem(item) is ListBoxItem listBoxItem)
+                    {
+                        if (listBoxItem.DataContext is Employee employee)
+                        {
+                            _dragStartPoint = e.GetPosition(null);
+                            _draggedEmployee = employee;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AbsenceEmployeeListBox_PreviewMouseLeftButtonDown");
+            }
+        }
+
+        private void AbsenceEmployeeListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee != null)
+                {
+                    var currentPoint = e.GetPosition(null);
+                    var diff = _dragStartPoint - currentPoint;
+
+                    if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+                        var dragData = new DataObject(typeof(Employee), _draggedEmployee);
+                        var result = DragDrop.DoDragDrop((DependencyObject)sender, dragData, DragDropEffects.Move);
+                        _draggedEmployee = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AbsenceEmployeeListBox_MouseMove");
+            }
+        }
+
+        private void AbsenceEmployeeListBox_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                // Only process if this is a simple click (not part of a drag operation)
+                // If _draggedEmployee is null, it means a drag operation occurred (was cleared in MouseMove)
+                // If _draggedEmployee is not null, it means no drag occurred, so process the click
+                if (_draggedEmployee == null)
+                {
+                    // A drag operation occurred, ignore the click
+                    return;
+                }
+
+                if (sender is ListBox listBox)
+                {
+                    var item = GetItemFromListBox(listBox, e.GetPosition(listBox));
+                    if (item != null && item is Employee employee && employee == _draggedEmployee)
+                    {
+                        // Clear the dragged employee flag
+                        var clickedEmployee = _draggedEmployee;
+                        _draggedEmployee = null;
+
+                        // Show confirmation dialog
+                        var result = MessageBox.Show(
+                            $"آیا می‌خواهید {clickedEmployee.FullName} را به لیست اصلی بازگردانید؟",
+                            "بازگرداندن به لیست اصلی",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            // Get today's date
+                            var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
+                            
+                            // Find and remove today's absence for this employee
+                            var absences = _controller.AbsenceManager.GetAbsencesByEmployee(clickedEmployee);
+                            var todayAbsence = absences.FirstOrDefault(a => a.Date == todayGeorgian);
+                            
+                            if (todayAbsence != null)
+                            {
+                                var success = _controller.AbsenceManager.RemoveAbsence(todayAbsence);
+                                if (success)
+                                {
+                                    // Save data and refresh UI
+                                    _controller.SaveData();
+                                    
+                                    // Refresh lists
+                                    LoadAbsenceLists();
+                                    LoadEmployees();
+                                    
+                                    UpdateStatus($"{clickedEmployee.FullName} به لیست اصلی بازگردانده شد");
+                                }
+                                else
+                                {
+                                    UpdateStatus($"خطا در بازگرداندن {clickedEmployee.FullName}");
+                                }
+                            }
+                            else
+                            {
+                                // If no specific absence found, try removing all absences for today
+                                var success = _controller.RemoveAbsence(clickedEmployee);
+                                if (success)
+                                {
+                                    LoadAbsenceLists();
+                                    LoadEmployees();
+                                    UpdateStatus($"{clickedEmployee.FullName} به لیست اصلی بازگردانده شد");
+                                }
+                                else
+                                {
+                                    UpdateStatus($"غیبت امروز برای {clickedEmployee.FullName} یافت نشد");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Clear the dragged employee flag if clicked item doesn't match
+                        _draggedEmployee = null;
+                    }
+                }
+                else
+                {
+                    // Clear the dragged employee flag
+                    _draggedEmployee = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in AbsenceEmployeeListBox_MouseLeftButtonUp");
+                MessageBox.Show($"خطا در بازگرداندن کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                _draggedEmployee = null; // Clear on error
+            }
+        }
+
+        private object? GetItemFromListBox(ListBox listBox, Point point)
+        {
+            try
+            {
+                var hit = VisualTreeHelper.HitTest(listBox, point);
+                if (hit != null)
+                {
+                    var depObj = hit.VisualHit;
+                    while (depObj != null && depObj != listBox)
+                    {
+                        if (depObj is ListBoxItem item)
+                        {
+                            return item.DataContext;
+                        }
+                        depObj = VisualTreeHelper.GetParent(depObj);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetItemFromListBox");
+            }
+            return null;
+        }
+
+        #endregion
+
+        #region Employee List Drag Handlers
+
+        private void EmployeeListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (sender is ListBox listBox)
+                {
+                    var item = GetItemFromListBox(listBox, e.GetPosition(listBox));
+                    if (item != null && item is Employee employee)
+                    {
+                        _dragStartPoint = e.GetPosition(null);
+                        _draggedEmployee = employee;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in EmployeeListBox_PreviewMouseLeftButtonDown");
+            }
+        }
+
+        private void EmployeeListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee != null)
+                {
+                    var currentPoint = e.GetPosition(null);
+                    var diff = _dragStartPoint - currentPoint;
+
+                    if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+                        var dragData = new DataObject(typeof(Employee), _draggedEmployee);
+                        dragData.SetData("SourceList", "EmployeeList"); // Mark the source
+                        var result = DragDrop.DoDragDrop((DependencyObject)sender, dragData, DragDropEffects.Move);
+                        _draggedEmployee = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in EmployeeListBox_MouseMove");
+            }
+        }
+
+        private void EmployeeListBox_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                // Clear the dragged employee when mouse button is released without a drag
+                _draggedEmployee = null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in EmployeeListBox_MouseLeftButtonUp");
+            }
+        }
+
+        #endregion
+
+        #region Absence List Drop Handlers
+
+        private void AbsentEmployeesListBox_Drop(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDrop(e, "غایب", "غایب");
+        }
+
+        private void SickEmployeesListBox_Drop(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDrop(e, "بیمار", "بیمار");
+        }
+
+        private void LeaveEmployeesListBox_Drop(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDrop(e, "مرخصی", "مرخصی");
+        }
+
+        private void HandleAbsenceListDrop(DragEventArgs e, string category, string categoryDisplay)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(typeof(Employee)))
+                {
+                    var employee = e.Data.GetData(typeof(Employee)) as Employee;
+                    if (employee != null)
+                    {
+                        // Check if employee is already in an absence list for today
+                        var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
+                        var existingAbsences = _controller.AbsenceManager.GetAbsencesByEmployee(employee);
+                        var todayAbsence = existingAbsences.FirstOrDefault(a => a.Date == todayGeorgian);
+                        
+                        if (todayAbsence != null)
+                        {
+                            UpdateStatus($"{employee.FullName} قبلاً به عنوان {todayAbsence.Category} ثبت شده است");
+                            return;
+                        }
+
+                        var success = _controller.MarkEmployeeAbsent(employee, category);
+                        if (success)
+                        {
+                            LoadAbsenceLists();
+                            LoadEmployees();
+                            LoadShiftSlots();
+                            UpdateShiftStatistics();
+                            UpdateStatus($"{employee.FullName} به عنوان {categoryDisplay} ثبت شد");
+                        }
+                        else
+                        {
+                            UpdateStatus($"خطا در ثبت {employee.FullName} به عنوان {categoryDisplay}");
+                        }
+                    }
+                }
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in HandleAbsenceListDrop for category {Category}", category);
+                MessageBox.Show($"خطا در ثبت غیبت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void AbsentEmployeesListBox_DragEnter(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDragEnter(sender, e, Brushes.IndianRed);
+        }
+
+        private void SickEmployeesListBox_DragEnter(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDragEnter(sender, e, Brushes.Orange);
+        }
+
+        private void LeaveEmployeesListBox_DragEnter(object sender, DragEventArgs e)
+        {
+            HandleAbsenceListDragEnter(sender, e, Brushes.MediumPurple);
+        }
+
+        private void HandleAbsenceListDragEnter(object sender, DragEventArgs e, Brush highlightColor)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(typeof(Employee)))
+                {
+                    e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
+
+                    // Visual feedback: highlight the list box
+                    if (sender is ListBox listBox)
+                    {
+                        listBox.BorderBrush = highlightColor;
+                        listBox.BorderThickness = new Thickness(2);
+                        listBox.Background = new SolidColorBrush(Color.FromArgb(30, 
+                            ((SolidColorBrush)highlightColor).Color.R,
+                            ((SolidColorBrush)highlightColor).Color.G,
+                            ((SolidColorBrush)highlightColor).Color.B));
+                    }
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in HandleAbsenceListDragEnter");
+            }
+        }
+
+        private void AbsentEmployeesListBox_DragLeave(object sender, DragEventArgs e)
+        {
+            ResetAbsenceListBoxVisual(sender as ListBox);
+        }
+
+        private void SickEmployeesListBox_DragLeave(object sender, DragEventArgs e)
+        {
+            ResetAbsenceListBoxVisual(sender as ListBox);
+        }
+
+        private void LeaveEmployeesListBox_DragLeave(object sender, DragEventArgs e)
+        {
+            ResetAbsenceListBoxVisual(sender as ListBox);
+        }
+
+        private void ResetAbsenceListBoxVisual(ListBox? listBox)
+        {
+            try
+            {
+                if (listBox != null)
+                {
+                    listBox.BorderBrush = null;
+                    listBox.BorderThickness = new Thickness(0);
+                    listBox.Background = Brushes.Transparent;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ResetAbsenceListBoxVisual");
+            }
+        }
+
+        #endregion
+        
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem item && item.Tag is Employee employee)
+            {
+                _dragStartPoint = e.GetPosition(null);
+                _draggedEmployee = employee;
+            }
+        }
+        
+        private void ListBoxItem_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (sender is ListBoxItem item && item.Tag is Employee employee)
+                {
+                    if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee == employee)
+                    {
+                        var currentPoint = e.GetPosition(null);
+                        var diff = _dragStartPoint - currentPoint;
+
+                        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                            Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                        {
+                            var dragData = new DataObject(typeof(Employee), employee);
+                            var result = DragDrop.DoDragDrop(item, dragData, DragDropEffects.Move);
+                            _draggedEmployee = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ListBoxItem mouse move");
+            }
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T result)
+                {
+                    return result;
+                }
+                var childOfChild = FindVisualChild<T>(child);
+                if (childOfChild != null)
+                {
+                    return childOfChild;
+                }
+            }
+            return null;
+        }
+
+        private void EmployeeItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.Tag is Employee employee)
+            {
+                _dragStartPoint = e.GetPosition(null);
+                _draggedEmployee = employee;
+            }
+        }
+
+        private void EmployeeItem_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                if (sender is Border border && border.Tag is Employee employee)
+                {
+                    if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee == employee)
+                    {
+                        var currentPoint = e.GetPosition(null);
+                        var diff = _dragStartPoint - currentPoint;
+
+                        if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                            Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                        {
+                            var dragData = new DataObject(typeof(Employee), employee);
+                            var result = DragDrop.DoDragDrop(border, dragData, DragDropEffects.Move);
+                            _draggedEmployee = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in employee mouse move");
+            }
+        }
+
+        private void EmployeeItem_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (sender is Border border)
+            {
+                border.Background = new SolidColorBrush(Color.FromArgb(30, 0, 120, 215));
+                border.BorderBrush = Brushes.DodgerBlue;
+            }
+        }
+
+        private void EmployeeItem_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (sender is Border border)
+            {
+                border.Background = Brushes.White;
+                border.BorderBrush = new SolidColorBrush(Color.FromRgb(204, 204, 204));
+            }
+        }
 
         private void Employee_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e, Employee employee)
         {
@@ -1170,6 +3070,7 @@ namespace ManagementApp.Views
                 if (e.Data.GetDataPresent(typeof(Employee)))
                 {
                     e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
                 }
                 else
                 {
@@ -1182,23 +3083,142 @@ namespace ManagementApp.Views
             }
         }
 
+        private void ShiftSlotEmployee_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e, Employee employee, string shiftType, int slotIndex)
+        {
+            try
+            {
+                if (employee != null)
+                {
+                    _dragStartPoint = e.GetPosition(null);
+                    _draggedEmployee = employee;
+                    _draggedShiftType = shiftType;
+                    _draggedSlotIndex = slotIndex;
+                    
+                    // Get the current group ID
+                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
+                    {
+                        _draggedGroupId = groupId;
+                    }
+                    else
+                    {
+                        _draggedGroupId = "default";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in shift slot employee preview mouse left button down");
+            }
+        }
+
+        private void ShiftSlotEmployee_MouseMove(object sender, MouseEventArgs e, Employee employee, string shiftType, int slotIndex)
+        {
+            try
+            {
+                if (e.LeftButton == MouseButtonState.Pressed && _draggedEmployee != null && _draggedEmployee == employee && _draggedShiftType == shiftType && _draggedSlotIndex == slotIndex)
+                {
+                    var currentPoint = e.GetPosition(null);
+                    var diff = _dragStartPoint - currentPoint;
+
+                    if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                        Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                    {
+                        // Create drag data with employee and shift context
+                        var dragData = new DataObject();
+                        dragData.SetData(typeof(Employee), _draggedEmployee);
+                        dragData.SetData("ShiftType", _draggedShiftType ?? shiftType);
+                        dragData.SetData("GroupId", _draggedGroupId ?? "default");
+                        dragData.SetData("SlotIndex", _draggedSlotIndex);
+                        
+                        var result = DragDrop.DoDragDrop((DependencyObject)sender, dragData, DragDropEffects.Move);
+                        
+                        // Reset drag state
+                        _draggedEmployee = null;
+                        _draggedShiftType = null;
+                        _draggedGroupId = null;
+                        _draggedSlotIndex = -1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in shift slot employee mouse move");
+            }
+        }
+
         private void Slot_DragOver(object sender, DragEventArgs e, string shiftType, int slotIndex)
         {
             try
             {
-                if (e.Data.GetDataPresent(typeof(Employee)))
+                if (sender is Border border)
                 {
-                    e.Effects = DragDropEffects.Move;
-                    (sender as Border)!.Background = Brushes.LightBlue;
-                }
-                else
-                {
-                    e.Effects = DragDropEffects.None;
+                    if (e.Data.GetDataPresent(typeof(Employee)))
+                    {
+                        e.Effects = DragDropEffects.Move;
+                        border.Background = Brushes.LightBlue;
+                        border.BorderBrush = Brushes.DodgerBlue;
+                        border.BorderThickness = new Thickness(2);
+                    }
+                    else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                    {
+                        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                        if (files != null && files.Length > 0)
+                        {
+                            var file = files[0];
+                            var ext = Path.GetExtension(file).ToLower();
+                            if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                            {
+                                e.Effects = DragDropEffects.Copy;
+                                border.Background = Brushes.LightGreen;
+                                border.BorderBrush = Brushes.Green;
+                                border.BorderThickness = new Thickness(2);
+                            }
+                            else
+                            {
+                                e.Effects = DragDropEffects.None;
+                                border.Background = Brushes.LightGray;
+                                border.BorderBrush = Brushes.Gray;
+                                border.BorderThickness = new Thickness(1);
+                            }
+                        }
+                        else
+                        {
+                            e.Effects = DragDropEffects.None;
+                            border.Background = Brushes.LightGray;
+                            border.BorderBrush = Brushes.Gray;
+                            border.BorderThickness = new Thickness(1);
+                        }
+                    }
+                    else
+                    {
+                        e.Effects = DragDropEffects.None;
+                        border.Background = Brushes.LightGray;
+                        border.BorderBrush = Brushes.Gray;
+                        border.BorderThickness = new Thickness(1);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in slot drag over");
+            }
+        }
+
+        private void Slot_DragLeave(object sender, DragEventArgs e, string shiftType, int slotIndex)
+        {
+            try
+            {
+                if (sender is Border border)
+                {
+                    // Reset background and border to default
+                    border.Background = Brushes.LightGray;
+                    border.BorderBrush = Brushes.Gray;
+                    border.BorderThickness = new Thickness(1);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in slot drag leave");
             }
         }
 
@@ -1220,21 +3240,267 @@ namespace ManagementApp.Views
                             groupId = selectedGroupId;
                         }
                         
-                        var success = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
-                        if (success)
+                        var result = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
+                        HandleAssignmentResult(result, employee, shiftType, slotIndex, groupId, () =>
                         {
                             LoadShiftSlots();
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
+                            LoadAbsenceLists(); // Refresh absence lists
                             UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                        });
+                    }
+                }
+                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    // Handle photo file drop - detect employee name from folder or create new employee
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            // Try to detect employee name and personnel ID from filename (format: FirstName_LastName_PersonnelId.ext)
+                            var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(file);
+                            var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(file);
+                            
+                            if (detectedFirstName != null && detectedLastName != null)
+                            {
+                                // Find employee by name
+                                var employee = _controller.GetAllEmployees()
+                                    .FirstOrDefault(e => e.FirstName == detectedFirstName && e.LastName == detectedLastName);
+                                
+                                if (employee != null)
+                                {
+                                    // Update employee photo and personnel ID if detected, then assign to shift
+                                    _controller.UpdateEmployee(employee.EmployeeId, 
+                                        photoPath: file,
+                                        personnelId: detectedPersonnelId);
+                                    
+                                    string? groupId = null;
+                                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                                    {
+                                        groupId = selectedGroupId;
+                                    }
+                                    
+                                    var result = _controller.AssignEmployeeToShift(employee, shiftType, slotIndex, groupId);
+                                    HandleAssignmentResult(result, employee, shiftType, slotIndex, groupId, () =>
+                                    {
+                                        LoadShiftSlots();
+                                        UpdateShiftStatistics();
+                                        LoadEmployees();
+                                        UpdateStatus($"عکس کارمند {employee.FullName} به‌روزرسانی شد و به شیفت تخصیص داده شد");
+                                    });
+                                }
+                                else
+                                {
+                                    // Create new employee automatically from folder name
+                                    var dialogResult = MessageBox.Show(
+                                        $"کارمند {detectedFirstName} {detectedLastName} یافت نشد.\nآیا می‌خواهید کارمند جدیدی با این نام ایجاد شود؟",
+                                        "ایجاد کارمند جدید",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (dialogResult == MessageBoxResult.Yes)
+                                    {
+                                        var newEmployee = _controller.AddEmployee(
+                                            detectedFirstName, 
+                                            detectedLastName, 
+                                            photoPath: file,
+                                            personnelId: detectedPersonnelId ?? "");
+                                        
+                                        if (newEmployee)
+                                        {
+                                            // Find the newly created employee
+                                            var createdEmployee = _controller.GetAllEmployees()
+                                                .FirstOrDefault(e => e.FirstName == detectedFirstName && e.LastName == detectedLastName);
+                                            
+                                            if (createdEmployee != null)
+                                            {
+                                                string? groupId = null;
+                                                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                                                {
+                                                    groupId = selectedGroupId;
+                                                }
+                                                
+                                                var assignmentResult = _controller.AssignEmployeeToShift(createdEmployee, shiftType, slotIndex, groupId);
+                                                HandleAssignmentResult(assignmentResult, createdEmployee, shiftType, slotIndex, groupId, () =>
+                                                {
+                                                    LoadShiftSlots();
+                                                    UpdateShiftStatistics();
+                                                    LoadEmployees();
+                                                    UpdateStatus($"کارمند جدید {detectedFirstName} {detectedLastName} ایجاد شد و به شیفت تخصیص داده شد");
+                                                });
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        UpdateStatus($"کارمند {detectedFirstName} {detectedLastName} یافت نشد.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                UpdateStatus("نام کارمند از نام فایل تشخیص داده نشد. لطفاً نام فایل را به فرمت FirstName_LastName_PersonnelId.ext تغییر دهید.");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error in slot drop");
+                    MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+        }
+
+        private void EmployeePhoto_DragOver(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            e.Effects = DragDropEffects.Copy;
+                            if (sender is Border border)
+                            {
+                                border.BorderBrush = Brushes.LightGreen;
+                            }
+                        }
+                        else
+                        {
+                            e.Effects = DragDropEffects.None;
+                        }
+                    }
+                    else
+                    {
+                        e.Effects = DragDropEffects.None;
+                    }
+                }
+                else
+                {
+                    e.Effects = DragDropEffects.None;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in employee photo drag over");
+            }
+        }
+
+        private void EmployeePhoto_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (sender is Border border)
+                {
+                    border.BorderBrush = Brushes.Gray;
+                }
+
+                if (_selectedEmployee == null)
+                {
+                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        var file = files[0];
+                        var ext = Path.GetExtension(file).ToLower();
+                        if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
+                        {
+                            // Detect name and personnel ID from filename (format: FirstName_LastName_PersonnelId.ext)
+                            var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(file);
+                            var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(file);
+                            
+                            string? updatePersonnelId = null;
+                            
+                            // If personnel ID detected and different from current, ask user if they want to update
+                            if (detectedPersonnelId != null)
+                            {
+                                if (string.IsNullOrEmpty(_selectedEmployee.PersonnelId))
+                                {
+                                    // Auto-fill if empty
+                                    updatePersonnelId = detectedPersonnelId;
+                                }
+                                else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
+                                {
+                                    var result = MessageBox.Show(
+                                        $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
+                                        "تشخیص کد پرسنلی",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        updatePersonnelId = detectedPersonnelId;
+                                    }
+                                }
+                            }
+                            
+                            if (detectedFirstName != null && detectedLastName != null)
+                            {
+                                if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
+                                {
+                                    var result = MessageBox.Show(
+                                        $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
+                                        "تشخیص نام از پوشه",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+                                    
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                            firstName: detectedFirstName, 
+                                            lastName: detectedLastName, 
+                                            photoPath: file,
+                                            personnelId: updatePersonnelId);
+                                    }
+                                    else
+                                    {
+                                        _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                            photoPath: file,
+                                            personnelId: updatePersonnelId);
+                                    }
+                                }
+                                else
+                                {
+                                    _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                        photoPath: file,
+                                        personnelId: updatePersonnelId);
+                                }
+                            }
+                            else
+                            {
+                                // Name could not be detected from folder, just update photo and personnel ID
+                                _controller.UpdateEmployee(_selectedEmployee.EmployeeId, 
+                                    photoPath: file,
+                                    personnelId: updatePersonnelId);
+                            }
+                            
+                            LoadEmployees();
+                            LoadEmployeeDetails(_selectedEmployee); // Refresh employee details view
+                            LoadEmployeeDetails(_selectedEmployee);
+                            UpdateStatus("عکس کارمند بروزرسانی شد");
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in slot drop");
-                MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                _logger.LogError(ex, "Error in employee photo drop");
+                MessageBox.Show($"خطا در افزودن عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1395,14 +3661,14 @@ namespace ManagementApp.Views
                             groupId = selectedGroupId;
                         }
                         
-                        var success = _controller.AssignEmployeeToShift(selectedEmployee, shiftType, slotIndex, groupId);
-                        if (success)
+                        var result = _controller.AssignEmployeeToShift(selectedEmployee, shiftType, slotIndex, groupId);
+                        HandleAssignmentResult(result, selectedEmployee, shiftType, slotIndex, groupId, () =>
                         {
                             LoadShiftSlots();
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
                             UpdateStatus($"کارمند {selectedEmployee.FullName} به شیفت {shiftType} تخصیص داده شد");
-                        }
+                        });
                     }
                     dialog.Close();
                 };
@@ -1842,19 +4108,19 @@ namespace ManagementApp.Views
                 var taskId = _selectedTask.TaskId;
                 var taskTitle = _selectedTask.Title;
 
-                var availableEmployees = _controller.GetAvailableEmployeesForTask(taskId);
+                var availableGroups = _controller.GetActiveShiftGroups();
                 
-                if (availableEmployees.Count == 0)
+                if (availableGroups.Count == 0)
                 {
-                    MessageBox.Show("همه کارمندان به این وظیفه تخصیص داده شده‌اند", "اطلاع", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("هیچ گروه شیفت فعالی یافت نشد", "اطلاع", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 var dialog = new Window
                 {
-                    Title = $"تخصیص کارمند به وظیفه: {taskTitle}",
+                    Title = $"تخصیص گروه شیفت به وظیفه: {taskTitle}",
                     Width = 400,
-                    Height = 500,
+                    Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
                     FlowDirection = FlowDirection.RightToLeft,
@@ -1868,7 +4134,7 @@ namespace ManagementApp.Views
 
                 var label = new Label
                 {
-                    Content = "کارمند مورد نظر را انتخاب کنید:",
+                    Content = "گروه شیفت مورد نظر را انتخاب کنید:",
                     FontSize = 12,
                     Margin = new Thickness(10, 10, 10, 5),
                     HorizontalAlignment = HorizontalAlignment.Center
@@ -1876,15 +4142,15 @@ namespace ManagementApp.Views
                 Grid.SetRow(label, 0);
                 grid.Children.Add(label);
 
-                var listBox = new ListBox
+                var comboBox = new ComboBox
                 {
-                    DisplayMemberPath = "FullName",
-                    ItemsSource = availableEmployees,
-                    Height = 300,
+                    DisplayMemberPath = "Name",
+                    ItemsSource = availableGroups,
+                    Height = 30,
                     Margin = new Thickness(10, 5, 10, 5)
                 };
-                Grid.SetRow(listBox, 1);
-                grid.Children.Add(listBox);
+                Grid.SetRow(comboBox, 1);
+                grid.Children.Add(comboBox);
 
                 var buttonPanel = new StackPanel
                 {
@@ -1904,19 +4170,30 @@ namespace ManagementApp.Views
                 };
                 assignButton.Click += (s, e) =>
                 {
-                    if (listBox.SelectedItem is Employee selectedEmployee)
+                    if (comboBox.SelectedItem is Shared.Models.ShiftGroup selectedGroup)
                     {
-                        var success = _controller.AssignTaskToEmployee(taskId, selectedEmployee.EmployeeId);
+                        var employees = _controller.GetEmployeesFromShiftGroup(selectedGroup.GroupId);
+                        if (employees.Count == 0)
+                        {
+                            MessageBox.Show($"گروه {selectedGroup.Name} هیچ کارمندی ندارد", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+
+                        var success = _controller.AssignTaskToShiftGroup(taskId, selectedGroup.GroupId);
                         if (success)
                         {
                             LoadTaskAssignments();
-                            UpdateStatus($"{selectedEmployee.FullName} به وظیفه {taskTitle} تخصیص داده شد");
+                            UpdateStatus($"تمام کارمندان گروه {selectedGroup.Name} ({employees.Count} نفر) به وظیفه {taskTitle} تخصیص داده شدند");
                             dialog.Close();
+                        }
+                        else
+                        {
+                            MessageBox.Show($"خطا در تخصیص کارمندان گروه {selectedGroup.Name} به وظیفه", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("لطفاً یک گروه شیفت را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 };
 
@@ -2430,90 +4707,6 @@ namespace ManagementApp.Views
             }
         }
 
-        private void ExportReport_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var saveFileDialog = new SaveFileDialog
-                {
-                    Filter = "PDF files (*.pdf)|*.pdf|Text files (*.txt)|*.txt|All files (*.*)|*.*",
-                    Title = "ذخیره گزارش",
-                    DefaultExt = "pdf"
-                };
-
-                // Get current report details for default filename
-                var reportType = ReportTypeComboBox.SelectedItem?.ToString() ?? "گزارش";
-                var startDate = ReportStartDatePicker.SelectedDate?.ToString() ?? "";
-                var endDate = ReportEndDatePicker.SelectedDate?.ToString() ?? "";
-                
-                if (!string.IsNullOrEmpty(startDate) && !string.IsNullOrEmpty(endDate))
-                {
-                    var defaultFileName = _pdfService.GetDefaultFileName(reportType, startDate, endDate);
-                    saveFileDialog.FileName = defaultFileName;
-                }
-
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    var filePath = saveFileDialog.FileName;
-                    var fileExtension = Path.GetExtension(filePath).ToLower();
-
-                    if (fileExtension == ".pdf")
-                    {
-                        // Export as PDF
-                        var reportTypeText = "گزارش";
-                        if (ReportTypeComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedReportType)
-                        {
-                            reportTypeText = selectedReportType.Content?.ToString() ?? "گزارش";
-                        }
-                        var reportTitle = $"{reportTypeText} - {startDate} تا {endDate}";
-                        
-                        var assignedTo = "";
-                        if (ReportAssignedToComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedAssignedTo)
-                        {
-                            assignedTo = selectedAssignedTo.Content?.ToString() ?? "";
-                        }
-                        else if (ReportAssignedToComboBox.SelectedItem is string assignedToString)
-                        {
-                            assignedTo = assignedToString;
-                        }
-                        
-                        _logger.LogInformation("Starting PDF export to: {FilePath}", filePath);
-                        _logger.LogInformation("Report title: {ReportTitle}", reportTitle);
-                        _logger.LogInformation("Report content length: {Length}", ReportPreviewTextBlock.Text?.Length ?? 0);
-                        _logger.LogInformation("Assigned to: {AssignedTo}", assignedTo);
-                        
-                        var success = _pdfService.ExportReportToPdf(ReportPreviewTextBlock.Text, filePath, reportTitle, assignedTo);
-                        
-                        if (success)
-                        {
-                            _logger.LogInformation("PDF export completed successfully");
-                            UpdateStatus("گزارش PDF صادر شد");
-                            MessageBox.Show("گزارش با موفقیت به فرمت PDF صادر شد.", "موفقیت", 
-                                MessageBoxButton.OK, MessageBoxImage.Information);
-                        }
-                        else
-                        {
-                            _logger.LogError("PDF export failed");
-                            MessageBox.Show("خطا در صادر کردن گزارش PDF.", "خطا", 
-                                MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
-                    }
-                    else
-                    {
-                        // Export as text file
-                        File.WriteAllText(filePath, ReportPreviewTextBlock.Text, System.Text.Encoding.UTF8);
-                        UpdateStatus("گزارش متنی صادر شد");
-                        MessageBox.Show("گزارش با موفقیت به فرمت متنی صادر شد.", "موفقیت", 
-                            MessageBoxButton.OK, MessageBoxImage.Information);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting report");
-                MessageBox.Show($"خطا در صادر کردن گزارش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         #endregion
 
@@ -2571,7 +4764,9 @@ namespace ManagementApp.Views
             {
                 // Refresh shift group selection ComboBox
                 LoadShiftGroups();
-                LoadDisplayGroups();
+                
+                // Refresh progress group ComboBoxes
+                LoadDailyProgressGroups();
                 
                 // Refresh shift-related data when shift groups are updated
                 LoadShiftSlots();
@@ -2585,6 +4780,1004 @@ namespace ManagementApp.Views
                 
                 _logger.LogInformation("Shift groups updated - UI refreshed");
             });
+        }
+
+        private void UpdateDailyPreview()
+        {
+            try
+            {
+                var today = Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
+                
+                // Count sick employees for today
+                var sickAbsences = _controller.AbsenceManager.GetAbsencesByCategory("بیمار")
+                    .Where(a => a.Date == today)
+                    .ToList();
+                SickCountText.Text = sickAbsences.Count.ToString();
+                
+                // Count employees on leave for today
+                var leaveAbsences = _controller.AbsenceManager.GetAbsencesByCategory("مرخصی")
+                    .Where(a => a.Date == today)
+                    .ToList();
+                LeaveCountText.Text = leaveAbsences.Count.ToString();
+                
+                // Count absent employees for today
+                var absentAbsences = _controller.AbsenceManager.GetAbsencesByCategory("غایب")
+                    .Where(a => a.Date == today)
+                    .ToList();
+                AbsentCountText.Text = absentAbsences.Count.ToString();
+                
+                // Get group statistics
+                var groupStats = new List<GroupStatistic>();
+                foreach (var group in _controller.ShiftGroupManager.ShiftGroups.Values)
+                {
+                    if (group.IsActive)
+                    {
+                        var employeeCount = group.GetTotalAssignedEmployees();
+                        groupStats.Add(new GroupStatistic
+                        {
+                            GroupName = group.Name,
+                            Description = group.Description,
+                            EmployeeCount = employeeCount
+                        });
+                    }
+                }
+                
+                GroupStatsItemsControl.ItemsSource = groupStats;
+                
+                // Update date display
+                DailyPreviewDateText.Text = Shared.Utils.GeorgianDateHelper.FormatForDisplay(today);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating daily preview");
+            }
+        }
+
+        private void OnDailyPreviewDataUpdated()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Only update if the daily preview tab is currently selected
+                if (MainTabControl.SelectedItem is TabItem selectedTab && 
+                    selectedTab.Header?.ToString() == "پیش‌نمایش روزانه")
+                {
+                    UpdateDailyPreview();
+                }
+            });
+        }
+
+        private void PrintDailyPreview_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var printDialog = new PrintDialog();
+                if (printDialog.ShowDialog() == true)
+                {
+                    // Create a printable document with better formatting
+                    var document = new FlowDocument
+                    {
+                        PagePadding = new Thickness(50),
+                        FontFamily = new FontFamily("Tahoma"),
+                        FontSize = 12,
+                        ColumnWidth = printDialog.PrintableAreaWidth - 100
+                    };
+                    
+                    var today = Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
+                    var todayDisplay = Shared.Utils.GeorgianDateHelper.FormatForDisplay(today);
+                    var generationTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
+                    
+                    // Define color scheme
+                    var headerBackground = new SolidColorBrush(Color.FromRgb(227, 242, 253)); // Light blue
+                    var sectionBackground = new SolidColorBrush(Color.FromRgb(245, 245, 245)); // Light gray
+                    var borderColor = new SolidColorBrush(Color.FromRgb(189, 189, 189)); // Medium gray
+                    var headerTextColor = new SolidColorBrush(Color.FromRgb(25, 118, 210)); // Blue
+                    var darkTextColor = new SolidColorBrush(Color.FromRgb(66, 66, 66)); // Dark gray
+                    
+                    // Header Section
+                    var headerTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Background = headerBackground,
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 25)
+                    };
+                    headerTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var headerRow = new TableRow();
+                    var headerCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(15, 20, 15, 20),
+                        TextAlignment = TextAlignment.Center
+                    };
+                    headerCell.Blocks.Add(new Paragraph(new Run($"خلاصه روزانه - {todayDisplay}"))
+                    {
+                        FontSize = 22,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    headerCell.Blocks.Add(new Paragraph(new Run($"تاریخ تولید: {generationTime}"))
+                    {
+                        FontSize = 10,
+                        Foreground = darkTextColor,
+                        Margin = new Thickness(0, 8, 0, 0)
+                    });
+                    headerRow.Cells.Add(headerCell);
+                    headerTable.RowGroups.Add(new TableRowGroup());
+                    headerTable.RowGroups[0].Rows.Add(headerRow);
+                    document.Blocks.Add(headerTable);
+                    
+                    // Absence statistics
+                    var sickCount = _controller.AbsenceManager.GetAbsencesByCategory("بیمار")
+                        .Count(a => a.Date == today);
+                    var leaveCount = _controller.AbsenceManager.GetAbsencesByCategory("مرخصی")
+                        .Count(a => a.Date == today);
+                    var absentCount = _controller.AbsenceManager.GetAbsencesByCategory("غایب")
+                        .Count(a => a.Date == today);
+                    
+                    // Absence Statistics Table
+                    var absenceTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 20)
+                    };
+                    absenceTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+                    absenceTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var absenceRowGroup = new TableRowGroup();
+                    
+                    // Section header row
+                    var absenceHeaderRow = new TableRow
+                    {
+                        Background = sectionBackground
+                    };
+                    var absenceHeaderCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Padding = new Thickness(12, 10, 12, 10),
+                        ColumnSpan = 2
+                    };
+                    absenceHeaderCell.Blocks.Add(new Paragraph(new Run("آمار غیبت‌ها"))
+                    {
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    absenceHeaderRow.Cells.Add(absenceHeaderCell);
+                    absenceRowGroup.Rows.Add(absenceHeaderRow);
+                    
+                    // Data rows
+                    var absenceData = new[]
+                    {
+                        new { Label = "کارمندان بیمار", Count = sickCount },
+                        new { Label = "کارمندان مرخصی", Count = leaveCount },
+                        new { Label = "کارمندان غایب", Count = absentCount }
+                    };
+                    
+                    bool isAlternate = false;
+                    foreach (var item in absenceData)
+                    {
+                        var dataRow = new TableRow
+                        {
+                            Background = isAlternate ? sectionBackground : Brushes.White
+                        };
+                        isAlternate = !isAlternate;
+                        
+                        var labelCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10)
+                        };
+                        labelCell.Blocks.Add(new Paragraph(new Run(item.Label))
+                        {
+                            FontSize = 12,
+                            Foreground = darkTextColor
+                        });
+                        dataRow.Cells.Add(labelCell);
+                        
+                        var countCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            TextAlignment = TextAlignment.Center
+                        };
+                        countCell.Blocks.Add(new Paragraph(new Run(item.Count.ToString()))
+                        {
+                            FontSize = 14,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dataRow.Cells.Add(countCell);
+                        
+                        absenceRowGroup.Rows.Add(dataRow);
+                    }
+                    
+                    absenceTable.RowGroups.Add(absenceRowGroup);
+                    document.Blocks.Add(absenceTable);
+                    
+                    // Visual Separator
+                    var separator = new Paragraph(new Run(new string('─', 50)))
+                    {
+                        TextAlignment = TextAlignment.Center,
+                        Margin = new Thickness(0, 15, 0, 20),
+                        Foreground = borderColor
+                    };
+                    document.Blocks.Add(separator);
+                    
+                    // Group statistics
+                    var activeGroups = _controller.ShiftGroupManager.ShiftGroups.Values
+                        .Where(g => g.IsActive)
+                        .ToList();
+                    
+                    // Shift Groups Statistics Table
+                    var groupsTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 20)
+                    };
+                    groupsTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+                    groupsTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var groupsRowGroup = new TableRowGroup();
+                    
+                    // Section header row
+                    var groupsHeaderRow = new TableRow
+                    {
+                        Background = sectionBackground
+                    };
+                    var groupsHeaderCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Padding = new Thickness(12, 10, 12, 10),
+                        ColumnSpan = 2
+                    };
+                    groupsHeaderCell.Blocks.Add(new Paragraph(new Run("آمار گروه‌های شیفت"))
+                    {
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    groupsHeaderRow.Cells.Add(groupsHeaderCell);
+                    groupsRowGroup.Rows.Add(groupsHeaderRow);
+                    
+                    // Group data rows
+                    isAlternate = false;
+                    foreach (var group in activeGroups)
+                    {
+                        var count = group.GetTotalAssignedEmployees();
+                        var dataRow = new TableRow
+                        {
+                            Background = isAlternate ? sectionBackground : Brushes.White
+                        };
+                        isAlternate = !isAlternate;
+                        
+                        var nameCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10)
+                        };
+                        nameCell.Blocks.Add(new Paragraph(new Run(group.Name))
+                        {
+                            FontSize = 12,
+                            Foreground = darkTextColor
+                        });
+                        dataRow.Cells.Add(nameCell);
+                        
+                        var countCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            TextAlignment = TextAlignment.Center
+                        };
+                        countCell.Blocks.Add(new Paragraph(new Run($"{count} کارمند"))
+                        {
+                            FontSize = 12,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dataRow.Cells.Add(countCell);
+                        
+                        groupsRowGroup.Rows.Add(dataRow);
+                    }
+                    
+                    // If no groups, add a message row
+                    if (activeGroups.Count == 0)
+                    {
+                        var emptyRow = new TableRow
+                        {
+                            Background = Brushes.White
+                        };
+                        var emptyCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            ColumnSpan = 2,
+                            TextAlignment = TextAlignment.Center
+                        };
+                        emptyCell.Blocks.Add(new Paragraph(new Run("گروه فعالی وجود ندارد"))
+                        {
+                            FontSize = 12,
+                            FontStyle = FontStyles.Italic,
+                            Foreground = darkTextColor
+                        });
+                        emptyRow.Cells.Add(emptyCell);
+                        groupsRowGroup.Rows.Add(emptyRow);
+                    }
+                    
+                    groupsTable.RowGroups.Add(groupsRowGroup);
+                    document.Blocks.Add(groupsTable);
+                    
+                    // Footer Section
+                    var footerTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1, 0, 1, 1),
+                        Background = sectionBackground,
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 30, 0, 0)
+                    };
+                    footerTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var footerRow = new TableRow();
+                    var footerCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(15, 12, 15, 12),
+                        TextAlignment = TextAlignment.Center
+                    };
+                    footerCell.Blocks.Add(new Paragraph(new Run("گزارش تولید شده توسط سیستم مدیریت کارمندان"))
+                    {
+                        FontSize = 9,
+                        Foreground = darkTextColor,
+                        FontStyle = FontStyles.Italic
+                    });
+                    footerRow.Cells.Add(footerCell);
+                    footerTable.RowGroups.Add(new TableRowGroup());
+                    footerTable.RowGroups[0].Rows.Add(footerRow);
+                    document.Blocks.Add(footerTable);
+                    
+                    // Print
+                    document.PageHeight = printDialog.PrintableAreaHeight;
+                    document.PageWidth = printDialog.PrintableAreaWidth;
+                    
+                    var paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
+                    printDialog.PrintDocument(paginator, $"خلاصه روزانه - {todayDisplay}");
+                    
+                    UpdateStatus("خلاصه روزانه چاپ شد");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error printing daily preview");
+                MessageBox.Show($"خطا در چاپ: {ex.Message}", "خطا", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void PrintReport_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var reportContent = ReportPreviewTextBlock.Text;
+                if (string.IsNullOrWhiteSpace(reportContent))
+                {
+                    MessageBox.Show("لطفاً ابتدا گزارش را تولید کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var printDialog = new PrintDialog();
+                if (printDialog.ShowDialog() == true)
+                {
+                    // Parse report content
+                    var reportData = ParseReportContentForPrint(reportContent);
+                    
+                    // Create a printable document with better formatting
+                    var document = new FlowDocument
+                    {
+                        PagePadding = new Thickness(50),
+                        FontFamily = new FontFamily("Tahoma"),
+                        FontSize = 12,
+                        ColumnWidth = printDialog.PrintableAreaWidth - 100
+                    };
+                    
+                    var generationTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
+                    
+                    // Define color scheme (same as PrintDailyPreview_Click)
+                    var headerBackground = new SolidColorBrush(Color.FromRgb(227, 242, 253)); // Light blue
+                    var sectionBackground = new SolidColorBrush(Color.FromRgb(245, 245, 245)); // Light gray
+                    var borderColor = new SolidColorBrush(Color.FromRgb(189, 189, 189)); // Medium gray
+                    var headerTextColor = new SolidColorBrush(Color.FromRgb(25, 118, 210)); // Blue
+                    var darkTextColor = new SolidColorBrush(Color.FromRgb(66, 66, 66)); // Dark gray
+                    
+                    // Get report title
+                    var reportTypeText = "گزارش";
+                    if (ReportTypeComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedReportType)
+                    {
+                        reportTypeText = selectedReportType.Content?.ToString() ?? "گزارش";
+                    }
+                    var reportTitle = !string.IsNullOrEmpty(reportData.ReportType) 
+                        ? reportData.ReportType 
+                        : reportTypeText;
+                    
+                    // Header Section
+                    var headerTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Background = headerBackground,
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 25)
+                    };
+                    headerTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var headerRow = new TableRow();
+                    var headerCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(15, 20, 15, 20),
+                        TextAlignment = TextAlignment.Center
+                    };
+                    headerCell.Blocks.Add(new Paragraph(new Run(reportTitle))
+                    {
+                        FontSize = 22,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    
+                    if (!string.IsNullOrEmpty(reportData.StartDate) && !string.IsNullOrEmpty(reportData.EndDate))
+                    {
+                        headerCell.Blocks.Add(new Paragraph(new Run($"از {reportData.StartDate} تا {reportData.EndDate}"))
+                        {
+                            FontSize = 14,
+                            Foreground = darkTextColor,
+                            Margin = new Thickness(0, 8, 0, 0)
+                        });
+                    }
+                    
+                    headerCell.Blocks.Add(new Paragraph(new Run($"تاریخ تولید: {generationTime}"))
+                    {
+                        FontSize = 10,
+                        Foreground = darkTextColor,
+                        Margin = new Thickness(0, 8, 0, 0)
+                    });
+                    headerRow.Cells.Add(headerCell);
+                    headerTable.RowGroups.Add(new TableRowGroup());
+                    headerTable.RowGroups[0].Rows.Add(headerRow);
+                    document.Blocks.Add(headerTable);
+                    
+                    // Visual Separator
+                    var separator = new Paragraph(new Run(new string('─', 50)))
+                    {
+                        TextAlignment = TextAlignment.Center,
+                        Margin = new Thickness(0, 15, 0, 20),
+                        Foreground = borderColor
+                    };
+                    document.Blocks.Add(separator);
+                    
+                    // Employee Statistics Table
+                    var employeeTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 20)
+                    };
+                    employeeTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+                    employeeTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var employeeRowGroup = new TableRowGroup();
+                    
+                    // Section header row
+                    var employeeHeaderRow = new TableRow
+                    {
+                        Background = sectionBackground
+                    };
+                    var employeeHeaderCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Padding = new Thickness(12, 10, 12, 10),
+                        ColumnSpan = 2
+                    };
+                    employeeHeaderCell.Blocks.Add(new Paragraph(new Run("آمار کارمندان"))
+                    {
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    employeeHeaderRow.Cells.Add(employeeHeaderCell);
+                    employeeRowGroup.Rows.Add(employeeHeaderRow);
+                    
+                    // Data rows
+                    var employeeData = new[]
+                    {
+                        new { Label = "کل کارمندان", Value = reportData.TotalEmployees.ToString() },
+                        new { Label = "کل غیبت‌ها در بازه", Value = reportData.TotalAbsences.ToString() }
+                    };
+                    
+                    bool isAlternate = false;
+                    foreach (var item in employeeData)
+                    {
+                        var dataRow = new TableRow
+                        {
+                            Background = isAlternate ? sectionBackground : Brushes.White
+                        };
+                        isAlternate = !isAlternate;
+                        
+                        var labelCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10)
+                        };
+                        labelCell.Blocks.Add(new Paragraph(new Run(item.Label))
+                        {
+                            FontSize = 12,
+                            Foreground = darkTextColor
+                        });
+                        dataRow.Cells.Add(labelCell);
+                        
+                        var valueCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            TextAlignment = TextAlignment.Center
+                        };
+                        valueCell.Blocks.Add(new Paragraph(new Run(item.Value))
+                        {
+                            FontSize = 14,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dataRow.Cells.Add(valueCell);
+                        
+                        employeeRowGroup.Rows.Add(dataRow);
+                    }
+                    
+                    employeeTable.RowGroups.Add(employeeRowGroup);
+                    document.Blocks.Add(employeeTable);
+                    
+                    // Visual Separator
+                    document.Blocks.Add(separator);
+                    
+                    // Shift Statistics Table
+                    var capacity = reportData.ShiftCapacity > 0 ? reportData.ShiftCapacity : 15;
+                    var shiftTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 20)
+                    };
+                    shiftTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+                    shiftTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var shiftRowGroup = new TableRowGroup();
+                    
+                    // Section header row
+                    var shiftHeaderRow = new TableRow
+                    {
+                        Background = sectionBackground
+                    };
+                    var shiftHeaderCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Padding = new Thickness(12, 10, 12, 10),
+                        ColumnSpan = 2
+                    };
+                    shiftHeaderCell.Blocks.Add(new Paragraph(new Run("آمار شیفت‌ها (میانگین)"))
+                    {
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    shiftHeaderRow.Cells.Add(shiftHeaderCell);
+                    shiftRowGroup.Rows.Add(shiftHeaderRow);
+                    
+                    // Data rows
+                    var shiftData = new[]
+                    {
+                        new { Label = "شیفت صبح (میانگین)", Value = $"{reportData.AverageMorningShift:F1}/{capacity}" },
+                        new { Label = "شیفت عصر (میانگین)", Value = $"{reportData.AverageEveningShift:F1}/{capacity}" },
+                        new { Label = "حداکثر شیفت صبح", Value = $"{reportData.MaxMorningShift}/{capacity}" },
+                        new { Label = "حداکثر شیفت عصر", Value = $"{reportData.MaxEveningShift}/{capacity}" }
+                    };
+                    
+                    isAlternate = false;
+                    foreach (var item in shiftData)
+                    {
+                        var dataRow = new TableRow
+                        {
+                            Background = isAlternate ? sectionBackground : Brushes.White
+                        };
+                        isAlternate = !isAlternate;
+                        
+                        var labelCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10)
+                        };
+                        labelCell.Blocks.Add(new Paragraph(new Run(item.Label))
+                        {
+                            FontSize = 12,
+                            Foreground = darkTextColor
+                        });
+                        dataRow.Cells.Add(labelCell);
+                        
+                        var valueCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            TextAlignment = TextAlignment.Center
+                        };
+                        valueCell.Blocks.Add(new Paragraph(new Run(item.Value))
+                        {
+                            FontSize = 12,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dataRow.Cells.Add(valueCell);
+                        
+                        shiftRowGroup.Rows.Add(dataRow);
+                    }
+                    
+                    shiftTable.RowGroups.Add(shiftRowGroup);
+                    document.Blocks.Add(shiftTable);
+                    
+                    // Visual Separator
+                    document.Blocks.Add(separator);
+                    
+                    // Task Statistics Table
+                    var taskTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 0, 0, 20)
+                    };
+                    taskTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+                    taskTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var taskRowGroup = new TableRowGroup();
+                    
+                    // Section header row
+                    var taskHeaderRow = new TableRow
+                    {
+                        Background = sectionBackground
+                    };
+                    var taskHeaderCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1),
+                        Padding = new Thickness(12, 10, 12, 10),
+                        ColumnSpan = 2
+                    };
+                    taskHeaderCell.Blocks.Add(new Paragraph(new Run("آمار وظایف (کل دوره)"))
+                    {
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = headerTextColor
+                    });
+                    taskHeaderRow.Cells.Add(taskHeaderCell);
+                    taskRowGroup.Rows.Add(taskHeaderRow);
+                    
+                    // Data rows
+                    var taskData = new[]
+                    {
+                        new { Label = "کل وظایف", Value = reportData.TotalTasks.ToString() },
+                        new { Label = "تکمیل شده", Value = reportData.CompletedTasks.ToString() },
+                        new { Label = "در حال انجام", Value = reportData.InProgressTasks.ToString() },
+                        new { Label = "در انتظار", Value = reportData.PendingTasks.ToString() }
+                    };
+                    
+                    isAlternate = false;
+                    foreach (var item in taskData)
+                    {
+                        var dataRow = new TableRow
+                        {
+                            Background = isAlternate ? sectionBackground : Brushes.White
+                        };
+                        isAlternate = !isAlternate;
+                        
+                        var labelCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10)
+                        };
+                        labelCell.Blocks.Add(new Paragraph(new Run(item.Label))
+                        {
+                            FontSize = 12,
+                            Foreground = darkTextColor
+                        });
+                        dataRow.Cells.Add(labelCell);
+                        
+                        var valueCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(15, 10, 15, 10),
+                            TextAlignment = TextAlignment.Center
+                        };
+                        valueCell.Blocks.Add(new Paragraph(new Run(item.Value))
+                        {
+                            FontSize = 12,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dataRow.Cells.Add(valueCell);
+                        
+                        taskRowGroup.Rows.Add(dataRow);
+                    }
+                    
+                    taskTable.RowGroups.Add(taskRowGroup);
+                    document.Blocks.Add(taskTable);
+                    
+                    // Visual Separator
+                    document.Blocks.Add(separator);
+                    
+                    // Daily Details Section
+                    if (reportData.DailyDetails.Count > 0)
+                    {
+                        var dailyHeaderTable = new Table
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            CellSpacing = 0,
+                            Margin = new Thickness(0, 0, 0, 10)
+                        };
+                        dailyHeaderTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                        
+                        var dailyHeaderRow = new TableRow
+                        {
+                            Background = sectionBackground
+                        };
+                        var dailyHeaderCell = new TableCell
+                        {
+                            BorderBrush = borderColor,
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(12, 10, 12, 10)
+                        };
+                        dailyHeaderCell.Blocks.Add(new Paragraph(new Run("جزئیات روزانه"))
+                        {
+                            FontSize = 16,
+                            FontWeight = FontWeights.Bold,
+                            Foreground = headerTextColor
+                        });
+                        dailyHeaderRow.Cells.Add(dailyHeaderCell);
+                        dailyHeaderTable.RowGroups.Add(new TableRowGroup());
+                        dailyHeaderTable.RowGroups[0].Rows.Add(dailyHeaderRow);
+                        document.Blocks.Add(dailyHeaderTable);
+                        
+                        foreach (var detail in reportData.DailyDetails)
+                        {
+                            var detailParagraph = new Paragraph(new Run(detail))
+                            {
+                                FontSize = 11,
+                                Foreground = darkTextColor,
+                                Margin = new Thickness(0, 0, 0, 5),
+                                Padding = new Thickness(15, 0, 0, 0)
+                            };
+                            document.Blocks.Add(detailParagraph);
+                        }
+                        
+                        document.Blocks.Add(separator);
+                    }
+                    
+                    // Footer Section
+                    var footerTable = new Table
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(1, 0, 1, 1),
+                        Background = sectionBackground,
+                        CellSpacing = 0,
+                        Margin = new Thickness(0, 30, 0, 0)
+                    };
+                    footerTable.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                    
+                    var footerRow = new TableRow();
+                    var footerCell = new TableCell
+                    {
+                        BorderBrush = borderColor,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(15, 12, 15, 12),
+                        TextAlignment = TextAlignment.Center
+                    };
+                    footerCell.Blocks.Add(new Paragraph(new Run("گزارش تولید شده توسط سیستم مدیریت کارمندان"))
+                    {
+                        FontSize = 9,
+                        FontStyle = FontStyles.Italic,
+                        Foreground = darkTextColor
+                    });
+                    footerRow.Cells.Add(footerCell);
+                    footerTable.RowGroups.Add(new TableRowGroup());
+                    footerTable.RowGroups[0].Rows.Add(footerRow);
+                    document.Blocks.Add(footerTable);
+                    
+                    // Print
+                    document.PageHeight = printDialog.PrintableAreaHeight;
+                    document.PageWidth = printDialog.PrintableAreaWidth;
+                    
+                    var paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
+                    printDialog.PrintDocument(paginator, reportTitle);
+                    
+                    UpdateStatus("گزارش چاپ شد");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error printing report");
+                MessageBox.Show($"خطا در چاپ: {ex.Message}", "خطا", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private class ReportDataForPrint
+        {
+            public string ReportType { get; set; } = "";
+            public string StartDate { get; set; } = "";
+            public string EndDate { get; set; } = "";
+            public int TotalEmployees { get; set; }
+            public int TotalAbsences { get; set; }
+            public double AverageMorningShift { get; set; }
+            public double AverageEveningShift { get; set; }
+            public int MaxMorningShift { get; set; }
+            public int MaxEveningShift { get; set; }
+            public int ShiftCapacity { get; set; }
+            public int TotalTasks { get; set; }
+            public int CompletedTasks { get; set; }
+            public int InProgressTasks { get; set; }
+            public int PendingTasks { get; set; }
+            public List<string> DailyDetails { get; set; } = new List<string>();
+        }
+
+        private ReportDataForPrint ParseReportContentForPrint(string content)
+        {
+            var reportData = new ReportDataForPrint();
+            
+            if (string.IsNullOrEmpty(content))
+                return reportData;
+
+            var lines = content.Split('\n');
+            bool inDailyDetails = false;
+            
+            foreach (var line in lines)
+            {
+                var cleanLine = line.Trim();
+                if (string.IsNullOrWhiteSpace(cleanLine))
+                {
+                    inDailyDetails = false;
+                    continue;
+                }
+
+                // Remove emojis and formatting characters if present
+                cleanLine = System.Text.RegularExpressions.Regex.Replace(cleanLine, @"[📊📅👥❌⏰📋📈•=]", "").Trim();
+                
+                // Normalize whitespace
+                cleanLine = System.Text.RegularExpressions.Regex.Replace(cleanLine, @"\s+", " ");
+
+                // Parse report type
+                if (cleanLine.StartsWith("گزارش") && !cleanLine.Contains(":"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"گزارش\s+(.+)");
+                    if (match.Success)
+                        reportData.ReportType = match.Groups[1].Value.Trim();
+                }
+                // Parse dates
+                else if (cleanLine.Contains("تاریخ شروع:"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تاریخ شروع:\s*(.+)");
+                    if (match.Success)
+                        reportData.StartDate = match.Groups[1].Value.Trim();
+                }
+                else if (cleanLine.Contains("تاریخ پایان:"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تاریخ پایان:\s*(.+)");
+                    if (match.Success)
+                        reportData.EndDate = match.Groups[1].Value.Trim();
+                }
+                // Parse employee statistics
+                else if (cleanLine.Contains("کل کارمندان") && !cleanLine.Contains("مدیران"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+کارمندان[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.TotalEmployees = count;
+                }
+                else if (cleanLine.Contains("کل غیبت") && (cleanLine.Contains("بازه") || cleanLine.Contains("در بازه")))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+غیبت[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.TotalAbsences = count;
+                }
+                // Parse shift statistics
+                else if (cleanLine.Contains("شیفت صبح") && cleanLine.Contains("/") && !cleanLine.Contains("حداکثر"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"شیفت\s+صبح[^:]*:\s*([\d.]+)/(\d+)");
+                    if (match.Success)
+                    {
+                        if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double avg))
+                            reportData.AverageMorningShift = avg;
+                        if (int.TryParse(match.Groups[2].Value, out int cap) && reportData.ShiftCapacity == 0)
+                            reportData.ShiftCapacity = cap;
+                    }
+                }
+                else if (cleanLine.Contains("شیفت عصر") && cleanLine.Contains("/") && !cleanLine.Contains("حداکثر"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"شیفت\s+عصر[^:]*:\s*([\d.]+)/(\d+)");
+                    if (match.Success && double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double avg))
+                        reportData.AverageEveningShift = avg;
+                }
+                else if (cleanLine.Contains("حداکثر") && cleanLine.Contains("شیفت صبح"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"حداکثر\s+شیفت\s+صبح[^:]*:\s*(\d+)/(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int max))
+                        reportData.MaxMorningShift = max;
+                }
+                else if (cleanLine.Contains("حداکثر") && cleanLine.Contains("شیفت عصر"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"حداکثر\s+شیفت\s+عصر[^:]*:\s*(\d+)/(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int max))
+                        reportData.MaxEveningShift = max;
+                }
+                // Parse task statistics
+                else if (cleanLine.Contains("کل وظایف") && cleanLine.Contains(":"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+وظایف[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.TotalTasks = count;
+                }
+                else if (cleanLine.Contains("تکمیل شده") && cleanLine.Contains(":"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تکمیل\s+شده[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.CompletedTasks = count;
+                }
+                else if (cleanLine.Contains("در حال انجام") && cleanLine.Contains(":"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"در\s+حال\s+انجام[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.InProgressTasks = count;
+                }
+                else if (cleanLine.Contains("در انتظار") && cleanLine.Contains(":"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"در\s+انتظار[^:]*:\s*(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
+                        reportData.PendingTasks = count;
+                }
+                // Check for daily details section
+                else if (cleanLine.Contains("جزئیات روزانه:") || cleanLine == "جزئیات روزانه")
+                {
+                    inDailyDetails = true;
+                }
+                // Parse daily details
+                else if (inDailyDetails || (cleanLine.Contains("صبح") && cleanLine.Contains("عصر") && 
+                          cleanLine.Contains("غیبت") && cleanLine.Contains("وظیفه")))
+                {
+                    if (!string.IsNullOrWhiteSpace(cleanLine))
+                        reportData.DailyDetails.Add(cleanLine);
+                }
+            }
+
+            return reportData;
         }
 
         private void OnSettingsUpdated()
@@ -2776,6 +5969,16 @@ namespace ManagementApp.Views
                     DefaultShiftCapacityTextBox.Text = "15";
                     SyncIntervalTextBox.Text = "30";
                     
+                    // Reset display background color to default
+                    var displayConfigPath = GetDisplayConfigPath();
+                    if (File.Exists(displayConfigPath))
+                    {
+                        var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
+                        displayConfigHelper.SetBackgroundColor("#1a1a1a");
+                        displayConfigHelper.SaveConfig();
+                        UpdateDisplayColorPreview("#1a1a1a");
+                    }
+                    
                     MessageBox.Show("تنظیمات به حالت پیش‌فرض بازنشانی شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
@@ -2783,6 +5986,96 @@ namespace ManagementApp.Views
             {
                 _logger.LogError(ex, "Error resetting settings");
                 MessageBox.Show($"خطا در بازنشانی تنظیمات: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SelectDisplayColorButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Get current background color from config
+                var displayConfigPath = GetDisplayConfigPath();
+                var currentColor = "#1a1a1a"; // Default
+                
+                if (File.Exists(displayConfigPath))
+                {
+                    var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
+                    currentColor = displayConfigHelper.GetBackgroundColor();
+                }
+                
+                // Open color palette popup
+                var colorPicker = new ColorPalettePopup(currentColor);
+                if (colorPicker.ShowDialog() == true)
+                {
+                    var selectedColor = colorPicker.SelectedColor;
+                    
+                    // Save to display config
+                    var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
+                    displayConfigHelper.SetBackgroundColor(selectedColor);
+                    displayConfigHelper.SaveConfig();
+                    
+                    // Update preview
+                    UpdateDisplayColorPreview(selectedColor);
+                    
+                    MessageBox.Show("رنگ محیط نمایش با موفقیت تغییر کرد. برای اعمال تغییرات، برنامه نمایش را مجدداً راه‌اندازی کنید.", 
+                        "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error selecting display color");
+                MessageBox.Show($"خطا در انتخاب رنگ: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string GetDisplayConfigPath()
+        {
+            // Try multiple possible locations for the display config file
+            // Priority: DisplayApp's bin directory (where it actually runs from), then source directory
+            // From ManagementApp\bin\Debug\net8.0-windows\ we need to go up 4 levels to project root
+            var possiblePaths = new[]
+            {
+                // DisplayApp's bin directory (where it runs from) - 4 levels up from ManagementApp\bin\Debug\net8.0-windows\
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
+                // DisplayApp's source Config directory - 4 levels up
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
+                // Alternative: 3 levels up (if running from different location)
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
+                // Fallback: 2 levels up
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "DisplayApp", "Config", "display_config.json")
+            };
+
+            foreach (var path in possiblePaths)
+            {
+                var fullPath = Path.GetFullPath(path);
+                if (File.Exists(fullPath))
+                {
+                    return fullPath;
+                }
+            }
+            
+            // If not found, return the most likely path (DisplayApp's bin directory) - 4 levels up
+            var defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json");
+            return Path.GetFullPath(defaultPath);
+        }
+
+        private void UpdateDisplayColorPreview(string colorHex)
+        {
+            try
+            {
+                var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorHex);
+                DisplayColorPreview.Background = new SolidColorBrush(color);
+            }
+            catch
+            {
+                // If color conversion fails, use default
+                DisplayColorPreview.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1a1a1a"));
             }
         }
 
@@ -2795,6 +6088,19 @@ namespace ManagementApp.Views
                 CurrentDataDirectoryTextBlock.Text = config.DataDirectory;
                 DefaultShiftCapacityTextBox.Text = "15"; // Default value
                 SyncIntervalTextBox.Text = config.SyncIntervalSeconds.ToString();
+                
+                // Load display background color
+                var displayConfigPath = GetDisplayConfigPath();
+                if (File.Exists(displayConfigPath))
+                {
+                    var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
+                    var backgroundColor = displayConfigHelper.GetBackgroundColor();
+                    UpdateDisplayColorPreview(backgroundColor);
+                }
+                else
+                {
+                    UpdateDisplayColorPreview("#1a1a1a");
+                }
                 
                 // Update sync status
                 SyncStatusTextBlock.Text = config.SyncEnabled ? "فعال" : "غیرفعال";
@@ -2916,5 +6222,278 @@ namespace ManagementApp.Views
         }
 
         #endregion
+
+        // Daily Progress Tracking Methods
+        private void LoadDailyProgressGroups()
+        {
+            try
+            {
+                var shiftGroups = _controller.GetAllShiftGroups();
+                DailyProgressGroupComboBox.Items.Clear();
+                WeeklyProgressGroupComboBox.Items.Clear();
+                
+                foreach (var group in shiftGroups)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = group.Name,
+                        Tag = group.GroupId,
+                        ToolTip = group.Description
+                    };
+                    DailyProgressGroupComboBox.Items.Add(item);
+                    
+                    var weeklyItem = new ComboBoxItem
+                    {
+                        Content = group.Name,
+                        Tag = group.GroupId,
+                        ToolTip = group.Description
+                    };
+                    WeeklyProgressGroupComboBox.Items.Add(weeklyItem);
+                }
+                
+                // Select default group if available
+                if (DailyProgressGroupComboBox.Items.Count > 0)
+                {
+                    var defaultItem = DailyProgressGroupComboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == "default")
+                        ?? (ComboBoxItem)DailyProgressGroupComboBox.Items[0];
+                    DailyProgressGroupComboBox.SelectedItem = defaultItem;
+                }
+                
+                if (WeeklyProgressGroupComboBox.Items.Count > 0)
+                {
+                    var defaultItem = WeeklyProgressGroupComboBox.Items.Cast<ComboBoxItem>()
+                        .FirstOrDefault(item => item.Tag?.ToString() == "default")
+                        ?? (ComboBoxItem)WeeklyProgressGroupComboBox.Items[0];
+                    WeeklyProgressGroupComboBox.SelectedItem = defaultItem;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading daily progress groups");
+            }
+        }
+
+        private void DailyProgressGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            LoadDailyProgress();
+        }
+
+        private void DailyProgressShiftTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            LoadDailyProgress();
+        }
+
+        private void DailyProgressBoxesTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // Allow only numeric input
+            if (!char.IsDigit(e.Text, 0))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void LoadDailyProgress()
+        {
+            try
+            {
+                string? groupId = null;
+                if (DailyProgressGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+                
+                if (string.IsNullOrEmpty(groupId))
+                {
+                    groupId = "default";
+                }
+                
+                string shiftType = "morning";
+                if (DailyProgressShiftTypeComboBox.SelectedItem is ComboBoxItem shiftItem && shiftItem.Tag is string shiftTag)
+                {
+                    shiftType = shiftTag;
+                }
+                
+                var dateStr = DailyProgressDatePicker.SelectedDate ?? Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
+                var shamsiDate = Shared.Utils.ShamsiDateHelper.GregorianToShamsi(dateStr);
+                
+                var progress = _controller.GetDailyProgress(groupId, shiftType, shamsiDate);
+                var status = _controller.CalculateProgressStatus(groupId, shiftType, shamsiDate);
+                
+                // Update UI
+                if (progress != null)
+                {
+                    DailyProgressBoxesTextBox.Text = progress.CompletedBoxes.ToString();
+                }
+                else
+                {
+                    DailyProgressBoxesTextBox.Text = "0";
+                }
+                
+                DisplayDailyProgressStatus(status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading daily progress");
+            }
+        }
+
+        private void DisplayDailyProgressStatus(ProgressStatus status)
+        {
+            DailyProgressCompletedTextBlock.Text = status.Completed.ToString();
+            DailyProgressTargetTextBlock.Text = status.Target.ToString();
+            DailyProgressPercentageTextBlock.Text = status.Percentage.ToString("F1");
+            DailyProgressDifferenceTextBlock.Text = status.Difference >= 0 ? $"+{status.Difference}" : status.Difference.ToString();
+            
+            string statusText = $"{status.StatusText} ({status.Percentage:F1}%)";
+            if (status.IsAhead)
+            {
+                statusText += $" - {status.Difference} جعبه جلوتر";
+                DailyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
+            }
+            else if (status.IsBehind)
+            {
+                statusText += $" - {Math.Abs(status.Difference)} جعبه عقب‌تر";
+                DailyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Red);
+            }
+            else
+            {
+                DailyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
+            }
+            
+            DailyProgressStatusTextBlock.Text = statusText;
+        }
+
+        private void RecordDailyProgress_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? groupId = null;
+                if (DailyProgressGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+                
+                if (string.IsNullOrEmpty(groupId))
+                {
+                    MessageBox.Show("لطفاً یک گروه شیفت را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                
+                string shiftType = "morning";
+                if (DailyProgressShiftTypeComboBox.SelectedItem is ComboBoxItem shiftItem && shiftItem.Tag is string shiftTag)
+                {
+                    shiftType = shiftTag;
+                }
+                
+                var dateStr = DailyProgressDatePicker.SelectedDate ?? Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
+                var shamsiDate = Shared.Utils.ShamsiDateHelper.GregorianToShamsi(dateStr);
+                
+                if (!int.TryParse(DailyProgressBoxesTextBox.Text, out int completedBoxes) || completedBoxes < 0)
+                {
+                    MessageBox.Show("لطفاً تعداد جعبه‌های تکمیل شده را به صورت عدد صحیح غیرمنفی وارد کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+                
+                var success = _controller.RecordDailyProgress(groupId, shiftType, shamsiDate, completedBoxes);
+                if (success)
+                {
+                    LoadDailyProgress();
+                    LoadWeeklyProgress();
+                    UpdateStatus($"پیشرفت روزانه ثبت شد: {completedBoxes} جعبه");
+                }
+                else
+                {
+                    MessageBox.Show("خطا در ثبت پیشرفت روزانه", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error recording daily progress");
+                MessageBox.Show($"خطا در ثبت پیشرفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void WeeklyProgressGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            LoadWeeklyProgress();
+        }
+
+        private void WeeklyProgressShiftTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            LoadWeeklyProgress();
+        }
+
+        private void LoadWeeklyProgress()
+        {
+            try
+            {
+                string? groupId = null;
+                if (WeeklyProgressGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                {
+                    groupId = selectedGroupId;
+                }
+                
+                if (string.IsNullOrEmpty(groupId))
+                {
+                    groupId = "default";
+                }
+                
+                string shiftType = "morning";
+                if (WeeklyProgressShiftTypeComboBox.SelectedItem is ComboBoxItem shiftItem && shiftItem.Tag is string shiftTag)
+                {
+                    shiftType = shiftTag;
+                }
+                
+                // Get current date and calculate week start
+                var currentDate = DailyProgressDatePicker.SelectedDate ?? Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
+                var currentShamsiDate = Shared.Utils.ShamsiDateHelper.GregorianToShamsi(currentDate);
+                var weekStartDate = _controller.GetWeekStartDate(currentShamsiDate);
+                
+                var weeklyStatus = _controller.GetWeeklyProgressStatus(groupId, shiftType, weekStartDate);
+                
+                // Update UI
+                WeeklyProgressWeekStartTextBlock.Text = Shared.Utils.ShamsiDateHelper.FormatForDisplay(weekStartDate);
+                WeeklyProgressTotalCompletedTextBlock.Text = weeklyStatus.TotalCompleted.ToString();
+                WeeklyProgressPercentageTextBlock.Text = weeklyStatus.Percentage.ToString("F1");
+                WeeklyProgressDifferenceTextBlock.Text = weeklyStatus.Difference >= 0 ? $"+{weeklyStatus.Difference}" : weeklyStatus.Difference.ToString();
+                
+                string statusText = $"{weeklyStatus.StatusText} ({weeklyStatus.Percentage:F1}%)";
+                if (weeklyStatus.IsAhead)
+                {
+                    statusText += $" - {weeklyStatus.Difference} جعبه جلوتر";
+                    WeeklyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
+                }
+                else if (weeklyStatus.IsBehind)
+                {
+                    statusText += $" - {Math.Abs(weeklyStatus.Difference)} جعبه عقب‌تر";
+                    WeeklyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Red);
+                }
+                else
+                {
+                    WeeklyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
+                }
+                
+                WeeklyProgressStatusTextBlock.Text = statusText;
+                
+                // Populate daily breakdown DataGrid
+                var dailyBreakdown = weeklyStatus.DailyProgress.Select(p => new
+                {
+                    Date = Shared.Utils.ShamsiDateHelper.FormatForDisplay(p.Date),
+                    CompletedBoxes = p.CompletedBoxes,
+                    DailyTarget = p.DailyTarget,
+                    Percentage = p.DailyTarget > 0 ? Math.Round((p.CompletedBoxes / (double)p.DailyTarget * 100), 1) : 0,
+                    StatusText = p.CompletedBoxes > p.DailyTarget ? "در حال پیشرفت" : 
+                                (p.CompletedBoxes < p.DailyTarget ? "عقب افتاده" : "در مسیر"),
+                    DateDisplay = Shared.Utils.ShamsiDateHelper.FormatForDisplay(p.Date)
+                }).ToList();
+                
+                WeeklyProgressDataGrid.ItemsSource = dailyBreakdown;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading weekly progress");
+            }
+        }
     }
 }

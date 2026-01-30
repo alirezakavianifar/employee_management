@@ -19,7 +19,7 @@ namespace ManagementApp.Services
         /// <summary>
         /// Validates shift group data before creation or update
         /// </summary>
-        public bool ValidateShiftGroup(string groupId, string name, int morningCapacity, int eveningCapacity, out string errorMessage)
+        public bool ValidateShiftGroup(string groupId, string name, int morningCapacity, int afternoonCapacity, int nightCapacity, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -41,9 +41,15 @@ namespace ManagementApp.Services
                 return false;
             }
 
-            if (eveningCapacity < 1)
+            if (afternoonCapacity < 1)
             {
                 errorMessage = "ظرفیت شیفت عصر باید حداقل 1 باشد";
+                return false;
+            }
+
+            if (nightCapacity < 1)
+            {
+                errorMessage = "ظرفیت شیفت شب باید حداقل 1 باشد";
                 return false;
             }
 
@@ -113,9 +119,10 @@ namespace ManagementApp.Services
             try
             {
                 var morningAssigned = group.MorningShift.AssignedEmployees.Count(emp => emp != null);
-                var eveningAssigned = group.EveningShift.AssignedEmployees.Count(emp => emp != null);
-                var totalAssigned = morningAssigned + eveningAssigned;
-                var totalCapacity = group.MorningCapacity + group.EveningCapacity;
+                var afternoonAssigned = group.AfternoonShift.AssignedEmployees.Count(emp => emp != null);
+                var nightAssigned = group.NightShift.AssignedEmployees.Count(emp => emp != null);
+                var totalAssigned = morningAssigned + afternoonAssigned + nightAssigned;
+                var totalCapacity = group.MorningCapacity + group.AfternoonCapacity + group.NightCapacity;
                 var utilizationRate = totalCapacity > 0 ? (double)totalAssigned / totalCapacity * 100 : 0;
 
                 return new ShiftGroupStatistics
@@ -124,8 +131,10 @@ namespace ManagementApp.Services
                     GroupName = group.Name,
                     MorningAssigned = morningAssigned,
                     MorningCapacity = group.MorningCapacity,
-                    EveningAssigned = eveningAssigned,
-                    EveningCapacity = group.EveningCapacity,
+                    AfternoonAssigned = afternoonAssigned,
+                    AfternoonCapacity = group.AfternoonCapacity,
+                    NightAssigned = nightAssigned,
+                    NightCapacity = group.NightCapacity,
                     TotalAssigned = totalAssigned,
                     TotalCapacity = totalCapacity,
                     UtilizationRate = utilizationRate,
@@ -177,23 +186,26 @@ namespace ManagementApp.Services
         /// <summary>
         /// Suggests optimal capacity based on employee count and historical data
         /// </summary>
-        public CapacitySuggestion SuggestCapacity(int employeeCount, int currentMorningCapacity, int currentEveningCapacity)
+        public CapacitySuggestion SuggestCapacity(int employeeCount, int currentMorningCapacity, int currentAfternoonCapacity, int currentNightCapacity)
         {
             try
             {
-                // Simple algorithm: suggest 60% morning, 40% evening split
-                var suggestedMorning = (int)Math.Ceiling(employeeCount * 0.6);
-                var suggestedEvening = (int)Math.Ceiling(employeeCount * 0.4);
+                // Simple algorithm: suggest 40% morning, 35% afternoon, 25% night split
+                var suggestedMorning = (int)Math.Ceiling(employeeCount * 0.4);
+                var suggestedAfternoon = (int)Math.Ceiling(employeeCount * 0.35);
+                var suggestedNight = (int)Math.Ceiling(employeeCount * 0.25);
 
                 // Ensure minimum capacity of 1
                 suggestedMorning = Math.Max(1, suggestedMorning);
-                suggestedEvening = Math.Max(1, suggestedEvening);
+                suggestedAfternoon = Math.Max(1, suggestedAfternoon);
+                suggestedNight = Math.Max(1, suggestedNight);
 
                 return new CapacitySuggestion
                 {
                     SuggestedMorningCapacity = suggestedMorning,
-                    SuggestedEveningCapacity = suggestedEvening,
-                    Reason = $"پیشنهاد بر اساس {employeeCount} کارمند: 60% صبح، 40% عصر"
+                    SuggestedAfternoonCapacity = suggestedAfternoon,
+                    SuggestedNightCapacity = suggestedNight,
+                    Reason = $"پیشنهاد بر اساس {employeeCount} کارمند: 40% صبح، 35% عصر، 25% شب"
                 };
             }
             catch (Exception ex)
@@ -202,7 +214,8 @@ namespace ManagementApp.Services
                 return new CapacitySuggestion
                 {
                     SuggestedMorningCapacity = currentMorningCapacity,
-                    SuggestedEveningCapacity = currentEveningCapacity,
+                    SuggestedAfternoonCapacity = currentAfternoonCapacity,
+                    SuggestedNightCapacity = currentNightCapacity,
                     Reason = "خطا در محاسبه پیشنهاد"
                 };
             }
@@ -215,8 +228,10 @@ namespace ManagementApp.Services
         public string GroupName { get; set; } = string.Empty;
         public int MorningAssigned { get; set; }
         public int MorningCapacity { get; set; }
-        public int EveningAssigned { get; set; }
-        public int EveningCapacity { get; set; }
+        public int AfternoonAssigned { get; set; }
+        public int AfternoonCapacity { get; set; }
+        public int NightAssigned { get; set; }
+        public int NightCapacity { get; set; }
         public int TotalAssigned { get; set; }
         public int TotalCapacity { get; set; }
         public double UtilizationRate { get; set; }
@@ -236,7 +251,8 @@ namespace ManagementApp.Services
     public class CapacitySuggestion
     {
         public int SuggestedMorningCapacity { get; set; }
-        public int SuggestedEveningCapacity { get; set; }
+        public int SuggestedAfternoonCapacity { get; set; }
+        public int SuggestedNightCapacity { get; set; }
         public string Reason { get; set; } = string.Empty;
     }
 }

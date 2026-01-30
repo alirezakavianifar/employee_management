@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = ManagementApp
-build_property.ProjectDir = D:\projects\employee_management_csharp\ManagementApp\
+build_property.ProjectDir = E:\projects\employee_management_csharp\ManagementApp\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

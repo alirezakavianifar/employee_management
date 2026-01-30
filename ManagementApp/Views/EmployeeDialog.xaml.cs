@@ -183,13 +183,15 @@ namespace ManagementApp.Views
         private void LoadShieldColors()
         {
             ShieldColorComboBox.Items.Clear();
-            var colors = new[] { "Red", "Blue", "Yellow", "Black" };
+            var colors = new[] { "Red", "Blue", "Yellow", "Black", "Orange", "Gray" };
             var colorNames = new Dictionary<string, string>
             {
                 { "Red", "قرمز" },
                 { "Blue", "آبی" },
                 { "Yellow", "زرد" },
-                { "Black", "سیاه" }
+                { "Black", "سیاه" },
+                { "Orange", "نارنجی" },
+                { "Gray", "خاکستری" }
             };
             
             foreach (var color in colors)
@@ -341,7 +343,7 @@ namespace ManagementApp.Views
                     PhotoPath = openFileDialog.FileName;
                     LoadPhotoPreview(PhotoPath);
 
-                    // Try to detect name from folder and personnel ID from filename
+                    // Try to detect name and personnel ID from filename (format: FirstName_LastName_PersonnelId.ext)
                     var controller = _controller ?? GetController();
                     if (controller != null)
                     {
@@ -456,13 +458,13 @@ namespace ManagementApp.Views
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            // Validation: Either name fields must be filled OR photo must be selected from a worker folder with detected name
+            // Validation: Either name fields must be filled OR photo filename must contain detectable name (format: FirstName_LastName_PersonnelId.ext)
             var hasNameFields = !string.IsNullOrWhiteSpace(FirstNameTextBox.Text) && !string.IsNullOrWhiteSpace(LastNameTextBox.Text);
             var hasPhotoWithDetectedName = false;
             
             if (!hasNameFields && !string.IsNullOrEmpty(PhotoPath))
             {
-                // Try to detect name from photo path
+                // Try to detect name from filename (format: FirstName_LastName_PersonnelId.ext)
                 var controller = _controller ?? GetController();
                 if (controller != null)
                 {
@@ -479,7 +481,7 @@ namespace ManagementApp.Views
 
             if (!hasNameFields && !hasPhotoWithDetectedName)
             {
-                MessageBox.Show("لطفاً نام و نام خانوادگی را وارد کنید یا عکسی از پوشه کارمند انتخاب کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("لطفاً نام و نام خانوادگی را وارد کنید یا عکسی با نام فایل به فرمت FirstName_LastName_PersonnelId.ext انتخاب کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

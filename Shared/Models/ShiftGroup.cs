@@ -12,14 +12,16 @@ namespace Shared.Models
         public string Description { get; set; } = string.Empty;
         public string Color { get; set; } = "#4CAF50"; // Default green color
         public int MorningCapacity { get; set; } = 15;
-        public int EveningCapacity { get; set; } = 15;
+        public int AfternoonCapacity { get; set; } = 15;
+        public int NightCapacity { get; set; } = 15;
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
         // Shifts for this group
         public Shift MorningShift { get; set; }
-        public Shift EveningShift { get; set; }
+        public Shift AfternoonShift { get; set; }
+        public Shift NightShift { get; set; }
 
         public ShiftGroup()
         {
@@ -36,32 +38,37 @@ namespace Shared.Models
                 Color = "#4CAF50";
             if (MorningCapacity <= 0)
                 MorningCapacity = 15;
-            if (EveningCapacity <= 0)
-                EveningCapacity = 15;
+            if (AfternoonCapacity <= 0)
+                AfternoonCapacity = 15;
+            if (NightCapacity <= 0)
+                NightCapacity = 15;
             
             MorningShift = new Shift("morning", MorningCapacity);
-            EveningShift = new Shift("evening", EveningCapacity);
+            AfternoonShift = new Shift("afternoon", AfternoonCapacity);
+            NightShift = new Shift("night", NightCapacity);
         }
 
         public ShiftGroup(string groupId, string name, string description = "", string color = "#4CAF50", 
-                         int morningCapacity = 15, int eveningCapacity = 15)
+                         int morningCapacity = 15, int afternoonCapacity = 15, int nightCapacity = 15)
         {
             GroupId = groupId ?? $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
             Name = name ?? "گروه جدید";
             Description = description ?? "بدون توضیحات";
             Color = color ?? "#4CAF50";
             MorningCapacity = morningCapacity > 0 ? morningCapacity : 15;
-            EveningCapacity = eveningCapacity > 0 ? eveningCapacity : 15;
+            AfternoonCapacity = afternoonCapacity > 0 ? afternoonCapacity : 15;
+            NightCapacity = nightCapacity > 0 ? nightCapacity : 15;
             IsActive = true;
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
             
             MorningShift = new Shift("morning", MorningCapacity);
-            EveningShift = new Shift("evening", EveningCapacity);
+            AfternoonShift = new Shift("afternoon", AfternoonCapacity);
+            NightShift = new Shift("night", NightCapacity);
         }
 
         public void Update(string? name = null, string? description = null, string? color = null, 
-                          int? morningCapacity = null, int? eveningCapacity = null, bool? isActive = null)
+                          int? morningCapacity = null, int? afternoonCapacity = null, int? nightCapacity = null, bool? isActive = null)
         {
             if (!string.IsNullOrEmpty(name))
                 Name = name;
@@ -77,13 +84,21 @@ namespace Shared.Models
                 else
                     MorningShift.SetCapacity(morningCapacity.Value);
             }
-            if (eveningCapacity.HasValue)
+            if (afternoonCapacity.HasValue)
             {
-                EveningCapacity = eveningCapacity.Value;
-                if (EveningShift == null)
-                    EveningShift = new Shift("evening", EveningCapacity);
+                AfternoonCapacity = afternoonCapacity.Value;
+                if (AfternoonShift == null)
+                    AfternoonShift = new Shift("afternoon", AfternoonCapacity);
                 else
-                    EveningShift.SetCapacity(eveningCapacity.Value);
+                    AfternoonShift.SetCapacity(afternoonCapacity.Value);
+            }
+            if (nightCapacity.HasValue)
+            {
+                NightCapacity = nightCapacity.Value;
+                if (NightShift == null)
+                    NightShift = new Shift("night", NightCapacity);
+                else
+                    NightShift.SetCapacity(nightCapacity.Value);
             }
             if (isActive.HasValue)
                 IsActive = isActive.Value;
@@ -96,13 +111,17 @@ namespace Shared.Models
             // Ensure shifts are initialized
             if (MorningShift == null)
                 MorningShift = new Shift("morning", MorningCapacity);
-            if (EveningShift == null)
-                EveningShift = new Shift("evening", EveningCapacity);
+            if (AfternoonShift == null)
+                AfternoonShift = new Shift("afternoon", AfternoonCapacity);
+            if (NightShift == null)
+                NightShift = new Shift("night", NightCapacity);
                 
             return shiftType switch
             {
                 "morning" => MorningShift,
-                "evening" => EveningShift,
+                "afternoon" => AfternoonShift,
+                "evening" => AfternoonShift, // Legacy support
+                "night" => NightShift,
                 _ => null
             };
         }
@@ -144,8 +163,10 @@ namespace Shared.Models
             var shifts = new List<string>();
             if (MorningShift != null && MorningShift.IsEmployeeAssigned(employee))
                 shifts.Add("morning");
-            if (EveningShift != null && EveningShift.IsEmployeeAssigned(employee))
-                shifts.Add("evening");
+            if (AfternoonShift != null && AfternoonShift.IsEmployeeAssigned(employee))
+                shifts.Add("afternoon");
+            if (NightShift != null && NightShift.IsEmployeeAssigned(employee))
+                shifts.Add("night");
             return shifts;
         }
 
@@ -157,25 +178,25 @@ namespace Shared.Models
 
         public void SwapShifts()
         {
-            // Ensure shifts are initialized
+            // Ensure shifts are initialized  
             if (MorningShift == null)
                 MorningShift = new Shift("morning", MorningCapacity);
-            if (EveningShift == null)
-                EveningShift = new Shift("evening", EveningCapacity);
+            if (AfternoonShift == null)
+                AfternoonShift = new Shift("afternoon", AfternoonCapacity);
             
             // Swap AssignedEmployees lists
             var tempEmployees = new List<Employee?>(MorningShift.AssignedEmployees);
-            MorningShift.AssignedEmployees = new List<Employee?>(EveningShift.AssignedEmployees);
-            EveningShift.AssignedEmployees = tempEmployees;
+            MorningShift.AssignedEmployees = new List<Employee?>(AfternoonShift.AssignedEmployees);
+            AfternoonShift.AssignedEmployees = tempEmployees;
             
             // Swap TeamLeaderId values
             var tempTeamLeader = MorningShift.TeamLeaderId;
-            MorningShift.TeamLeaderId = EveningShift.TeamLeaderId;
-            EveningShift.TeamLeaderId = tempTeamLeader;
+            MorningShift.TeamLeaderId = AfternoonShift.TeamLeaderId;
+            AfternoonShift.TeamLeaderId = tempTeamLeader;
             
             // Update timestamps
             MorningShift.UpdatedAt = DateTime.Now;
-            EveningShift.UpdatedAt = DateTime.Now;
+            AfternoonShift.UpdatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }
 
@@ -184,8 +205,8 @@ namespace Shared.Models
             // Ensure shifts are initialized before accessing them
             if (MorningShift == null)
                 MorningShift = new Shift("morning", MorningCapacity);
-            if (EveningShift == null)
-                EveningShift = new Shift("evening", EveningCapacity);
+            if (AfternoonShift == null)
+                AfternoonShift = new Shift("afternoon", AfternoonCapacity);
                 
             var shift = GetShift(shiftType);
             if (shift != null)
@@ -204,13 +225,14 @@ namespace Shared.Models
         public int GetTotalAssignedEmployees()
         {
             var morningCount = MorningShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
-            var eveningCount = EveningShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
-            return morningCount + eveningCount;
+            var afternoonCount = AfternoonShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
+            var nightCount = NightShift?.AssignedEmployees.Count(emp => emp != null) ?? 0;
+            return morningCount + afternoonCount + nightCount;
         }
 
         public int GetTotalCapacity()
         {
-            return MorningCapacity + EveningCapacity;
+            return MorningCapacity + AfternoonCapacity + NightCapacity;
         }
 
         public override bool Equals(object? obj)
@@ -235,8 +257,12 @@ namespace Shared.Models
                 var groupData = JsonConvert.DeserializeObject<ShiftGroupData>(json);
                 if (groupData != null && !string.IsNullOrEmpty(groupData.GroupId))
                 {
+                    // Migration: map old EveningCapacity to AfternoonCapacity if needed
+                    int afternoonCap = groupData.AfternoonCapacity > 0 ? groupData.AfternoonCapacity : groupData.EveningCapacity;
+                    int nightCap = groupData.NightCapacity;
+                    
                     var group = new ShiftGroup(groupData.GroupId, groupData.Name, groupData.Description, 
-                                             groupData.Color, groupData.MorningCapacity, groupData.EveningCapacity);
+                                             groupData.Color, groupData.MorningCapacity, afternoonCap, nightCap);
                     group.IsActive = groupData.IsActive;
                     group.CreatedAt = groupData.CreatedAt;
                     group.UpdatedAt = groupData.UpdatedAt;
@@ -244,8 +270,18 @@ namespace Shared.Models
                     // Load shifts
                     if (!string.IsNullOrEmpty(groupData.MorningShift))
                         group.MorningShift = Shift.FromJson(groupData.MorningShift, employeesDict);
-                    if (!string.IsNullOrEmpty(groupData.EveningShift))
-                        group.EveningShift = Shift.FromJson(groupData.EveningShift, employeesDict);
+                    
+                    // Migration: try AfternoonShift first, fallback to EveningShift
+                    if (!string.IsNullOrEmpty(groupData.AfternoonShift))
+                        group.AfternoonShift = Shift.FromJson(groupData.AfternoonShift, employeesDict);
+                    else if (!string.IsNullOrEmpty(groupData.EveningShift))
+                    {
+                        group.AfternoonShift = Shift.FromJson(groupData.EveningShift, employeesDict);
+                        group.AfternoonShift.ShiftType = "afternoon"; // Migrate type
+                    }
+                    
+                    if (!string.IsNullOrEmpty(groupData.NightShift))
+                        group.NightShift = Shift.FromJson(groupData.NightShift, employeesDict);
 
                     return group;
                 }
@@ -264,20 +300,29 @@ namespace Shared.Models
                 var description = groupDict.GetValueOrDefault("description", "").ToString() ?? "";
                 var color = groupDict.GetValueOrDefault("color", "#4CAF50").ToString() ?? "#4CAF50";
                 var morningCapacity = 15;
-                var eveningCapacity = 15;
+                var afternoonCapacity = 15;
+                var nightCapacity = 15;
                 var isActive = true;
 
                 if (groupDict.ContainsKey("morning_capacity") && int.TryParse(groupDict["morning_capacity"].ToString(), out int parsedMorningCapacity))
                     morningCapacity = parsedMorningCapacity;
-                if (groupDict.ContainsKey("evening_capacity") && int.TryParse(groupDict["evening_capacity"].ToString(), out int parsedEveningCapacity))
-                    eveningCapacity = parsedEveningCapacity;
+                
+                // Migration: Try afternoon_capacity first, fallback to evening_capacity
+                if (groupDict.ContainsKey("afternoon_capacity") && int.TryParse(groupDict["afternoon_capacity"].ToString(), out int parsedAfternoonCapacity))
+                    afternoonCapacity = parsedAfternoonCapacity;
+                else if (groupDict.ContainsKey("evening_capacity") && int.TryParse(groupDict["evening_capacity"].ToString(), out int parsedEveningCapacity))
+                    afternoonCapacity = parsedEveningCapacity;  // Migrate evening to afternoon
+                
+                if (groupDict.ContainsKey("night_capacity") && int.TryParse(groupDict["night_capacity"].ToString(), out int parsedNightCapacity))
+                    nightCapacity = parsedNightCapacity;
+                
                 if (groupDict.ContainsKey("is_active") && bool.TryParse(groupDict["is_active"].ToString(), out bool parsedIsActive))
                     isActive = parsedIsActive;
 
-                var group = new ShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity);
+                var group = new ShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity);
                 group.IsActive = isActive;
 
-                // Load shifts
+                // Load morning shift
                 if (groupDict.ContainsKey("morning_shift"))
                 {
                     var morningShiftData = groupDict["morning_shift"];
@@ -288,16 +333,42 @@ namespace Shared.Models
                     }
                 }
 
-                if (groupDict.ContainsKey("evening_shift"))
+                // Migration: Load afternoon shift (try afternoon_shift first, fallback to evening_shift)
+                if (groupDict.ContainsKey("afternoon_shift"))
                 {
+                    var afternoonShiftData = groupDict["afternoon_shift"];
+                    if (afternoonShiftData != null)
+                    {
+                        var afternoonShiftJson = JsonConvert.SerializeObject(afternoonShiftData);
+                        group.AfternoonShift = Shift.FromJson(afternoonShiftJson, employeesDict);
+                        // Ensure shift type is updated to afternoon
+                        group.AfternoonShift.ShiftType = "afternoon";
+                    }
+                }
+                else if (groupDict.ContainsKey("evening_shift"))
+                {
+                    // Migrate old evening_shift to afternoon_shift
                     var eveningShiftData = groupDict["evening_shift"];
                     if (eveningShiftData != null)
                     {
                         var eveningShiftJson = JsonConvert.SerializeObject(eveningShiftData);
-                        group.EveningShift = Shift.FromJson(eveningShiftJson, employeesDict);
+                        group.AfternoonShift = Shift.FromJson(eveningShiftJson, employeesDict);
+                        // Update shift type from evening to afternoon
+                        group.AfternoonShift.ShiftType = "afternoon";
                     }
                 }
 
+                // Load night shift (new, will be empty for old data)
+                if (groupDict.ContainsKey("night_shift"))
+                {
+                    var nightShiftData = groupDict["night_shift"];
+                    if (nightShiftData != null)
+                    {
+                        var nightShiftJson = JsonConvert.SerializeObject(nightShiftData);
+                        group.NightShift = Shift.FromJson(nightShiftJson, employeesDict);
+                    }
+                }
+                
                 return group;
             }
 
@@ -314,12 +385,14 @@ namespace Shared.Models
                 Description = Description,
                 Color = Color,
                 MorningCapacity = MorningCapacity,
-                EveningCapacity = EveningCapacity,
+                AfternoonCapacity = AfternoonCapacity,
+                NightCapacity = NightCapacity,
                 IsActive = IsActive,
                 CreatedAt = CreatedAt,
                 UpdatedAt = UpdatedAt,
                 MorningShift = MorningShift.ToJson(),
-                EveningShift = EveningShift.ToJson()
+                AfternoonShift = AfternoonShift.ToJson(),
+                NightShift = NightShift.ToJson()
             };
             return JsonConvert.SerializeObject(groupData, Formatting.Indented);
         }
@@ -333,12 +406,14 @@ namespace Shared.Models
                 { "description", Description },
                 { "color", Color },
                 { "morning_capacity", MorningCapacity },
-                { "evening_capacity", EveningCapacity },
+                { "afternoon_capacity", AfternoonCapacity },
+                { "night_capacity", NightCapacity },
                 { "is_active", IsActive },
                 { "created_at", CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
                 { "updated_at", UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
                 { "morning_shift", JsonConvert.DeserializeObject<Dictionary<string, object>>(MorningShift.ToJson()) ?? new Dictionary<string, object>() },
-                { "evening_shift", JsonConvert.DeserializeObject<Dictionary<string, object>>(EveningShift.ToJson()) ?? new Dictionary<string, object>() }
+                { "afternoon_shift", JsonConvert.DeserializeObject<Dictionary<string, object>>(AfternoonShift.ToJson()) ?? new Dictionary<string, object>() },
+                { "night_shift", JsonConvert.DeserializeObject<Dictionary<string, object>>(NightShift.ToJson()) ?? new Dictionary<string, object>() }
             };
         }
 
@@ -349,12 +424,16 @@ namespace Shared.Models
             public string Description { get; set; } = string.Empty;
             public string Color { get; set; } = "#4CAF50";
             public int MorningCapacity { get; set; } = 15;
-            public int EveningCapacity { get; set; } = 15;
+            public int AfternoonCapacity { get; set; } = 15;
+            public int EveningCapacity { get; set; } = 15; // Legacy - for reading old data
+            public int NightCapacity { get; set; } = 15;
             public bool IsActive { get; set; } = true;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
             public string MorningShift { get; set; } = string.Empty;
-            public string EveningShift { get; set; } = string.Empty;
+            public string AfternoonShift { get; set; } = string.Empty;
+            public string? EveningShift { get; set; } // Legacy - for reading old data
+            public string NightShift { get; set; } = string.Empty;
         }
     }
 
@@ -371,24 +450,24 @@ namespace Shared.Models
         }
 
         public bool AddShiftGroup(string groupId, string name, string description = "", string color = "#4CAF50", 
-                                 int morningCapacity = 15, int eveningCapacity = 15)
+                                 int morningCapacity = 15, int afternoonCapacity = 15, int nightCapacity = 15)
         {
             if (string.IsNullOrEmpty(groupId) || ShiftGroups.ContainsKey(groupId))
                 return false;
 
-            var group = new ShiftGroup(groupId, name, description, color, morningCapacity, eveningCapacity);
+            var group = new ShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity);
             ShiftGroups[groupId] = group;
             return true;
         }
 
-        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
-                                    string? color = null, int? morningCapacity = null, int? eveningCapacity = null, 
-                                    bool? isActive = null)
+       public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
+                                    string? color = null, int? morningCapacity = null, int? afternoonCapacity = null, 
+                                    int? nightCapacity = null, bool? isActive = null)
         {
             if (!ShiftGroups.ContainsKey(groupId))
                 return false;
 
-            ShiftGroups[groupId].Update(name, description, color, morningCapacity, eveningCapacity, isActive);
+            ShiftGroups[groupId].Update(name, description, color, morningCapacity, afternoonCapacity, nightCapacity, isActive);
             return true;
         }
 

@@ -6,6 +6,10 @@ namespace DisplayApp.Models
     {
         public string GroupName { get; set; } = "";
         public string GroupDescription { get; set; } = "";
+        public string Color { get; set; } = "#4CAF50"; // Default green color
+        public string SupervisorName { get; set; } = "";
+        public string MorningForemanName { get; set; } = "";
+        public string EveningForemanName { get; set; } = "";
         public List<EmployeeDisplayModel> MorningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
         public List<EmployeeDisplayModel> EveningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
     }
@@ -27,5 +31,10 @@ namespace DisplayApp.Models
         public string PhotoPath { get; set; } = "";
         public string Role { get; set; } = "";
         public string GroupName { get; set; } = ""; // Add group name to identify which group the employee belongs to
+        public string ShieldColor { get; set; } = "Blue";
+        public bool ShowShield { get; set; } = true;
+        public List<string> StickerPaths { get; set; } = new List<string>();
+        public string MedalBadgePath { get; set; } = "";
+        public string PersonnelId { get; set; } = "";
     }
 }

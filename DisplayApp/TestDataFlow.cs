@@ -172,7 +172,9 @@ namespace DisplayApp
                         var shiftKey = shift.Key switch
                         {
                             "MorningShift" => "morning",
-                            "EveningShift" => "evening",
+                            "EveningShift" => "afternoon", // Map archaic "evening" to "afternoon"
+                            "AfternoonShift" => "afternoon",
+                            "NightShift" => "night",
                             _ => shift.Key.ToLower()
                         };
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,6 +20,7 @@ using DisplayApp.Models;
 using Newtonsoft.Json.Linq;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Text.Json;
 
 namespace DisplayApp
 {
@@ -36,6 +37,12 @@ namespace DisplayApp
         private int _countdownSeconds = 30;
         private DateTime _lastUpdateTime;
         
+        // Config file watching
+        private FileSystemWatcher _configWatcher;
+        private Utils.ConfigHelper _configHelper;
+        private string _configFilePath;
+        private DispatcherTimer _configReloadTimer;
+        
         // Chart data
         public SeriesCollection SeriesCollection { get; set; }
         public string[] Labels { get; set; }
@@ -47,6 +54,16 @@ namespace DisplayApp
             // Initialize logging
             _logger = LoggingService.CreateLogger<MainWindow>();
             _logger.LogInformation("DisplayApp MainWindow initialized");
+            
+            // Get display config path and initialize config helper
+            _configFilePath = GetDisplayConfigPath();
+            _configHelper = new Utils.ConfigHelper(_configFilePath);
+            
+            // Load and apply background color from config
+            ApplyBackgroundColor();
+            
+            // Setup config file watcher
+            SetupConfigWatcher();
             
             // Initialize services
             _dataService = new DataService();
@@ -75,6 +92,150 @@ namespace DisplayApp
             _syncManager.StartSync();
             
             _logger.LogInformation("DisplayApp started successfully");
+        }
+
+        private string GetDisplayConfigPath()
+        {
+            // Try multiple possible locations for the display config file
+            var possiblePaths = new[]
+            {
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "Config", "display_config.json"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DisplayApp", "Config", "display_config.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "DisplayApp", "Config", "display_config.json")
+            };
+
+            foreach (var path in possiblePaths)
+            {
+                var fullPath = Path.GetFullPath(path);
+                if (File.Exists(fullPath))
+                {
+                    _logger.LogInformation("Found display config at: {ConfigPath}", fullPath);
+                    return fullPath;
+                }
+            }
+            
+            // If not found, return the most likely path (relative to executable)
+            var defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "display_config.json");
+            var defaultFullPath = Path.GetFullPath(defaultPath);
+            _logger.LogInformation("Using default display config path: {ConfigPath}", defaultFullPath);
+            return defaultFullPath;
+        }
+
+        private void ApplyBackgroundColor()
+        {
+            try
+            {
+                // Reload config to get latest values
+                _configHelper.LoadConfig();
+                var backgroundColor = _configHelper.GetBackgroundColor();
+                var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(backgroundColor);
+                this.Background = new SolidColorBrush(color);
+                _logger.LogInformation("Background color applied: {Color}", backgroundColor);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying background color");
+                // Use default color if there's an error
+                this.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1a1a1a"));
+            }
+        }
+
+        private void SetupConfigWatcher()
+        {
+            try
+            {
+                var configDirectory = Path.GetDirectoryName(_configFilePath);
+                var configFileName = Path.GetFileName(_configFilePath);
+
+                if (string.IsNullOrEmpty(configDirectory) || !Directory.Exists(configDirectory))
+                {
+                    _logger.LogWarning("Config directory does not exist: {ConfigDirectory}. File watching disabled.", configDirectory);
+                    return;
+                }
+
+                _configWatcher = new FileSystemWatcher(configDirectory)
+                {
+                    Filter = configFileName,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                    EnableRaisingEvents = true
+                };
+
+                // Debounce timer to handle rapid file writes
+                _configReloadTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromMilliseconds(500) // Wait 500ms after last change
+                };
+                _configReloadTimer.Tick += ConfigReloadTimer_Tick;
+
+                _configWatcher.Changed += ConfigWatcher_Changed;
+                _logger.LogInformation("Config file watcher initialized for: {ConfigPath}", _configFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting up config file watcher");
+            }
+        }
+
+        private void ConfigWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                // Restart the debounce timer
+                _configReloadTimer.Stop();
+                _configReloadTimer.Start();
+                _logger.LogDebug("Config file change detected, waiting for write completion...");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling config file change event");
+            }
+        }
+
+        private void ConfigReloadTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                _configReloadTimer.Stop();
+                _logger.LogInformation("Reloading config file and applying background color...");
+                
+                // Retry logic to handle file locking during write operations
+                int retries = 3;
+                int delay = 100; // milliseconds
+                bool success = false;
+
+                for (int i = 0; i < retries && !success; i++)
+                {
+                    try
+                    {
+                        // Use Dispatcher to update UI on the UI thread
+                        Dispatcher.Invoke(() =>
+                        {
+                            ApplyBackgroundColor();
+                        });
+                        success = true;
+                    }
+                    catch (IOException ioEx) when (ioEx.Message.Contains("being used by another process"))
+                    {
+                        if (i < retries - 1)
+                        {
+                            _logger.LogDebug("Config file is locked, retrying in {Delay}ms... (attempt {Attempt}/{Retries})", delay, i + 1, retries);
+                            System.Threading.Thread.Sleep(delay);
+                            delay *= 2; // Exponential backoff
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Config file is still locked after {Retries} attempts, will retry on next change", retries);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reloading config file");
+            }
         }
 
         private void SetupTimers()
@@ -282,76 +443,126 @@ namespace DisplayApp
 
         private Border CreateManagerCard(Dictionary<string, object> managerData)
         {
+            // Badge dimensions (same as regular employees)
+            double badgeWidth = 80;
+            double badgeHeight = 100;
+            double borderThickness = 4; // Thick blue border
+            double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
+            double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
+            
+            // Create main badge container with blue border (same as regular employees)
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(8),
+                Background = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)), // Blue border
+                BorderThickness = new Thickness(borderThickness),
+                CornerRadius = new CornerRadius(4),
                 Margin = new Thickness(3),
-                Width = 80,
-                Height = 100
+                Width = badgeWidth,
+                Height = badgeHeight,
+                ClipToBounds = true,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
             };
             
-            var stackPanel = new StackPanel
+            // Create grid to hold photo and name areas (two-section layout)
+            var badgeGrid = new Grid
             {
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            badgeGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(largeRectHeight, GridUnitType.Pixel) });
+            badgeGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(smallRectHeight, GridUnitType.Pixel) });
+            
+            // Large rectangle (top 2/3) - Photo area
+            var photoContainer = new Grid
+            {
+                Background = Brushes.White,
+                ClipToBounds = true,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
             };
             
-            // Manager photo
+            // Manager photo - properly centered (same as regular employees)
             var image = new Image
             {
-                Width = 40,
-                Height = 40,
-                Stretch = Stretch.Uniform
+                Stretch = Stretch.UniformToFill, // Fill and crop to center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
             if (managerData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
             {
                 try
                 {
-                    var bitmap = new BitmapImage(new Uri(photoPath.ToString(), UriKind.Absolute));
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
                     image.Source = bitmap;
                 }
                 catch
                 {
-                    // Use placeholder if image fails to load
-                    image.Source = CreatePlaceholderImage();
+                    image.Source = CreateEmployeePlaceholderImage(largeRectHeight);
                 }
             }
             else
             {
-                image.Source = CreatePlaceholderImage();
+                image.Source = CreateEmployeePlaceholderImage(largeRectHeight);
             }
             
-            // Manager name
+            photoContainer.Children.Add(image);
+            Grid.SetRow(photoContainer, 0);
+            badgeGrid.Children.Add(photoContainer);
+            
+            // Small rectangle (bottom 1/3) - Name area (white background)
+            var nameContainer = new Grid
+            {
+                Background = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            
+            // Get personnel ID and name
+            var personnelId = managerData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
+            var firstName = managerData.GetValueOrDefault("first_name", "").ToString();
+            var lastName = managerData.GetValueOrDefault("last_name", "").ToString();
+            var fullName = $"{firstName} {lastName}".Trim();
+            
+            // Display name with personnel ID if available
+            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
+            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
+            
+            // White text with strong black outline for visibility on white background (same as regular employees)
             var nameText = new TextBlock
             {
-                Text = $"{managerData.GetValueOrDefault("first_name", "")} {managerData.GetValueOrDefault("last_name", "")}".Trim(),
+                Text = displayName,
                 Foreground = Brushes.White,
-                FontSize = 10,
+                FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Tahoma"),
                 HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 3, 0, 0)
+                Margin = new Thickness(0), // No margin to ensure proper centering
+                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                {
+                    Color = Colors.Black,
+                    BlurRadius = 4,
+                    ShadowDepth = 0,
+                    Opacity = 1.0
+                } // Strong black outline effect (ShadowDepth=0 creates outline, not shadow)
             };
             
-            // Manager role
-            var roleText = new TextBlock
-            {
-                Text = managerData.GetValueOrDefault("role", "مدیر").ToString(),
-                Foreground = Brushes.LightGray,
-                FontSize = 8,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextWrapping = TextWrapping.Wrap
-            };
+            nameContainer.Children.Add(nameText);
+            Grid.SetRow(nameContainer, 1);
+            badgeGrid.Children.Add(nameContainer);
             
-            stackPanel.Children.Add(image);
-            stackPanel.Children.Add(nameText);
-            stackPanel.Children.Add(roleText);
-            
-            card.Child = stackPanel;
+            card.Child = badgeGrid;
             return card;
         }
 
@@ -505,17 +716,33 @@ namespace DisplayApp
             {
                 Margin = new Thickness(5)
             };
-            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Night (Left)
+            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Afternoon (Center)
+            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Morning (Right)
             
-            // Evening Shift (Right side in RTL)
-            var eveningBorder = CreateShiftPanel("شیفت عصر", group.EveningShiftEmployees, "#FF6B9BD1", group.EveningForemanName);
-            Grid.SetColumn(eveningBorder, 0);
-            shiftsGrid.Children.Add(eveningBorder);
+            // Convert group color to WPF format (add FF prefix for alpha if not present)
+            var groupColor = group.Color ?? "#4CAF50";
+            if (!groupColor.StartsWith("#"))
+                groupColor = "#" + groupColor;
+            // Ensure color has alpha channel (8 characters including #)
+            // If color is 6 hex digits (#RRGGBB), add FF for full opacity (#FFRRGGBB)
+            if (groupColor.Length == 7)
+                groupColor = "#FF" + groupColor.Substring(1);
+            // If color already has 8 hex digits, use as-is
             
-            // Morning Shift (Left side in RTL)
-            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, "#FF81C784", group.MorningForemanName);
-            Grid.SetColumn(morningBorder, 1);
+            // Night Shift (Left side/End in RTL)
+            var nightBorder = CreateShiftPanel("شیفت شب", group.NightShiftEmployees, groupColor, group.NightForemanName);
+            Grid.SetColumn(nightBorder, 0);
+            shiftsGrid.Children.Add(nightBorder);
+
+            // Afternoon Shift (Center)
+            var afternoonBorder = CreateShiftPanel("شیفت عصر", group.AfternoonShiftEmployees, groupColor, group.AfternoonForemanName);
+            Grid.SetColumn(afternoonBorder, 1);
+            shiftsGrid.Children.Add(afternoonBorder);
+            
+            // Morning Shift (Right side/Start in RTL)
+            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, groupColor, group.MorningForemanName);
+            Grid.SetColumn(morningBorder, 2);
             shiftsGrid.Children.Add(morningBorder);
             
             Grid.SetRow(shiftsGrid, 1);
@@ -584,14 +811,15 @@ namespace DisplayApp
             
             var itemsControl = new ItemsControl();
             
-            // Set items panel to UniformGrid
+            // Set items panel to WrapPanel for smart, responsive layout
             var itemsPanel = new ItemsPanelTemplate();
-            var uniformGridFactory = new FrameworkElementFactory(typeof(UniformGrid));
-            uniformGridFactory.SetValue(UniformGrid.ColumnsProperty, 3);
-            itemsPanel.VisualTree = uniformGridFactory;
+            var wrapPanelFactory = new FrameworkElementFactory(typeof(WrapPanel));
+            wrapPanelFactory.SetValue(WrapPanel.OrientationProperty, Orientation.Horizontal);
+            wrapPanelFactory.SetValue(WrapPanel.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            itemsPanel.VisualTree = wrapPanelFactory;
             itemsControl.ItemsPanel = itemsPanel;
             
-            // Create employee cards programmatically to ensure shield overlay is included
+            // Create employee cards programmatically
             foreach (var employee in employees)
             {
                 // Convert EmployeeDisplayModel to dictionary format expected by CreateEmployeeCard
@@ -609,7 +837,7 @@ namespace DisplayApp
                     { "personnel_id", employee.PersonnelId }
                 };
                 
-                // Create card with shield overlay using the same method as other cards
+                // Create card using the same method as other cards
                 var employeeCard = CreateEmployeeCard(employeeData, "");
                 itemsControl.Items.Add(employeeCard);
             }
@@ -697,7 +925,6 @@ namespace DisplayApp
             double borderThickness = 4; // Thick blue border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
-            double shieldOverlap = badgeHeight * 0.12; // Shield overlaps ~12% of boundary
             
             // Create main badge container with blue border
             var card = new Border
@@ -781,119 +1008,53 @@ namespace DisplayApp
             var fullName = $"{firstName} {lastName}".Trim();
             var personnelId = employeeData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             
-            // Display name with personnel ID if available
-            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
             var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
+            var blueColor = new SolidColorBrush(Color.FromRgb(0, 100, 200)); // Blue matching border
             
-            // White text with strong black outline for visibility on white background
+            // Create StackPanel for name and personnel ID on separate lines
+            var textStack = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Orientation = Orientation.Vertical
+            };
+            
+            // Name TextBlock
             var nameText = new TextBlock
             {
-                Text = displayName,
-                Foreground = Brushes.White,
+                Text = fullName,
+                Foreground = blueColor,
                 FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Tahoma"),
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0), // No margin to ensure proper centering
-                Effect = new System.Windows.Media.Effects.DropShadowEffect
-                {
-                    Color = Colors.Black,
-                    BlurRadius = 4,
-                    ShadowDepth = 0,
-                    Opacity = 1.0
-                } // Strong black outline effect (ShadowDepth=0 creates outline, not shadow)
+                TextWrapping = TextWrapping.Wrap
             };
             
-            nameContainer.Children.Add(nameText);
+            textStack.Children.Add(nameText);
+            
+            // Personnel ID TextBlock (only if available)
+            if (!string.IsNullOrEmpty(personnelId))
+            {
+                var personnelIdText = new TextBlock
+                {
+                    Text = personnelId,
+                    Foreground = blueColor,
+                    FontSize = fontSize * 0.9, // Slightly smaller
+                    FontWeight = FontWeights.Bold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 2, 0, 0) // Small spacing from name
+                };
+                textStack.Children.Add(personnelIdText);
+            }
+            
+            nameContainer.Children.Add(textStack);
             Grid.SetRow(nameContainer, 1);
             badgeGrid.Children.Add(nameContainer);
-            
-            // Shield icon centered on chest area of photo (in the photo container) - only if show_shield is true
-            // Check if shield should be displayed (default to true for backward compatibility)
-            var showShield = true; // Default to true
-            if (employeeData.TryGetValue("show_shield", out var showShieldObj))
-            {
-                if (showShieldObj is bool showShieldBool)
-                {
-                    showShield = showShieldBool;
-                }
-                else if (bool.TryParse(showShieldObj?.ToString(), out bool showShieldParsed))
-                {
-                    showShield = showShieldParsed;
-                }
-            }
-            
-            if (showShield)
-            {
-                var shieldSize = badgeWidth * 0.28; // Optimized shield size for good visibility
-                
-                // Get shield color from employee data (default to Blue)
-                var shieldColorName = employeeData.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue";
-                var shieldColor = GetShieldColor(shieldColorName);
-                
-                // Create a golden shield with the selected color as the main fill, matching classic shield appearance
-                // Use a gradient from lighter gold at top to the selected color at bottom for depth
-                var shieldGradient = new LinearGradientBrush
-                {
-                    StartPoint = new System.Windows.Point(0.5, 0),
-                    EndPoint = new System.Windows.Point(0.5, 1)
-                };
-                
-                // For Yellow, use golden gradient; for others, blend gold with selected color
-                if (shieldColorName.Equals("Yellow", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Pure golden gradient for yellow
-                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 220, 0), 0.0)); // Bright gold at top
-                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 200, 0), 0.5)); // Medium gold
-                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(230, 180, 0), 1.0)); // Darker gold at bottom
-                }
-                else
-                {
-                    // Blend from gold to selected color for visual appeal
-                    shieldGradient.GradientStops.Add(new GradientStop(Color.FromRgb(255, 215, 0), 0.0)); // Gold at top
-                    // Calculate blended color with clamping to ensure values are within byte range (0-255)
-                    var blendedR = Math.Max(0, Math.Min(255, (int)(255 * 0.3 + shieldColor.R * 0.7)));
-                    var blendedG = Math.Max(0, Math.Min(255, (int)(215 * 0.3 + shieldColor.G * 0.7)));
-                    var blendedB = Math.Max(0, Math.Min(255, (int)(0 * 0.3 + shieldColor.B * 0.7)));
-                    shieldGradient.GradientStops.Add(new GradientStop(
-                        Color.FromRgb((byte)blendedR, (byte)blendedG, (byte)blendedB), 0.5)); // Blend in middle
-                    shieldGradient.GradientStops.Add(new GradientStop(shieldColor, 1.0)); // Selected color at bottom
-                }
-                
-                // Create shield positioned in the lower-middle part of the photo (chest area)
-                var shieldPath = new System.Windows.Shapes.Path
-                {
-                    Data = CreateShieldGeometry(),
-                    Fill = shieldGradient,
-                    Stroke = new SolidColorBrush(Color.FromRgb(40, 40, 40)), // Dark outline (black/dark brown) like in image
-                    StrokeThickness = 2.5, // Prominent but not too thick outline
-                    StrokeLineJoin = PenLineJoin.Round, // Smooth corners
-                    Width = shieldSize,
-                    Height = shieldSize,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Margin = new Thickness(0, largeRectHeight * 0.5, 0, 0), // Position at 50% down (chest area)
-                    RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
-                    Stretch = Stretch.Uniform, // Maintain aspect ratio
-                    Effect = new System.Windows.Media.Effects.DropShadowEffect
-                    {
-                        Color = Colors.Black,
-                        Direction = 270,
-                        ShadowDepth = 1.5,
-                        BlurRadius = 2,
-                        Opacity = 0.4
-                    } // Subtle shadow for depth and separation from background
-                };
-                
-                // Add shield to photo container AFTER image so it renders on top
-                // This ensures the shield appears above the photo
-                photoContainer.Children.Add(shieldPath);
-                // Set high z-index to ensure it's always on top
-                Panel.SetZIndex(shieldPath, 100);
-            }
             
             // Add stickers on the right side of the photo (inside the image frame, displayed vertically)
             if (employeeData.TryGetValue("sticker_paths", out var stickerPathsObj) && stickerPathsObj != null)
@@ -923,7 +1084,7 @@ namespace DisplayApp
                     };
                     
                     // Add each sticker image
-                    double stickerSize = badgeWidth * 0.15; // Stickers are smaller than shield
+                    double stickerSize = badgeWidth * 0.15; // Sticker size
                     foreach (var stickerPath in stickerPaths)
                     {
                         try
@@ -957,7 +1118,7 @@ namespace DisplayApp
                     
                     // Add stickers panel to photo container
                     photoContainer.Children.Add(stickersPanel);
-                    Panel.SetZIndex(stickersPanel, 90); // Above photo but below shield
+                    Panel.SetZIndex(stickersPanel, 90); // Above photo
                 }
             }
             
@@ -978,7 +1139,7 @@ namespace DisplayApp
                         bitmap.EndInit();
                         bitmap.Freeze();
                         
-                        // Medal/badge size - smaller than shield but visible
+                        // Medal/badge size
                         double medalSize = badgeWidth * 0.25; // 25% of badge width
                         
                         var medalImage = new Image
@@ -1008,7 +1169,7 @@ namespace DisplayApp
                         
                         // Add medal to photo container
                         photoContainer.Children.Add(medalImage);
-                        // Set high z-index to ensure it's visible above photo and stickers, but below shield
+                        // Set high z-index to ensure it's visible above photo and stickers
                         Panel.SetZIndex(medalImage, 95);
                     }
                     catch (Exception ex)
@@ -1021,75 +1182,6 @@ namespace DisplayApp
             
             card.Child = badgeGrid;
             return card;
-        }
-        
-        private Geometry CreateShieldGeometry()
-        {
-            // Create shield shape geometry (rounded top, pointed bottom)
-            // Using normalized coordinates (0-100 scale) that will be scaled by the Path's Width/Height
-            var geometry = new PathGeometry();
-            var figure = new PathFigure
-            {
-                StartPoint = new Point(25, 5), // Top left of rounded arc
-                IsClosed = true
-            };
-            
-            // Top rounded arc (left to right)
-            figure.Segments.Add(new ArcSegment
-            {
-                Point = new Point(75, 5), // Top right
-                Size = new Size(25, 25), // Arc size for smooth curve
-                SweepDirection = SweepDirection.Clockwise,
-                IsLargeArc = false
-            });
-            
-            // Right side down to middle
-            figure.Segments.Add(new LineSegment(new Point(90, 35), true));
-            // Right side to bottom point
-            figure.Segments.Add(new LineSegment(new Point(50, 95), true)); // Bottom center point
-            // Left side back up
-            figure.Segments.Add(new LineSegment(new Point(10, 35), true));
-            // Left side back to start (closes the path)
-            // Note: The path is already closed, so this line might be redundant, but it ensures proper closure
-            
-            geometry.Figures.Add(figure);
-            geometry.Freeze(); // Freeze for better performance
-            return geometry;
-        }
-
-        private Color GetShieldColor(string colorName)
-        {
-            // Map color name to Color object (default to Blue)
-            switch (colorName.ToLower())
-            {
-                case "red":
-                    return Color.FromRgb(255, 0, 0);
-                case "blue":
-                    return Color.FromRgb(0, 0, 255);
-                case "yellow":
-                    return Color.FromRgb(255, 255, 0);
-                case "black":
-                    return Color.FromRgb(0, 0, 0);
-                default:
-                    return Color.FromRgb(0, 0, 255); // Default Blue
-            }
-        }
-
-        private bool GetShowShieldFromDict(Dictionary<string, object> employeeDict)
-        {
-            // Get show_shield from dictionary (default to true for backward compatibility)
-            if (employeeDict.TryGetValue("show_shield", out var showShieldObj))
-            {
-                if (showShieldObj is bool showShieldBool)
-                {
-                    return showShieldBool;
-                }
-                else if (bool.TryParse(showShieldObj?.ToString(), out bool showShieldParsed))
-                {
-                    return showShieldParsed;
-                }
-            }
-            return true; // Default to true if not specified
         }
 
         private BitmapImage CreateEmployeePlaceholderImage(double size = 50)
@@ -1114,77 +1206,6 @@ namespace DisplayApp
             renderTargetBitmap.Freeze();
             
             return ConvertToBitmapImage(renderTargetBitmap);
-        }
-
-        private System.Windows.Shapes.Path CreateShieldBadge(double size, string colorName = "Blue")
-        {
-            // Create shield shape using Path geometry
-            // Shield shape: rounded top, pointed bottom (classic shield)
-            var shieldPath = new System.Windows.Shapes.Path
-            {
-                Width = size,
-                Height = size,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Opacity = 0.6, // Semi-transparent for frame effect
-                Stretch = Stretch.Uniform
-            };
-
-            // Define shield geometry using normalized coordinates (0-100 scale for easier calculation)
-            // This will be scaled by the Path's Width/Height
-            var geometry = new PathGeometry();
-            var figure = new PathFigure
-            {
-                StartPoint = new Point(25, 5), // Top left curve start
-                IsClosed = true
-            };
-
-            // Top rounded arc (left to right) - creates the rounded top of the shield
-            figure.Segments.Add(new ArcSegment
-            {
-                Point = new Point(75, 5), // Top right
-                Size = new Size(25, 25), // Arc size for smooth curve
-                SweepDirection = SweepDirection.Clockwise,
-                IsLargeArc = false
-            });
-
-            // Right side down to middle
-            figure.Segments.Add(new LineSegment(new Point(90, 35), true));
-            // Right side to point
-            figure.Segments.Add(new LineSegment(new Point(50, 95), true)); // Bottom point (center)
-
-            // Left side back up
-            figure.Segments.Add(new LineSegment(new Point(10, 35), true));
-            // Left side back to start
-            figure.Segments.Add(new LineSegment(new Point(25, 5), true));
-
-            geometry.Figures.Add(figure);
-
-            shieldPath.Data = geometry;
-            
-            // Set color based on shield color name
-            Color shieldColor = Color.FromRgb(0, 0, 255); // Default Blue
-            switch (colorName.ToLower())
-            {
-                case "red":
-                    shieldColor = Color.FromRgb(255, 0, 0);
-                    break;
-                case "blue":
-                    shieldColor = Color.FromRgb(0, 0, 255);
-                    break;
-                case "yellow":
-                    shieldColor = Color.FromRgb(255, 255, 0);
-                    break;
-                case "black":
-                    shieldColor = Color.FromRgb(0, 0, 0);
-                    break;
-            }
-            
-            shieldPath.Fill = new SolidColorBrush(shieldColor);
-            shieldPath.Stroke = new SolidColorBrush(Color.FromRgb(180, 180, 180)); // Light gray border for definition
-            shieldPath.StrokeThickness = 1.5;
-
-            return shieldPath;
         }
 
         private void UpdateAbsencePanel(Dictionary<string, object> reportData)
@@ -1617,7 +1638,8 @@ namespace DisplayApp
                             var defaultGroup = new DisplayApp.Models.GroupDisplayModel
                             {
                                 GroupName = "گروه پیش‌فرض",
-                                GroupDescription = "گروه پیش‌فرض سیستم"
+                                GroupDescription = "گروه پیش‌فرض سیستم",
+                                Color = "#4CAF50" // Default green color
                             };
                             
                             // Get morning shift employees
@@ -1629,12 +1651,34 @@ namespace DisplayApp
                                 }
                             }
                             
-                            // Get evening shift employees
+                            // Get afternoon shift employees
+                            if (shifts.TryGetValue("afternoon", out var afternoonShiftObj) && afternoonShiftObj is Dictionary<string, object> afternoonShift)
+                            {
+                                if (afternoonShift.TryGetValue("assigned_employees", out var afternoonEmployees) && afternoonEmployees is List<object> afternoonEmpList)
+                                {
+                                    defaultGroup.AfternoonShiftEmployees = ConvertToEmployeeDisplayModels(afternoonEmpList, defaultGroup.GroupName);
+                                }
+                            }
+
+                            // Get evening shift employees (legacy - map to afternoon)
                             if (shifts.TryGetValue("evening", out var eveningShiftObj) && eveningShiftObj is Dictionary<string, object> eveningShift)
                             {
                                 if (eveningShift.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
                                 {
-                                    defaultGroup.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, defaultGroup.GroupName);
+                                    // If afternoon is empty, use evening
+                                    if (defaultGroup.AfternoonShiftEmployees == null || defaultGroup.AfternoonShiftEmployees.Count == 0)
+                                    {
+                                        defaultGroup.AfternoonShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, defaultGroup.GroupName);
+                                    }
+                                }
+                            }
+
+                            // Get night shift employees
+                            if (shifts.TryGetValue("night", out var nightShiftObj) && nightShiftObj is Dictionary<string, object> nightShift)
+                            {
+                                if (nightShift.TryGetValue("assigned_employees", out var nightEmployees) && nightEmployees is List<object> nightEmpList)
+                                {
+                                    defaultGroup.NightShiftEmployees = ConvertToEmployeeDisplayModels(nightEmpList, defaultGroup.GroupName);
                                 }
                             }
                             
@@ -1668,8 +1712,8 @@ namespace DisplayApp
                 // Debug: Log details about each group
                 foreach (var group in groups)
                 {
-                    _logger.LogInformation("Group '{GroupName}': {MorningCount} morning, {EveningCount} evening employees", 
-                        group.GroupName, group.MorningShiftEmployees.Count, group.EveningShiftEmployees.Count);
+                    _logger.LogInformation("Group '{GroupName}': {MorningCount} morning, {AfternoonCount} afternoon, {NightCount} night employees", 
+                        group.GroupName, group.MorningShiftEmployees.Count, group.AfternoonShiftEmployees.Count, group.NightShiftEmployees.Count);
                 }
                 
                 // Combine all morning shift employees
@@ -1687,24 +1731,40 @@ namespace DisplayApp
                     }
                 }
                 
-                // Combine all evening shift employees
+                // Combine all afternoon shift employees
                 foreach (var group in groups)
                 {
-                    _logger.LogInformation("Processing {Count} evening employees from group '{GroupName}'", 
-                        group.EveningShiftEmployees.Count, group.GroupName);
-                    foreach (var employee in group.EveningShiftEmployees)
+                    _logger.LogInformation("Processing {Count} afternoon employees from group '{GroupName}'", 
+                        group.AfternoonShiftEmployees.Count, group.GroupName);
+                    foreach (var employee in group.AfternoonShiftEmployees)
                     {
                         // Set the group name for each employee
                         employee.GroupName = group.GroupName;
-                        combinedModel.AllEveningShiftEmployees.Add(employee);
-                        _logger.LogInformation("Added evening employee: {EmployeeName} from group {GroupName}", 
+                        combinedModel.AllAfternoonShiftEmployees.Add(employee);
+                        _logger.LogInformation("Added afternoon employee: {EmployeeName} from group {GroupName}", 
                             employee.FullName, group.GroupName);
                     }
                 }
                 
-                _logger.LogInformation("Combined {MorningCount} morning and {EveningCount} evening employees", 
+                // Combine all night shift employees
+                foreach (var group in groups)
+                {
+                    _logger.LogInformation("Processing {Count} night employees from group '{GroupName}'", 
+                        group.NightShiftEmployees.Count, group.GroupName);
+                    foreach (var employee in group.NightShiftEmployees)
+                    {
+                        // Set the group name for each employee
+                        employee.GroupName = group.GroupName;
+                        combinedModel.AllNightShiftEmployees.Add(employee);
+                        _logger.LogInformation("Added night employee: {EmployeeName} from group {GroupName}", 
+                            employee.FullName, group.GroupName);
+                    }
+                }
+                
+                _logger.LogInformation("Combined {MorningCount} morning, {AfternoonCount} afternoon, {NightCount} night employees", 
                     combinedModel.AllMorningShiftEmployees.Count, 
-                    combinedModel.AllEveningShiftEmployees.Count);
+                    combinedModel.AllAfternoonShiftEmployees.Count,
+                    combinedModel.AllNightShiftEmployees.Count);
                 
                 return combinedModel;
             }
@@ -1721,14 +1781,16 @@ namespace DisplayApp
             {
                 var groupName = groupData.GetValueOrDefault("name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
                 var groupDescription = groupData.GetValueOrDefault("description", "")?.ToString() ?? "";
+                var groupColor = groupData.GetValueOrDefault("color", "#4CAF50")?.ToString() ?? "#4CAF50";
                 var supervisorName = groupData.GetValueOrDefault("supervisor_name", "")?.ToString() ?? "";
                 
-                _logger.LogInformation("Creating group display model for: {GroupName}", groupName);
+                _logger.LogInformation("Creating group display model for: {GroupName} with color: {Color}", groupName, groupColor);
                 
                 var groupModel = new DisplayApp.Models.GroupDisplayModel
                 {
                     GroupName = groupName,
                     GroupDescription = groupDescription,
+                    Color = groupColor,
                     SupervisorName = supervisorName
                 };
                 
@@ -1760,42 +1822,89 @@ namespace DisplayApp
                             {
                                 if (morningForemanId != null && !string.IsNullOrEmpty(morningForemanId.ToString()))
                                 {
-                                    groupModel.MorningForemanName = GetEmployeeNameById(morningForemanId.ToString(), morningEmpList);
+                                    var foremanId = morningForemanId.ToString() ?? "";
+                                    if (!string.IsNullOrEmpty(foremanId))
+                                    {
+                                        groupModel.MorningForemanName = GetEmployeeNameById(foremanId, morningEmpList);
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 
-                // Get evening shift employees and foreman
-                if (groupData.TryGetValue("evening_shift", out var eveningShiftObj))
+                // Get afternoon shift employees and foreman
+                if (groupData.TryGetValue("afternoon_shift", out var afternoonShiftObj))
                 {
-                    Dictionary<string, object>? eveningShift = null;
-                    if (eveningShiftObj is Dictionary<string, object> eveningShiftDict)
+                    Dictionary<string, object>? afternoonShift = null;
+                    if (afternoonShiftObj is Dictionary<string, object> afternoonShiftDict)
                     {
-                        eveningShift = eveningShiftDict;
+                        afternoonShift = afternoonShiftDict;
                     }
-                    else if (eveningShiftObj is JObject eveningShiftJObject)
+                    else if (afternoonShiftObj is JObject afternoonShiftJObject)
                     {
-                        eveningShift = ConvertJObjectToDictionary(eveningShiftJObject);
+                        afternoonShift = ConvertJObjectToDictionary(afternoonShiftJObject);
                     }
                     
-                    if (eveningShift != null)
+                    if (afternoonShift != null)
                     {
                         // Get employees
-                        if (eveningShift.TryGetValue("assigned_employees", out var eveningEmployees) && eveningEmployees is List<object> eveningEmpList)
+                        if (afternoonShift.TryGetValue("assigned_employees", out var afternoonEmployees) && afternoonEmployees is List<object> afternoonEmpList)
                         {
-                            groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmpList, groupName);
-                            _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmpList.Count, groupName);
+                            groupModel.AfternoonShiftEmployees = ConvertToEmployeeDisplayModels(afternoonEmpList, groupName);
+                            _logger.LogInformation("Found {Count} afternoon shift employees for group {GroupName}", afternoonEmpList.Count, groupName);
                             
-                            // Get foreman name from team_leader_id (check both snake_case and PascalCase)
-                            object? eveningForemanId = null;
-                            if (eveningShift.TryGetValue("team_leader_id", out eveningForemanId) || 
-                                eveningShift.TryGetValue("TeamLeaderId", out eveningForemanId))
+                            // Get foreman name from team_leader_id
+                            object? afternoonForemanId = null;
+                            if (afternoonShift.TryGetValue("team_leader_id", out afternoonForemanId) || 
+                                afternoonShift.TryGetValue("TeamLeaderId", out afternoonForemanId))
                             {
-                                if (eveningForemanId != null && !string.IsNullOrEmpty(eveningForemanId.ToString()))
+                                if (afternoonForemanId != null && !string.IsNullOrEmpty(afternoonForemanId.ToString()))
                                 {
-                                    groupModel.EveningForemanName = GetEmployeeNameById(eveningForemanId.ToString(), eveningEmpList);
+                                    var foremanId = afternoonForemanId.ToString() ?? "";
+                                    if (!string.IsNullOrEmpty(foremanId))
+                                    {
+                                        groupModel.AfternoonForemanName = GetEmployeeNameById(foremanId, afternoonEmpList);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Get night shift employees and foreman
+                if (groupData.TryGetValue("night_shift", out var nightShiftObj))
+                {
+                    Dictionary<string, object>? nightShift = null;
+                    if (nightShiftObj is Dictionary<string, object> nightShiftDict)
+                    {
+                        nightShift = nightShiftDict;
+                    }
+                    else if (nightShiftObj is JObject nightShiftJObject)
+                    {
+                        nightShift = ConvertJObjectToDictionary(nightShiftJObject);
+                    }
+                    
+                    if (nightShift != null)
+                    {
+                        // Get employees
+                        if (nightShift.TryGetValue("assigned_employees", out var nightEmployees) && nightEmployees is List<object> nightEmpList)
+                        {
+                            groupModel.NightShiftEmployees = ConvertToEmployeeDisplayModels(nightEmpList, groupName);
+                            _logger.LogInformation("Found {Count} night shift employees for group {GroupName}", nightEmpList.Count, groupName);
+                            
+                            // Get foreman name from team_leader_id
+                            object? nightForemanId = null;
+                            if (nightShift.TryGetValue("team_leader_id", out nightForemanId) || 
+                                nightShift.TryGetValue("TeamLeaderId", out nightForemanId))
+                            {
+                                if (nightForemanId != null && !string.IsNullOrEmpty(nightForemanId.ToString()))
+                                {
+                                    var foremanId = nightForemanId.ToString() ?? "";
+                                    if (!string.IsNullOrEmpty(foremanId))
+                                    {
+                                        groupModel.NightForemanName = GetEmployeeNameById(foremanId, nightEmpList);
+                                    }
                                 }
                             }
                         }
@@ -1817,15 +1926,17 @@ namespace DisplayApp
             {
                 var groupName = groupData.GetValueOrDefault("Name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
                 var groupDescription = groupData.GetValueOrDefault("Description", "")?.ToString() ?? "";
+                var groupColor = groupData.GetValueOrDefault("Color", "#4CAF50")?.ToString() ?? "#4CAF50";
                 var supervisorName = groupData.GetValueOrDefault("SupervisorName", "")?.ToString() ?? "";
                 
-                _logger.LogInformation("Creating group display model from parsed data for: {GroupName} (ID: {GroupId})", groupName, groupId);
+                _logger.LogInformation("Creating group display model from parsed data for: {GroupName} (ID: {GroupId}) with color: {Color}", groupName, groupId, groupColor);
                 _logger.LogInformation("Group data keys: {Keys}", string.Join(", ", groupData.Keys));
                 
                 var groupModel = new DisplayApp.Models.GroupDisplayModel
                 {
                     GroupName = groupName,
                     GroupDescription = groupDescription,
+                    Color = groupColor,
                     SupervisorName = supervisorName
                 };
                 
@@ -1931,106 +2042,186 @@ namespace DisplayApp
                     _logger.LogWarning("No morning shift found in group data for group {GroupName}", groupName);
                 }
                 
-                // Parse evening shift from JSON string
-                if (groupData.TryGetValue("EveningShift", out var eveningShiftObj))
+                // Parse afternoon shift from JSON string
+                if (groupData.TryGetValue("AfternoonShift", out var afternoonShiftObj))
                 {
                     // Handle both string and JsonElement types
-                    string? eveningShiftJson = null;
-                    if (eveningShiftObj is string str)
+                    string? afternoonShiftJson = null;
+                    if (afternoonShiftObj is string str)
                     {
-                        eveningShiftJson = str;
+                        afternoonShiftJson = str;
                     }
-                    else if (eveningShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    else if (afternoonShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
                     {
-                        eveningShiftJson = jsonElement.GetString();
+                        afternoonShiftJson = jsonElement.GetString();
                     }
                     
-                    if (!string.IsNullOrEmpty(eveningShiftJson))
+                    if (!string.IsNullOrEmpty(afternoonShiftJson))
                     {
-                        _logger.LogInformation("Found EveningShift JSON string for group {GroupName}: {Length} characters", groupName, eveningShiftJson.Length);
+                        _logger.LogInformation("Found AfternoonShift JSON string for group {GroupName}: {Length} characters", groupName, afternoonShiftJson.Length);
                         try
                         {
-                        // The JSON is double-escaped, so we need to unescape it first
-                        var unescapedJson = eveningShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
-                        _logger.LogInformation("Unescaped evening shift JSON for group {GroupName}: {Length} characters", groupName, unescapedJson.Length);
-                        _logger.LogInformation("Unescaped evening shift JSON content: {Json}", unescapedJson);
-                        
-                        var eveningShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
-                        if (eveningShiftData != null)
-                        {
-                            _logger.LogInformation("Successfully parsed evening shift data for group {GroupName}, keys: {Keys}", groupName, string.Join(", ", eveningShiftData.Keys));
-                            
-                            if (eveningShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
+                            var unescapedJson = afternoonShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
+                            var afternoonShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
+                            if (afternoonShiftData != null)
                             {
-                                List<object> assignedIdsList = new List<object>();
-                                
-                                // Handle both List<object> and JsonElement array types
-                                if (assignedIds is List<object> list)
+                                if (afternoonShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
                                 {
-                                    assignedIdsList = list;
-                                }
-                                else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    foreach (var item in jsonElement.EnumerateArray())
+                                    List<object> assignedIdsList = new List<object>();
+                                    if (assignedIds is List<object> list) assignedIdsList = list;
+                                    else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                                     {
-                                        if (item.ValueKind == System.Text.Json.JsonValueKind.String)
+                                        foreach (var item in jsonElement.EnumerateArray())
                                         {
-                                            assignedIdsList.Add(item.GetString() ?? "");
-                                        }
-                                        else if (item.ValueKind == System.Text.Json.JsonValueKind.Null)
-                                        {
-                                            assignedIdsList.Add(null!);
+                                            if (item.ValueKind == System.Text.Json.JsonValueKind.String) assignedIdsList.Add(item.GetString() ?? "");
+                                            else if (item.ValueKind == System.Text.Json.JsonValueKind.Null) assignedIdsList.Add(null!);
                                         }
                                     }
-                                }
-                                
-                                _logger.LogInformation("Found {Count} assigned employee IDs for evening shift in group {GroupName}", assignedIdsList.Count, groupName);
-                                
-                                // Filter out null values from the assigned IDs
-                                var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
-                                _logger.LogInformation("Found {Count} valid employee IDs for evening shift in group {GroupName}", validIds.Count, groupName);
-                                
-                                // Convert employee IDs to employee objects
-                                var eveningEmployees = GetEmployeesByIds(validIds, reportData);
-                                groupModel.EveningShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmployees, groupName);
-                                _logger.LogInformation("Found {Count} evening shift employees for group {GroupName}", eveningEmployees.Count, groupName);
-                                
-                                // Get foreman name from TeamLeaderId (check both PascalCase and snake_case)
-                                object? eveningForemanId = null;
-                                if (eveningShiftData.TryGetValue("TeamLeaderId", out eveningForemanId) || 
-                                    eveningShiftData.TryGetValue("team_leader_id", out eveningForemanId))
-                                {
-                                    if (eveningForemanId != null && !string.IsNullOrEmpty(eveningForemanId.ToString()))
+                                    
+                                    var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
+                                    var afternoonEmployees = GetEmployeesByIds(validIds, reportData);
+                                    groupModel.AfternoonShiftEmployees = ConvertToEmployeeDisplayModels(afternoonEmployees, groupName);
+                                    
+                                    object? foremanIdObj = null;
+                                    if (afternoonShiftData.TryGetValue("TeamLeaderId", out foremanIdObj) || 
+                                        afternoonShiftData.TryGetValue("team_leader_id", out foremanIdObj))
                                     {
-                                        var foremanEmployee = GetEmployeesByIds(new List<object> { eveningForemanId }, reportData);
-                                        if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                        if (foremanIdObj != null && !string.IsNullOrEmpty(foremanIdObj.ToString()))
                                         {
-                                            var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
-                                            var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
-                                            groupModel.EveningForemanName = $"{firstName} {lastName}".Trim();
+                                            var foremanEmployee = GetEmployeesByIds(new List<object> { foremanIdObj }, reportData);
+                                            if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                            {
+                                                var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                                var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                                groupModel.AfternoonForemanName = $"{firstName} {lastName}".Trim();
+                                            }
                                         }
                                     }
                                 }
                             }
-                            else
-                            {
-                                _logger.LogWarning("No AssignedEmployeeIds found in evening shift data for group {GroupName}", groupName);
-                            }
                         }
-                        else
-                        {
-                            _logger.LogWarning("Failed to deserialize evening shift JSON for group {GroupName}", groupName);
-                        }
-                    }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "Failed to parse evening shift data for group {GroupName}", groupName);
+                            _logger.LogWarning(ex, "Failed to parse afternoon shift data for group {GroupName}", groupName);
                         }
                     }
                 }
-                else
+                
+                // Parse EveningShift as fallback for Afternoon
+                if (groupData.TryGetValue("EveningShift", out var eveningShiftObj) && (groupModel.AfternoonShiftEmployees == null || groupModel.AfternoonShiftEmployees.Count == 0))
                 {
-                    _logger.LogWarning("No evening shift found in group data for group {GroupName}", groupName);
+                    string? eveningShiftJson = null;
+                    if (eveningShiftObj is string str) eveningShiftJson = str;
+                    else if (eveningShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String) eveningShiftJson = jsonElement.GetString();
+                    
+                    if (!string.IsNullOrEmpty(eveningShiftJson))
+                    {
+                         try
+                        {
+                            var unescapedJson = eveningShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
+                            var eveningShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
+                            if (eveningShiftData != null)
+                            {
+                                if (eveningShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
+                                {
+                                    List<object> assignedIdsList = new List<object>();
+                                    if (assignedIds is List<object> list) assignedIdsList = list;
+                                    else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                    {
+                                        foreach (var item in jsonElement.EnumerateArray())
+                                        {
+                                            if (item.ValueKind == System.Text.Json.JsonValueKind.String) assignedIdsList.Add(item.GetString() ?? "");
+                                            else if (item.ValueKind == System.Text.Json.JsonValueKind.Null) assignedIdsList.Add(null!);
+                                        }
+                                    }
+                                    var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
+                                    var eveningEmployees = GetEmployeesByIds(validIds, reportData);
+                                    groupModel.AfternoonShiftEmployees = ConvertToEmployeeDisplayModels(eveningEmployees, groupName); // Map to Afternoon
+                                    
+                                     object? foremanIdObj = null;
+                                    if (eveningShiftData.TryGetValue("TeamLeaderId", out foremanIdObj) || eveningShiftData.TryGetValue("team_leader_id", out foremanIdObj))
+                                    {
+                                        if (foremanIdObj != null && !string.IsNullOrEmpty(foremanIdObj.ToString()))
+                                        {
+                                             var foremanEmployee = GetEmployeesByIds(new List<object> { foremanIdObj }, reportData);
+                                            if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                            {
+                                                var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                                var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                                groupModel.AfternoonForemanName = $"{firstName} {lastName}".Trim();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex) {_logger.LogWarning(ex, "Failed to parse evening shift data fallback");}
+                    }
+                }
+
+                // Parse night shift from JSON string
+                if (groupData.TryGetValue("NightShift", out var nightShiftObj))
+                {
+                    // Handle both string and JsonElement types
+                    string? nightShiftJson = null;
+                    if (nightShiftObj is string str)
+                    {
+                        nightShiftJson = str;
+                    }
+                    else if (nightShiftObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        nightShiftJson = jsonElement.GetString();
+                    }
+                    
+                    if (!string.IsNullOrEmpty(nightShiftJson))
+                    {
+                        _logger.LogInformation("Found NightShift JSON string for group {GroupName}: {Length} characters", groupName, nightShiftJson.Length);
+                        try
+                        {
+                            var unescapedJson = nightShiftJson.Replace("\\\"", "\"").Replace("\\r\\n", "").Replace("\\n", "");
+                            var nightShiftData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(unescapedJson);
+                            if (nightShiftData != null)
+                            {
+                                if (nightShiftData.TryGetValue("AssignedEmployeeIds", out var assignedIds))
+                                {
+                                    List<object> assignedIdsList = new List<object>();
+                                    if (assignedIds is List<object> list) assignedIdsList = list;
+                                    else if (assignedIds is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                    {
+                                        foreach (var item in jsonElement.EnumerateArray())
+                                        {
+                                            if (item.ValueKind == System.Text.Json.JsonValueKind.String) assignedIdsList.Add(item.GetString() ?? "");
+                                            else if (item.ValueKind == System.Text.Json.JsonValueKind.Null) assignedIdsList.Add(null!);
+                                        }
+                                    }
+                                    
+                                    var validIds = assignedIdsList.Where(id => id != null && !string.IsNullOrEmpty(id.ToString())).ToList();
+                                    var nightEmployees = GetEmployeesByIds(validIds, reportData);
+                                    groupModel.NightShiftEmployees = ConvertToEmployeeDisplayModels(nightEmployees, groupName);
+                                    
+                                    object? foremanIdObj = null;
+                                    if (nightShiftData.TryGetValue("TeamLeaderId", out foremanIdObj) || 
+                                        nightShiftData.TryGetValue("team_leader_id", out foremanIdObj))
+                                    {
+                                        if (foremanIdObj != null && !string.IsNullOrEmpty(foremanIdObj.ToString()))
+                                        {
+                                            var foremanEmployee = GetEmployeesByIds(new List<object> { foremanIdObj }, reportData);
+                                            if (foremanEmployee.Count > 0 && foremanEmployee[0] is Dictionary<string, object> foremanData)
+                                            {
+                                                var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                                                var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                                                groupModel.NightForemanName = $"{firstName} {lastName}".Trim();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to parse night shift data for group {GroupName}", groupName);
+                        }
+                    }
                 }
                 
                 return groupModel;
@@ -2161,7 +2352,7 @@ namespace DisplayApp
                             Role = employeeDict.GetValueOrDefault("role", "").ToString() ?? "",
                             GroupName = groupName,
                             ShieldColor = employeeDict.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
-                            ShowShield = GetShowShieldFromDict(employeeDict),
+                            ShowShield = false, // Shields are no longer displayed
                             StickerPaths = stickerPaths,
                             MedalBadgePath = employeeDict.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
                             PersonnelId = employeeDict.GetValueOrDefault("personnel_id", "").ToString() ?? ""
@@ -2195,7 +2386,7 @@ namespace DisplayApp
                             Role = employeeDictFromJObject.GetValueOrDefault("role", "").ToString() ?? "",
                             GroupName = groupName,
                             ShieldColor = employeeDictFromJObject.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
-                            ShowShield = GetShowShieldFromDict(employeeDictFromJObject),
+                            ShowShield = false, // Shields are no longer displayed
                             StickerPaths = stickerPaths,
                             MedalBadgePath = employeeDictFromJObject.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
                             PersonnelId = employeeDictFromJObject.GetValueOrDefault("personnel_id", "").ToString() ?? ""
@@ -2217,6 +2408,8 @@ namespace DisplayApp
         {
             _refreshTimer?.Stop();
             _countdownTimer?.Stop();
+            _configReloadTimer?.Stop();
+            _configWatcher?.Dispose();
             _syncManager?.Dispose();
             base.OnClosed(e);
         }

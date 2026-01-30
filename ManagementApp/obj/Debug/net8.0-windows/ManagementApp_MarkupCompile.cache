@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-D:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\
 ManagementApp
 none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
-D:\projects\employee_management_csharp\ManagementApp\App.xaml
-121359791760
+E:\projects\employee_management_csharp\ManagementApp\App.xaml
+131131094396
 1290796608
-17-1423172042
-2301183065135
-Controls\GeorgianDatePicker.xaml;Controls\NavigationMenu.xaml;Resources\Colors.xaml;Resources\Fonts.xaml;Resources\Styles.xaml;Views\EmployeeDialog.xaml;Views\MainWindow.xaml;Views\RoleDialog.xaml;Views\RoleEditDialog.xaml;Views\ShiftGroupDialog.xaml;Views\ShiftGroupEditDialog.xaml;Views\TaskDialog.xaml;
+18-1834054652
+233398114452
+Controls\GeorgianDatePicker.xaml;Controls\NavigationMenu.xaml;Resources\Colors.xaml;Resources\Fonts.xaml;Resources\Styles.xaml;Views\ColorPalettePopup.xaml;Views\EmployeeDialog.xaml;Views\MainWindow.xaml;Views\RoleDialog.xaml;Views\RoleEditDialog.xaml;Views\ShiftGroupDialog.xaml;Views\ShiftGroupEditDialog.xaml;Views\TaskDialog.xaml;
 
 False
 

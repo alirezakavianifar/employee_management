@@ -575,7 +575,7 @@ namespace DisplayApp.Services
                 }
                 else
                 {
-                    dictionary[property.Name] = property.Value.ToObject<object>();
+                    dictionary[property.Name] = property.Value?.ToObject<object>();
                 }
             }
             
@@ -600,10 +600,10 @@ namespace DisplayApp.Services
                     {
                         if (employeeItem is Dictionary<string, object> employeeDict)
                         {
-                            var employeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString();
-                            var firstName = employeeDict.GetValueOrDefault("first_name", "").ToString();
-                            var lastName = employeeDict.GetValueOrDefault("last_name", "").ToString();
-                            var role = employeeDict.GetValueOrDefault("role", "").ToString().ToLower();
+                            var employeeId = employeeDict.GetValueOrDefault("employee_id", "")?.ToString() ?? "";
+                            var firstName = employeeDict.GetValueOrDefault("first_name", "")?.ToString() ?? "";
+                            var lastName = employeeDict.GetValueOrDefault("last_name", "")?.ToString() ?? "";
+                            var role = employeeDict.GetValueOrDefault("role", "")?.ToString()?.ToLower() ?? "";
                             
                             _logger.LogInformation("Checking employee: {EmployeeId} - {FirstName} {LastName} (Role: {Role})", 
                                 employeeId, firstName, lastName, role);
@@ -621,7 +621,7 @@ namespace DisplayApp.Services
                                     isManager = isManagerBool;
                                     _logger.LogInformation("Employee {EmployeeId} is_manager (bool): {IsManager}", employeeId, isManager);
                                 }
-                                else if (bool.TryParse(isManagerObj.ToString(), out var isManagerParsed))
+                                else if (isManagerObj != null && bool.TryParse(isManagerObj.ToString(), out var isManagerParsed))
                                 {
                                     isManager = isManagerParsed;
                                     _logger.LogInformation("Employee {EmployeeId} is_manager (parsed): {IsManager}", employeeId, isManager);

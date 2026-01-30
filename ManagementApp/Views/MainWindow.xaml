@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ManagementApp.Views"
+        xmlns:converters="clr-namespace:ManagementApp.Converters"
         xmlns:controls="clr-namespace:ManagementApp.Controls"
         mc:Ignorable="d"
         Title="سیستم مدیریت شیفت کارمندان" 
@@ -12,7 +13,7 @@
         WindowStartupLocation="CenterScreen">
     
     <Window.Resources>
-        <!-- EmployeePhotoConverter will be added in code-behind -->
+        <converters:EmployeePhotoConverter x:Key="EmployeePhotoConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -73,6 +74,9 @@
                                     x:Name="EmployeeListBox"
                                     DisplayMemberPath="FullName"
                                     SelectionChanged="EmployeeListBox_SelectionChanged"
+                                    PreviewMouseLeftButtonDown="EmployeeListBox_PreviewMouseLeftButtonDown"
+                                    MouseMove="EmployeeListBox_MouseMove"
+                                    MouseLeftButtonUp="EmployeeListBox_MouseLeftButtonUp"
                                     Margin="5"/>
 
                             <!-- Employee Actions -->
@@ -176,7 +180,7 @@
                             <!-- Absence List -->
                             <Label Content="لیست غیبت‌ها:" Margin="0,20,0,5"/>
                             <ListBox x:Name="AbsenceListBox" 
-                                    Height="150" 
+                                    Height="100" 
                                     Margin="0,5">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -188,6 +192,138 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
+
+                            <!-- Categorized Absence Lists -->
+                            <Label Content="کارمندان غایب امروز:" FontWeight="Bold" Margin="0,20,0,5"/>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                <StackPanel>
+                                    <!-- Absent Employees (غایب) -->
+                                    <Expander x:Name="EmployeeManagementAbsentExpander" 
+                                             Header="کارمندان غایب (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementAbsentListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#FFCCCC"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+
+                                    <!-- Sick Employees (بیمار) -->
+                                    <Expander x:Name="EmployeeManagementSickExpander" 
+                                             Header="کارمندان بیمار (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementSickListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#FFE0B2"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+
+                                    <!-- Employees on Leave (مرخصی) -->
+                                    <Expander x:Name="EmployeeManagementLeaveExpander" 
+                                             Header="کارمندان مرخصی (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementLeaveListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#BBDEFB"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+                                </StackPanel>
+                            </ScrollViewer>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
@@ -205,12 +341,29 @@
 
                     <!-- Employee List for Shift Assignment -->
                     <GroupBox Grid.Column="0" Header="کارمندان" Margin="5">
-                        <ListBox x:Name="ShiftEmployeeListBox" 
-                                AllowDrop="True"
-                                DragOver="Employee_DragOver"
-                                PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
-                                MouseMove="ShiftEmployeeListBox_MouseMove"
-                                Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Search Box -->
+                            <TextBox Grid.Row="0"
+                                    x:Name="ShiftEmployeeSearchBox"
+                                    Text="جستجو..." 
+                                    Foreground="Gray"
+                                    Margin="5"/>
+                            
+                            <ListBox Grid.Row="1"
+                                    x:Name="ShiftEmployeeListBox" 
+                                    AllowDrop="True"
+                                    DragOver="Employee_DragOver"
+                                    DragEnter="ShiftEmployeeListBox_DragEnter"
+                                    DragLeave="ShiftEmployeeListBox_DragLeave"
+                                    Drop="ShiftEmployeeListBox_Drop"
+                                    PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
+                                    MouseMove="ShiftEmployeeListBox_MouseMove"
+                                    Margin="5">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Name="EmployeeCardBorder"
@@ -240,7 +393,8 @@
                                     </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
-                        </ListBox>
+                            </ListBox>
+                        </Grid>
                     </GroupBox>
 
                     <!-- Splitter 1 -->
@@ -277,15 +431,60 @@
                                     <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="15" Margin="5,0" VerticalAlignment="Center"/>
                                     <Button Content="تغییر ظرفیت" Click="ChangeCapacity_Click" Margin="5,0"/>
                                     <Button Content="پاک کردن شیفت صبح" Click="ClearMorningShift_Click" Margin="5,0"/>
-                                    <Button Content="پاک کردن شیفت عصر" Click="ClearEveningShift_Click" Margin="5,0"/>
+                                    <Button Content="پاک کردن شیفت عصر" Click="ClearAfternoonShift_Click" Margin="5,0"/>
+                                    <Button Content="پاک کردن شیفت شب" Click="ClearNightShift_Click" Margin="5,0"/>
                                     <Button Content="جابجایی شیفت‌ها" Click="SwapShifts_Click" Margin="5,0"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal">
-                                    <CheckBox x:Name="AutoRotateCheckBox" 
-                                              Content="جابجایی خودکار هر شنبه" 
-                                              Checked="AutoRotateCheckBox_Checked" 
-                                              Unchecked="AutoRotateCheckBox_Unchecked"
-                                              Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox x:Name="AutoRotateCheckBox" 
+                                                  Content="جابجایی خودکار شیفت‌ها" 
+                                                  Checked="AutoRotateCheckBox_Checked" 
+                                                  Unchecked="AutoRotateCheckBox_Unchecked"
+                                                  Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Expander x:Name="RotationConfigExpander" 
+                                             Header="تنظیمات چرخش خودکار"
+                                             IsExpanded="False"
+                                             Visibility="Collapsed"
+                                             Margin="20,5,0,0">
+                                        <StackPanel Orientation="Vertical" Margin="10">
+                                            <Label Content="نوع چرخش:" FontWeight="Bold" Margin="0,0,0,5"/>
+                                            <RadioButton x:Name="WeeklyRotationRadio" 
+                                                        Content="چرخش هفتگی"
+                                                        IsChecked="True"
+                                                        Checked="RotationTypeRadio_Checked"
+                                                        Margin="0,0,0,10"/>
+                                            <StackPanel Orientation="Horizontal" Margin="20,0,0,10">
+                                                <Label Content="روز هفته:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <ComboBox x:Name="RotationDayComboBox" 
+                                                         Width="150"
+                                                         SelectionChanged="RotationDayComboBox_SelectionChanged"
+                                                         VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Border Background="#F5F5F5" 
+                                                   BorderBrush="#CCCCCC" 
+                                                   BorderThickness="1" 
+                                                   CornerRadius="5" 
+                                                   Padding="10" 
+                                                   Margin="0,10,0,0">
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock x:Name="RotationScheduleInfo" 
+                                                              TextWrapping="Wrap"
+                                                              FontFamily="Tahoma"
+                                                              FontSize="11"
+                                                              Foreground="#333"/>
+                                                    <TextBlock x:Name="NextRotationDate" 
+                                                              TextWrapping="Wrap"
+                                                              FontFamily="Tahoma"
+                                                              FontSize="11"
+                                                              FontWeight="Bold"
+                                                              Foreground="#0066CC"
+                                                              Margin="0,5,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Expander>
                                 </StackPanel>
                             </StackPanel>
 
@@ -294,20 +493,126 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Morning Shift -->
                                 <GroupBox Grid.Column="0" Header="شیفت صبح" Margin="5">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                        <StackPanel x:Name="MorningShiftPanel" Margin="5"/>
-                                    </ScrollViewer>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <!-- Supervisor Drop Area -->
+                                        <Border x:Name="MorningSupervisorArea" 
+                                                Grid.Row="0"
+                                                AllowDrop="True"
+                                                DragOver="SupervisorArea_DragOver"
+                                                DragEnter="SupervisorArea_DragEnter"
+                                                DragLeave="SupervisorArea_DragLeave"
+                                                Drop="SupervisorArea_Drop"
+                                                Background="#E3F2FD"
+                                                BorderBrush="#1976D2"
+                                                BorderThickness="2"
+                                                CornerRadius="5"
+                                                Padding="10"
+                                                Margin="5"
+                                                Tag="morning">
+                                            <StackPanel>
+                                                <Label Content="سرپرست شیفت صبح" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
+                                                <StackPanel x:Name="MorningSupervisorContent" 
+                                                           Orientation="Horizontal" 
+                                                           HorizontalAlignment="Center"
+                                                           MinHeight="80">
+                                                    <!-- Supervisor display will be updated in code-behind -->
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Shift Slots -->
+                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                            <StackPanel x:Name="MorningShiftPanel" Margin="5"/>
+                                        </ScrollViewer>
+                                    </Grid>
                                 </GroupBox>
 
-                                <!-- Evening Shift -->
+
+
+                                <!-- Afternoon Shift -->
                                 <GroupBox Grid.Column="1" Header="شیفت عصر" Margin="5">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                        <StackPanel x:Name="EveningShiftPanel" Margin="5"/>
-                                    </ScrollViewer>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <!-- Supervisor Drop Area -->
+                                        <Border x:Name="AfternoonSupervisorArea" 
+                                                Grid.Row="0"
+                                                AllowDrop="True"
+                                                DragOver="SupervisorArea_DragOver"
+                                                DragEnter="SupervisorArea_DragEnter"
+                                                DragLeave="SupervisorArea_DragLeave"
+                                                Drop="SupervisorArea_Drop"
+                                                Background="#E3F2FD"
+                                                BorderBrush="#1976D2"
+                                                BorderThickness="2"
+                                                CornerRadius="5"
+                                                Padding="10"
+                                                Margin="5"
+                                                Tag="afternoon">
+                                            <StackPanel>
+                                                <Label Content="سرپرست شیفت عصر" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
+                                                <StackPanel x:Name="AfternoonSupervisorContent" 
+                                                           Orientation="Horizontal" 
+                                                           HorizontalAlignment="Center"
+                                                           MinHeight="80">
+                                                    <!-- Supervisor display will be updated in code-behind -->
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Shift Slots -->
+                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                            <StackPanel x:Name="AfternoonShiftPanel" Margin="5"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </GroupBox>
+
+                                <!-- Night Shift -->
+                                <GroupBox Grid.Column="2" Header="شیفت شب" Margin="5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <!-- Supervisor Drop Area -->
+                                        <Border x:Name="NightSupervisorArea" 
+                                                Grid.Row="0"
+                                                AllowDrop="True"
+                                                DragOver="SupervisorArea_DragOver"
+                                                DragEnter="SupervisorArea_DragEnter"
+                                                DragLeave="SupervisorArea_DragLeave"
+                                                Drop="SupervisorArea_Drop"
+                                                Background="#E3F2FD"
+                                                BorderBrush="#3F51B5"
+                                                BorderThickness="2"
+                                                CornerRadius="5"
+                                                Padding="10"
+                                                Margin="5"
+                                                Tag="night">
+                                            <StackPanel>
+                                                <Label Content="سرپرست شیفت شب" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
+                                                <StackPanel x:Name="NightSupervisorContent" 
+                                                           Orientation="Horizontal" 
+                                                           HorizontalAlignment="Center"
+                                                           MinHeight="80">
+                                                    <!-- Supervisor display will be updated in code-behind -->
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Shift Slots -->
+                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                            <StackPanel x:Name="NightShiftPanel" Margin="5"/>
+                                        </ScrollViewer>
+                                    </Grid>
                                 </GroupBox>
                             </Grid>
 
@@ -316,7 +621,9 @@
                                 <Label Content="شیفت صبح:"/>
                                 <TextBlock x:Name="MorningShiftStats" Text="0/15" Margin="5,0"/>
                                 <Label Content="شیفت عصر:"/>
-                                <TextBlock x:Name="EveningShiftStats" Text="0/15" Margin="5,0"/>
+                                <TextBlock x:Name="AfternoonShiftStats" Text="0/15" Margin="5,0"/>
+                                <Label Content="شیفت شب:"/>
+                                <TextBlock x:Name="NightShiftStats" Text="0/15" Margin="5,0"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
@@ -331,11 +638,149 @@
                                  ShowsPreview="False"
                                  Margin="0"/>
 
-                    <!-- Absence List -->
-                    <GroupBox Grid.Column="4" Header="کارمندان غایب" Margin="5">
-                        <ListBox x:Name="AbsentEmployeeListBox" 
-                                DisplayMemberPath="FullName"
-                                Margin="5"/>
+                    <!-- Absence Management -->
+                    <GroupBox Grid.Column="4" Header="مدیریت غیبت‌ها" Margin="5">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="5">
+                                <!-- Absent Employees (غایب) -->
+                                <Expander x:Name="AbsentEmployeesExpander" 
+                                         Header="کارمندان غایب (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="AbsentEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="AbsentEmployeesListBox_DragEnter"
+                                            DragLeave="AbsentEmployeesListBox_DragLeave"
+                                            Drop="AbsentEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#FFCCCC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+
+                                <!-- Sick Employees (بیمار) -->
+                                <Expander x:Name="SickEmployeesExpander" 
+                                         Header="کارمندان بیمار (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="SickEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="SickEmployeesListBox_DragEnter"
+                                            DragLeave="SickEmployeesListBox_DragLeave"
+                                            Drop="SickEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#FFE0B2"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+
+                                <!-- Employees on Leave (مرخصی) -->
+                                <Expander x:Name="LeaveEmployeesExpander" 
+                                         Header="کارمندان مرخصی (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="LeaveEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="LeaveEmployeesListBox_DragEnter"
+                                            DragLeave="LeaveEmployeesListBox_DragLeave"
+                                            Drop="LeaveEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#BBDEFB"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+                            </StackPanel>
+                        </ScrollViewer>
                     </GroupBox>
                 </Grid>
             </TabItem>
@@ -403,7 +848,9 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="100"/>
@@ -426,7 +873,7 @@
                             </ComboBox>
 
                             <Label Grid.Row="3" Grid.Column="0" Content="ساعت تخمینی:"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="1.0" Margin="5"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="8.0" Margin="5"/>
 
                             <Label Grid.Row="4" Grid.Column="0" Content="تاریخ هدف:"/>
                             <controls:GeorgianDatePicker Grid.Row="4" Grid.Column="1" x:Name="TaskTargetDatePicker" Margin="5"/>
@@ -494,6 +941,147 @@
                                             Margin="0,5"/>
                                 </StackPanel>
                             </GroupBox>
+
+                            <!-- Daily Progress Entry -->
+                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="ثبت پیشرفت روزانه" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="گروه شیفت:"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DailyProgressGroupComboBox" 
+                                             Margin="5"
+                                             SelectionChanged="DailyProgressGroupComboBox_SelectionChanged"/>
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="نوع شیفت:"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DailyProgressShiftTypeComboBox" Margin="5"
+                                             SelectionChanged="DailyProgressShiftTypeComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="صبح" Tag="morning"/>
+                                        <ComboBoxItem Content="عصر" Tag="evening"/>
+                                    </ComboBox>
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="تاریخ:"/>
+                                    <controls:GeorgianDatePicker Grid.Row="2" Grid.Column="1" 
+                                                                 x:Name="DailyProgressDatePicker" Margin="5"/>
+
+                                    <Label Grid.Row="3" Grid.Column="0" Content="تعداد جعبه‌ها:"/>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                        <TextBox x:Name="DailyProgressBoxesTextBox" Width="100" 
+                                                PreviewTextInput="DailyProgressBoxesTextBox_PreviewTextInput"/>
+                                        <Label Content="(هدف روزانه: 100)" Margin="10,0,0,0" Foreground="Gray"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                                           Content="ثبت" x:Name="RecordDailyProgressButton" 
+                                           Click="RecordDailyProgress_Click" 
+                                           Width="100" Height="30" Margin="5" HorizontalAlignment="Left"/>
+
+                                    <!-- Status Display -->
+                                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
+                                        <Label Content="وضعیت:" FontWeight="Bold"/>
+                                        <TextBlock x:Name="DailyProgressStatusTextBlock" Margin="5,5,5,0" 
+                                                  TextWrapping="Wrap" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="تکمیل شده:"/>
+                                            <TextBlock x:Name="DailyProgressCompletedTextBlock" Margin="5,0"/>
+                                            <Label Content="از" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="DailyProgressTargetTextBlock" Margin="5,0"/>
+                                            <Label Content="جعبه" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="درصد:"/>
+                                            <TextBlock x:Name="DailyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="%" Margin="5,0,10,0"/>
+                                            <Label Content="تفاوت:" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="DailyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="جعبه" Margin="5,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- Weekly Progress View -->
+                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="پیشرفت هفتگی" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="گروه شیفت:"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" x:Name="WeeklyProgressGroupComboBox" 
+                                             Margin="5"
+                                             SelectionChanged="WeeklyProgressGroupComboBox_SelectionChanged"/>
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="نوع شیفت:"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="WeeklyProgressShiftTypeComboBox" Margin="5"
+                                             SelectionChanged="WeeklyProgressShiftTypeComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="صبح" Tag="morning"/>
+                                        <ComboBoxItem Content="عصر" Tag="evening"/>
+                                    </ComboBox>
+
+                                    <!-- Weekly Summary -->
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
+                                        <Label Content="خلاصه هفتگی:" FontWeight="Bold"/>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="تاریخ شروع هفته:"/>
+                                            <TextBlock x:Name="WeeklyProgressWeekStartTextBlock" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="تکمیل شده:"/>
+                                            <TextBlock x:Name="WeeklyProgressTotalCompletedTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="از" Margin="10,0,0,0"/>
+                                            <TextBlock Text="1000" Margin="5,0"/>
+                                            <Label Content="جعبه (هدف هفتگی)" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="وضعیت:"/>
+                                            <TextBlock x:Name="WeeklyProgressStatusTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="درصد:"/>
+                                            <TextBlock x:Name="WeeklyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="%" Margin="5,0,10,0"/>
+                                            <Label Content="تفاوت:" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="WeeklyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="جعبه" Margin="5,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Daily Breakdown -->
+                                    <DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
+                                             x:Name="WeeklyProgressDataGrid" 
+                                             AutoGenerateColumns="False" 
+                                             HeadersVisibility="Column"
+                                             IsReadOnly="True"
+                                             Margin="5,10,5,5"
+                                             MaxHeight="200">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="تاریخ" Binding="{Binding DateDisplay}" Width="*"/>
+                                            <DataGridTextColumn Header="جعبه‌های تکمیل شده" Binding="{Binding CompletedBoxes}" Width="*"/>
+                                            <DataGridTextColumn Header="هدف" Binding="{Binding DailyTarget}" Width="*"/>
+                                            <DataGridTextColumn Header="درصد" Binding="{Binding Percentage}" Width="*"/>
+                                            <DataGridTextColumn Header="وضعیت" Binding="{Binding StatusText}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </GroupBox>
                         </Grid>
                     </GroupBox>
                 </Grid>
@@ -527,7 +1115,15 @@
                             <ComboBox x:Name="ReportAssignedToComboBox" Margin="0,0,0,10"/>
 
                             <Button Content="تولید گزارش" Click="GenerateReport_Click" Margin="0,10"/>
-                            <Button Content="صادر کردن" Click="ExportReport_Click" Margin="0,5"/>
+                            <Button Content="چاپ" 
+                                   Click="PrintReport_Click" 
+                                   Width="100" 
+                                   Height="35" 
+                                   FontSize="14" 
+                                   Background="#4CAF50" 
+                                   Foreground="White" 
+                                   FontWeight="Bold" 
+                                   Margin="0,10"/>
                             
                             <!-- Performance Calculation Formula Tooltip -->
                             <Border Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" 
@@ -622,6 +1218,20 @@
 
                             <Separator Margin="0,20,0,10"/>
 
+                            <Label Content="رنگ محیط نمایش:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Border x:Name="DisplayColorPreview" 
+                                        Width="50" Height="30" 
+                                        BorderBrush="Black" BorderThickness="2" 
+                                        Background="#1a1a1a" Margin="0,0,10,0"/>
+                                <Button x:Name="SelectDisplayColorButton" 
+                                        Content="انتخاب رنگ" 
+                                        Click="SelectDisplayColorButton_Click" 
+                                        Width="120"/>
+                            </StackPanel>
+
+                            <Separator Margin="0,20,0,10"/>
+
                             <Label Content="تنظیمات شیفت:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                 <Label Content="ظرفیت پیش‌فرض:" Width="120"/>
@@ -677,6 +1287,179 @@
                             </ScrollViewer>
                         </StackPanel>
                     </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="پیش‌نمایش روزانه">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Header with Date -->
+                    <Border Grid.Row="0" Background="#2E3440" Padding="15" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="خلاصه روزانه" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="18" 
+                                      FontWeight="Bold" 
+                                      Foreground="White"/>
+                            <TextBlock x:Name="DailyPreviewDateText" 
+                                      Text="" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="14" 
+                                      Foreground="LightGray" 
+                                      Margin="20,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Statistics Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="10">
+                            <!-- Absence Statistics -->
+                            <GroupBox Header="آمار غیبت‌ها" Margin="0,0,0,15">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Sick Employees -->
+                                    <Border Grid.Row="0" Grid.Column="0" 
+                                           Background="#FFF3E0" 
+                                           BorderBrush="#FF9800" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="کارمندان بیمار" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="SickCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#E65100" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Employees on Leave -->
+                                    <Border Grid.Row="0" Grid.Column="1" 
+                                           Background="#E3F2FD" 
+                                           BorderBrush="#2196F3" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="کارمندان مرخصی" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="LeaveCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#1565C0" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Absent Employees -->
+                                    <Border Grid.Row="0" Grid.Column="2" 
+                                           Background="#FFEBEE" 
+                                           BorderBrush="#F44336" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="کارمندان غایب" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="AbsentCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#C62828" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </GroupBox>
+                            
+                            <!-- Group Statistics -->
+                            <GroupBox Header="آمار گروه‌های شیفت" Margin="0,0,0,15">
+                                <ItemsControl x:Name="GroupStatsItemsControl" Margin="15">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" 
+                                                   BorderBrush="#CCCCCC" 
+                                                   BorderThickness="1" 
+                                                   CornerRadius="5" 
+                                                   Padding="15" 
+                                                   Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding GroupName}" 
+                                                                  FontFamily="Tahoma" 
+                                                                  FontSize="14" 
+                                                                  FontWeight="Bold" 
+                                                                  Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding Description}" 
+                                                                  FontFamily="Tahoma" 
+                                                                  FontSize="11" 
+                                                                  Foreground="Gray"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" 
+                                                              Text="{Binding EmployeeCount}" 
+                                                              FontFamily="Tahoma" 
+                                                              FontSize="24" 
+                                                              FontWeight="Bold" 
+                                                              Foreground="#4CAF50" 
+                                                              VerticalAlignment="Center" 
+                                                              Margin="20,0,0,0"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- Print Button -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="چاپ" 
+                               Click="PrintDailyPreview_Click" 
+                               Width="100" 
+                               Height="35" 
+                               FontSize="14" 
+                               Background="#4CAF50" 
+                               Foreground="White" 
+                               FontWeight="Bold" 
+                               Margin="5,0"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>
