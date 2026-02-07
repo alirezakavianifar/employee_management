@@ -17,13 +17,13 @@ namespace ManagementApp.Views
         public RoleEditDialog()
         {
             InitializeComponent();
-            Title = "افزودن نقش جدید";
+            Title = "Add new role";
             ColorComboBox.SelectionChanged += ColorComboBox_SelectionChanged;
         }
 
         public RoleEditDialog(Role role) : this()
         {
-            Title = "ویرایش نقش";
+            Title = "Edit role";
             RoleIdTextBox.Text = role.RoleId;
             RoleIdTextBox.IsReadOnly = true; // Don't allow editing ID
             RoleNameTextBox.Text = role.Name;
@@ -70,21 +70,21 @@ namespace ManagementApp.Views
             // Validation
             if (string.IsNullOrEmpty(RoleId))
             {
-                MessageBox.Show("لطفاً شناسه نقش را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please enter the role ID.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 RoleIdTextBox.Focus();
                 return;
             }
 
             if (string.IsNullOrEmpty(RoleName))
             {
-                MessageBox.Show("لطفاً نام نقش را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please enter the role name.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 RoleNameTextBox.Focus();
                 return;
             }
 
             if (Priority < 0 || Priority > 1000)
             {
-                MessageBox.Show("اولویت باید بین 0 تا 1000 باشد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Priority must be between 0 and 1000.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 PriorityTextBox.Focus();
                 return;
             }

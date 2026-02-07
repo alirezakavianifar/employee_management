@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
+using Shared.Utils;
 
 namespace Shared.Models
 {
@@ -23,6 +25,11 @@ namespace Shared.Models
         public List<string> StickerPaths { get; set; } = new List<string>();
         public string MedalBadgePath { get; set; } = string.Empty;
         public string PersonnelId { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public bool ShowPhone { get; set; } = true;
+        
+        // Employee labels (text labels displayed below photo)
+        public List<EmployeeLabel> Labels { get; set; } = new List<EmployeeLabel>();
 
         // Backward compatibility property
         [JsonIgnore]
@@ -53,34 +60,73 @@ namespace Shared.Models
         [JsonIgnore]
         public string DisplayName => FirstName;
 
+        /// <summary>
+        /// Resolves a photo path (absolute from another machine or relative) to a local file path.
+        /// Use this when loading photos from report/JSON data so images work on any system.
+        /// </summary>
+        public static string? ResolvePhotoPath(string? photoPath)
+        {
+            if (string.IsNullOrEmpty(photoPath))
+                return null;
+
+            if (File.Exists(photoPath))
+                return photoPath;
+
+            var fileName = Path.GetFileName(photoPath);
+            if (string.IsNullOrEmpty(fileName))
+                return null;
+
+            // Prefer the app's configured Images directory (works when config points to correct SharedData)
+            try
+            {
+                var config = AppConfigHelper.Config;
+                if (!string.IsNullOrEmpty(config.ImagesDirectory))
+                {
+                    var configuredPath = Path.Combine(config.ImagesDirectory, "Staff", fileName);
+                    if (File.Exists(configuredPath))
+                        return configuredPath;
+                }
+            }
+            catch { /* config not ready or wrong path on another PC */ }
+
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var sharedDataRoots = new[]
+            {
+                Path.Combine(baseDir, "SharedData"),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "SharedData")),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "SharedData")),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "SharedData"))
+            };
+
+            foreach (var dataDir in sharedDataRoots)
+            {
+                var imagesPath = Path.Combine(dataDir, "Images", "Staff", fileName);
+                if (File.Exists(imagesPath))
+                    return imagesPath;
+            }
+
+            var pathTrimmed = photoPath.Trim();
+            if (pathTrimmed.Length > 0 && pathTrimmed[0] != Path.DirectorySeparatorChar && pathTrimmed[0] != '/' && !Path.IsPathRooted(pathTrimmed))
+            {
+                var currentPath = Path.Combine(Directory.GetCurrentDirectory(), photoPath);
+                if (File.Exists(currentPath))
+                    return currentPath;
+            }
+
+            return null;
+        }
+
         public bool HasPhoto()
         {
             if (string.IsNullOrEmpty(PhotoPath))
                 return false;
 
-            // Try the path as-is first
-            if (File.Exists(PhotoPath))
-                return true;
-
-            var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SharedData");
-            var fileName = Path.GetFileName(PhotoPath);
-
-            // Try relative to data directory (Images/Staff)
-            var imagesPath = Path.Combine(dataDir, "Images", "Staff", fileName);
-            if (File.Exists(imagesPath))
+            var resolved = ResolvePhotoPath(PhotoPath);
+            if (resolved != null)
             {
-                PhotoPath = imagesPath;
+                PhotoPath = resolved;
                 return true;
             }
-
-            // Try current directory
-            var currentPath = Path.Combine(Directory.GetCurrentDirectory(), PhotoPath);
-            if (File.Exists(currentPath))
-            {
-                PhotoPath = currentPath;
-                return true;
-            }
-
             return false;
         }
 
@@ -94,7 +140,8 @@ namespace Shared.Models
         }
 
         public void Update(string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null, 
-                          string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null)
+                          string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null,
+                          List<EmployeeLabel>? labels = null, string? phone = null, bool? showPhone = null)
         {
             if (!string.IsNullOrEmpty(firstName))
                 FirstName = firstName;
@@ -114,10 +161,16 @@ namespace Shared.Models
                 ShowShield = showShield.Value;
             if (stickerPaths != null)
                 StickerPaths = stickerPaths;
-            if (!string.IsNullOrEmpty(medalBadgePath))
+            if (medalBadgePath != null)
                 MedalBadgePath = medalBadgePath;
             if (!string.IsNullOrEmpty(personnelId))
                 PersonnelId = personnelId;
+            if (labels != null)
+                Labels = labels;
+            if (phone != null)
+                Phone = phone;
+            if (showPhone.HasValue)
+                ShowPhone = showPhone.Value;
             
             UpdatedAt = DateTime.Now;
         }
@@ -165,7 +218,10 @@ namespace Shared.Models
                 { "show_shield", ShowShield },
                 { "sticker_paths", StickerPaths ?? new List<string>() },
                 { "medal_badge_path", MedalBadgePath },
-                { "personnel_id", PersonnelId }
+                { "personnel_id", PersonnelId },
+                { "labels", Labels?.Select(l => l.ToDictionary()).ToList() ?? new List<Dictionary<string, object>>() },
+                { "phone", Phone },
+                { "show_phone", ShowPhone }
             };
         }
     }

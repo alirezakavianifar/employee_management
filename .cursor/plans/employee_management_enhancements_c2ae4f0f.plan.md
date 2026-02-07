@@ -74,6 +74,7 @@ todos:
   - id: settings_reorganization
     content: Reorganize settings menu into logical categories with improved navigation
     status: completed
+isProject: false
 ---
 
 # Employee Man
@@ -281,8 +282,6 @@ Display App:
   Data/Reports/ → DataService → MainWindow → Employee Cards (with shields/stickers/medals)
 ```
 
-
-
 ## Folder Structure
 
 ```javascript
@@ -300,8 +299,6 @@ Data/
   Reports/
     report_YYYY-MM-DD.json
 ```
-
-
 
 ## Testing Considerations
 

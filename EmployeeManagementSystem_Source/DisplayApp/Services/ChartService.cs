@@ -29,7 +29,7 @@ namespace DisplayApp.Services
                 
                 var lineSeries = new LineSeries
                 {
-                    Title = "عملکرد",
+                    Title = "Performance",
                     Values = new ChartValues<double>(performanceData),
                     PointGeometry = DefaultGeometries.Circle,
                     PointGeometrySize = 8,
@@ -259,7 +259,7 @@ namespace DisplayApp.Services
         {
             return new LineSeries
             {
-                Title = "عملکرد",
+                Title = "Performance",
                 Values = new ChartValues<double> { 50, 55, 60, 65, 62, 68, 70 },
                 PointGeometry = DefaultGeometries.Circle,
                 PointGeometrySize = 8,
@@ -300,7 +300,7 @@ namespace DisplayApp.Services
                     
                     seriesCollection.Add(new PieSeries
                     {
-                        Title = "شیفت صبح",
+                        Title = "Morning Shift",
                         Values = new ChartValues<double> { morningCount },
                         DataLabels = true,
                         Fill = Brushes.LightGreen
@@ -308,7 +308,7 @@ namespace DisplayApp.Services
                     
                     seriesCollection.Add(new PieSeries
                     {
-                        Title = "شیفت عصر",
+                        Title = "Afternoon Shift",
                         Values = new ChartValues<double> { eveningCount },
                         DataLabels = true,
                         Fill = Brushes.LightCoral
@@ -333,27 +333,27 @@ namespace DisplayApp.Services
                 
                 if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
                 {
-                    var leaveCount = GetAbsenceCount(absences, "مرخصی");
-                    var sickCount = GetAbsenceCount(absences, "بیمار");
-                    var absentCount = GetAbsenceCount(absences, "غایب");
+                    var leaveCount = GetAbsenceCount(absences, "Leave");
+                    var sickCount = GetAbsenceCount(absences, "Sick");
+                    var absentCount = GetAbsenceCount(absences, "Absent");
                     
                     seriesCollection.Add(new ColumnSeries
                     {
-                        Title = "مرخصی",
+                        Title = "Leave",
                         Values = new ChartValues<double> { leaveCount },
                         Fill = Brushes.LightBlue
                     });
                     
                     seriesCollection.Add(new ColumnSeries
                     {
-                        Title = "بیمار",
+                        Title = "Sick",
                         Values = new ChartValues<double> { sickCount },
                         Fill = Brushes.Orange
                     });
                     
                     seriesCollection.Add(new ColumnSeries
                     {
-                        Title = "غایب",
+                        Title = "Absent",
                         Values = new ChartValues<double> { absentCount },
                         Fill = Brushes.Red
                     });
@@ -386,7 +386,7 @@ namespace DisplayApp.Services
                 
                 if (!Directory.Exists(reportsDirectory))
                 {
-                    return new[] { "امروز" };
+                    return new[] { "Today" };
                 }
 
                 // Get all report files and sort by date
@@ -398,7 +398,7 @@ namespace DisplayApp.Services
 
                 if (reportFiles.Count == 0)
                 {
-                    return new[] { "امروز" };
+                    return new[] { "Today" };
                 }
 
                 var labels = new List<string>();
@@ -411,11 +411,11 @@ namespace DisplayApp.Services
                     
                     if (i == reportFiles.Count - 1)
                     {
-                        labels.Add("امروز");
+                        labels.Add("Today");
                     }
                     else
                     {
-                        labels.Add($"{reportFiles.Count - i} روز قبل");
+                        labels.Add($"{reportFiles.Count - i} days ago");
                     }
                 }
 
@@ -424,13 +424,13 @@ namespace DisplayApp.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating week labels");
-                return new[] { "امروز" };
+                return new[] { "Today" };
             }
         }
 
         public string[] GetAbsenceLabels()
         {
-            return new[] { "مرخصی", "بیمار", "غایب" };
+            return new[] { "Leave", "Sick", "Absent" };
         }
 
     }

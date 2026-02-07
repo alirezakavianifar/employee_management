@@ -2,9 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:ManagementApp.Controls"
-        Title="مدیریت وظیفه" 
+        Title="Task Management" 
         Height="600" Width="600"
-        FlowDirection="RightToLeft"
+        FlowDirection="LeftToRight"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
     
@@ -28,32 +28,32 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Label Grid.Row="0" Grid.Column="0" Content="عنوان:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
+        <Label Grid.Row="0" Grid.Column="0" Content="Title:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
         <TextBox Grid.Row="0" Grid.Column="1" x:Name="TitleTextBox" FontFamily="Tahoma" FontSize="12" Margin="10,5,0,5"/>
 
-        <Label Grid.Row="1" Grid.Column="0" Content="توضیحات:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Top"/>
+        <Label Grid.Row="1" Grid.Column="0" Content="Description:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Top"/>
         <TextBox Grid.Row="1" Grid.Column="1" x:Name="DescriptionTextBox" Height="80" FontFamily="Tahoma" FontSize="12" 
                  TextWrapping="Wrap" AcceptsReturn="True" Margin="10,5,0,5"/>
 
-        <Label Grid.Row="2" Grid.Column="0" Content="اولویت:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Priority:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
         <ComboBox Grid.Row="2" Grid.Column="1" x:Name="PriorityComboBox" FontFamily="Tahoma" FontSize="12" Margin="10,5,0,5">
-            <ComboBoxItem Content="کم"/>
-            <ComboBoxItem Content="متوسط" IsSelected="True"/>
-            <ComboBoxItem Content="زیاد"/>
-            <ComboBoxItem Content="فوری"/>
+            <ComboBoxItem Content="Low"/>
+            <ComboBoxItem Content="Medium" IsSelected="True"/>
+            <ComboBoxItem Content="High"/>
+            <ComboBoxItem Content="Urgent"/>
         </ComboBox>
 
-        <Label Grid.Row="3" Grid.Column="0" Content="ساعت تخمینی:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
+        <Label Grid.Row="3" Grid.Column="0" Content="Estimated hours:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
         <TextBox Grid.Row="3" Grid.Column="1" x:Name="EstimatedHoursTextBox" Text="8.0" FontFamily="Tahoma" FontSize="12" Margin="10,5,0,5"
                  PreviewTextInput="EstimatedHoursTextBox_PreviewTextInput"/>
 
-        <Label Grid.Row="4" Grid.Column="0" Content="تاریخ هدف:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
+        <Label Grid.Row="4" Grid.Column="0" Content="Target date:" FontFamily="Tahoma" FontSize="12" Margin="0,5" VerticalAlignment="Center"/>
         <controls:GeorgianDatePicker Grid.Row="4" Grid.Column="1" x:Name="TargetDatePicker" Margin="10,5,0,5"/>
 
         <StackPanel Grid.Row="11" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,20,0,0">
-            <Button Content="تأیید" x:Name="OkButton" Click="OkButton_Click" 
+            <Button Content="OK" x:Name="OkButton" Click="OkButton_Click" 
                    Width="80" Height="30" Margin="0,0,10,0" IsDefault="True"/>
-            <Button Content="انصراف" x:Name="CancelButton" Click="CancelButton_Click" 
+            <Button Content="Cancel" x:Name="CancelButton" Click="CancelButton_Click" 
                    Width="80" Height="30" IsCancel="True"/>
         </StackPanel>
     </Grid>

@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Application Title -->
+    <string key="app_title">Employee Shift Management System</string>
+    
+    <!-- Shift Names -->
+    <string key="shift_morning">Morning</string>
+    <string key="shift_afternoon">Afternoon</string>
+    <string key="shift_night">Night</string>
+    
+    <!-- Tab Headers -->
+    <string key="tab_employee_management">Employee Management</string>
+    <string key="tab_shift_management">Shift Management</string>
+    <string key="tab_task_management">Task Management</string>
+    <string key="tab_reports">Reports</string>
+    <string key="tab_settings">Settings</string>
+    <string key="tab_daily_preview">Daily Preview</string>
+    <string key="tab_labels">Labels</string>
+    <string key="tab_status_cards">Status Cards</string>
+    
+    <!-- Group Headers -->
+    <string key="header_employee_list">Employee List</string>
+    <string key="header_employee_details">Employee Details</string>
+    <string key="header_absence_management">Absence Management</string>
+    <string key="header_employees">Employees</string>
+    <string key="header_shift_table">Shift Table</string>
+    <string key="header_absences">Absence Management</string>
+    <string key="header_task_list">Task List</string>
+    <string key="header_task_details">Task Details</string>
+    <string key="header_report_options">Report Options</string>
+    <string key="header_report_preview">Report Preview</string>
+    <string key="header_system_settings">System Settings</string>
+    <string key="header_system_info">System Information</string>
+    <string key="header_absence_stats">Absence Statistics</string>
+    <string key="header_shift_group_stats">Shift Group Statistics</string>
+    <string key="header_status_card_list">Status Card List</string>
+    <string key="header_shift_group_list">Shift Group List</string>
+    <string key="header_role_list">Role List</string>
+    <string key="header_auto_rotation_settings">Auto Rotation Settings</string>
+    <string key="header_employee_assignment">Employee Assignment</string>
+    <string key="header_task_progress">Task Progress</string>
+    <string key="header_daily_progress">Daily Progress</string>
+    <string key="header_weekly_progress">Weekly Progress</string>
+    
+    <!-- Labels -->
+    <string key="label_name">Name:</string>
+    <string key="label_last_name">Last Name:</string>
+    <string key="label_position">Position:</string>
+    <string key="label_manager_role">Manager Role:</string>
+    <string key="label_photo">Photo:</string>
+    <string key="label_absence_type">Absence Type:</string>
+    <string key="label_absence_date">Absence Date:</string>
+    <string key="label_notes">Notes:</string>
+    <string key="label_absence_list">Absence List:</string>
+    <string key="label_absent_employees_today">Absent Employees Today:</string>
+    <string key="label_search">Search...</string>
+    <string key="label_shift_group">Shift Group:</string>
+    <string key="label_shift_capacity">Shift Capacity:</string>
+    <string key="label_rotation_type">Rotation Type:</string>
+    <string key="label_day_of_week">Day of Week:</string>
+    <string key="label_group_name">Group Name:</string>
+    <string key="label_description">Description:</string>
+    <string key="label_group_color">Group Color:</string>
+    <!-- Label for shift supervisors field in shift group dialogs. 
+         To change "Supervisors" to "Foremen", edit this value -->
+    <string key="label_shift_supervisors">Shift Supervisors (required):</string>
+    <!-- Label for morning shift supervisor field. 
+         To change "Supervisor" to "Foreman", edit this value -->
+    <string key="label_morning_supervisor">Morning Shift Supervisor (required):</string>
+    <!-- Label for afternoon shift supervisor field. 
+         To change "Supervisor" to "Foreman", edit this value -->
+    <string key="label_afternoon_supervisor">Afternoon Shift Supervisor (required):</string>
+    <!-- Label for night shift supervisor field. 
+         To change "Supervisor" to "Foreman", edit this value -->
+    <string key="label_night_supervisor">Night Shift Supervisor (required):</string>
+    <string key="label_card_id">Card ID:</string>
+    <string key="label_card_name">Card Name:</string>
+    <string key="label_background_color">Background Color:</string>
+    <string key="label_text_color">Text Color:</string>
+    <string key="label_preview">Preview:</string>
+    <string key="label_role_id">Role ID:</string>
+    <string key="label_role_name">Role Name:</string>
+    <string key="label_color">Color:</string>
+    <string key="label_title">Title:</string>
+    <string key="label_priority">Priority:</string>
+    <string key="label_estimated_hours">Estimated Hours:</string>
+    <string key="label_target_date">Target Date:</string>
+    
+    <!-- Buttons -->
+    <string key="btn_add_employee">Add Employee</string>
+    <string key="btn_edit_employee">Edit Employee</string>
+    <string key="btn_delete_employee">Delete Employee</string>
+    <string key="btn_manage_roles">Manage Roles</string>
+    <string key="btn_manage_shift_groups">Manage Shift Groups</string>
+    <string key="btn_manage_status_cards">Manage Status Cards</string>
+    <string key="btn_import_csv">Import from CSV</string>
+    <string key="btn_select_photo">Select Photo</string>
+    <string key="btn_save_changes">Save Changes</string>
+    <string key="btn_mark_absent">Mark Absent</string>
+    <string key="btn_remove_absence">Remove Absence</string>
+    <string key="btn_clear_morning_shift">Clear Morning Shift</string>
+    <string key="btn_clear_afternoon_shift">Clear Afternoon Shift</string>
+    <string key="btn_clear_night_shift">Clear Night Shift</string>
+    <string key="btn_clear_shift">Clear shift</string>
+    <string key="btn_swap_shifts">Swap Shifts</string>
+    <string key="btn_add_task">Add Task</string>
+    <string key="btn_edit_task">Edit Task</string>
+    <string key="btn_delete_task">Delete Task</string>
+    <string key="btn_add_new_card">Add New Card</string>
+    <string key="btn_edit_card">Edit Card</string>
+    <string key="btn_delete_card">Delete Card</string>
+    <string key="btn_add_new_group">Add New Group</string>
+    <string key="btn_edit_group">Edit Group</string>
+    <string key="btn_delete_group">Delete Group</string>
+    <string key="btn_add_new_role">Add New Role</string>
+    <string key="btn_edit_role">Edit Role</string>
+    <string key="btn_delete_role">Delete Role</string>
+    <string key="btn_ok">OK</string>
+    <string key="btn_cancel">Cancel</string>
+    <string key="btn_close">Close</string>
+    <string key="btn_refresh">Refresh</string>
+    
+    <!-- Absence Types -->
+    <string key="absence_leave">Leave</string>
+    <string key="absence_sick">Sick</string>
+    <string key="absence_absent">Absent</string>
+    
+    <!-- Expander Headers (with count placeholder) -->
+    <string key="expander_absent_employees">Absent Employees ({0})</string>
+    <string key="expander_sick_employees">Sick Employees ({0})</string>
+    <string key="expander_leave_employees">Leave Employees ({0})</string>
+    
+    <!-- Checkbox Labels -->
+    <string key="checkbox_is_manager">This employee is a manager</string>
+    <string key="checkbox_auto_rotate">Auto rotate shifts</string>
+    <string key="radio_weekly_rotation">Weekly rotation</string>
+    
+    <!-- Task Filter Options -->
+    <string key="filter_all_tasks">All Tasks</string>
+    <string key="filter_pending">Pending</string>
+    <string key="filter_in_progress">In Progress</string>
+    <string key="filter_completed">Completed</string>
+    
+    <!-- Priority Levels -->
+    <string key="priority_low">Low</string>
+    <string key="priority_medium">Medium</string>
+    <string key="priority_high">High</string>
+    <string key="priority_urgent">Urgent</string>
+    
+    <!-- Color Names -->
+    <string key="color_orange">Orange</string>
+    <string key="color_red">Red</string>
+    <string key="color_blue">Blue</string>
+    <string key="color_green">Green</string>
+    <string key="color_purple">Purple</string>
+    <string key="color_gray">Gray</string>
+    <string key="color_black">Black</string>
+    <string key="color_yellow">Yellow</string>
+    <string key="color_white">White</string>
+    
+    <!-- DataGrid Column Headers -->
+    <string key="column_date">Date</string>
+    <string key="column_completed_boxes">Completed Boxes</string>
+    <string key="column_target">Target</string>
+    <string key="column_percentage">Percentage</string>
+    <string key="column_status">Status</string>
+    
+    <!-- Dialog Titles -->
+    <string key="dialog_add_employee">Add Employee</string>
+    <string key="dialog_edit_employee">Edit Employee</string>
+    <string key="dialog_manage_roles">Manage Roles</string>
+    <string key="dialog_manage_groups">Manage Shift Groups</string>
+    <string key="dialog_manage_status_cards">Manage Status Cards</string>
+    <string key="dialog_add_task">Add Task</string>
+    <string key="dialog_edit_task">Edit Task</string>
+    
+    <!-- DisplayApp Specific -->
+    <!-- Used in DisplayApp to show when data was last updated. {0} is replaced with time -->
+    <string key="display_last_update">Last update: {0}</string>
+    <!-- Used in DisplayApp to show when next update will occur. {0} is replaced with time -->
+    <string key="display_next_update">Next update: {0}</string>
+    <!-- Formula description shown in performance chart section -->
+    <string key="display_chart_formula">Formula: Base performance (70) + Employees (x2) + Shift (x3) - Absence (x2) + Daily changes (±12)</string>
+    <!-- Displayed above shift groups showing supervisor name. {0} is replaced with supervisor's name. 
+         To change "Supervisor" to "Foreman", edit this value to "Foreman: {0}" -->
+    <string key="display_supervisor">Supervisor: {0}</string>
+    <!-- Displayed when no supervisor is assigned to a group. 
+         To change "No Supervisor" to "No Foreman", edit this value -->
+    <string key="display_no_supervisor">No Supervisor</string>
+    <!-- Alternative foreman display text (currently not used in code, but available for future use) -->
+    <string key="display_foreman">Foreman: {0}</string>
+    
+    <!-- Messages -->
+    <string key="msg_confirm_delete">Are you sure?</string>
+    <string key="msg_confirm_delete_employee">Are you sure you want to delete employee {0}?</string>
+    <string key="msg_save_success">Information saved successfully</string>
+    <string key="msg_error">Error</string>
+    <string key="msg_warning">Warning</string>
+    <string key="msg_info">Information</string>
+    <string key="msg_select_employee">Please select an employee</string>
+    <string key="msg_select_task">Please select a task</string>
+    <string key="msg_fill_required_fields">Please fill in the required fields</string>
+    <string key="msg_data_loaded">Data loaded</string>
+    <string key="msg_error_loading_data">Error loading data</string>
+    <string key="msg_employee_added">Employee {0} {1} added</string>
+    <string key="msg_employee_updated">Employee {0} {1} updated</string>
+    <string key="msg_employee_deleted">Employee {0} deleted</string>
+    <string key="msg_role_mgmt_completed">Role management completed</string>
+    <string key="msg_shift_group_mgmt_completed">Shift group management completed</string>
+    <string key="msg_status_card_mgmt_completed">Status card management completed</string>
+    <string key="msg_select_csv">Select CSV File</string>
+    <string key="msg_import_result">{0} employees imported, {1} skipped</string>
+    <string key="msg_controller_error">Controller error</string>
+    <string key="header_confirm_delete">Confirm Delete</string>
+    <string key="err_group_id_empty">Group ID cannot be empty</string>
+    <string key="err_group_name_empty">Group name cannot be empty</string>
+    <string key="err_morning_capacity_min">Morning shift capacity must be at least 1</string>
+    <string key="err_afternoon_capacity_min">Afternoon shift capacity must be at least 1</string>
+    <string key="err_night_capacity_min">Night shift capacity must be at least 1</string>
+    <string key="err_default_id_reserved">The ID 'default' is reserved for the default group</string>
+    <string key="suggest_capacity_reason">Suggestion based on {0} employees: 40% morning, 35% afternoon, 25% night</string>
+    <string key="err_calculate_suggestion">Error calculating suggestion</string>
+    <string key="err_access_controller">Error accessing controller.</string>
+    <string key="err_load_roles">Error loading roles: {0}</string>
+    <string key="err_load_shift_groups">Error loading shift groups: {0}</string>
+    <string key="err_add_sticker">Error adding sticker: {0}</string>
+    <string key="err_select_badge">Error selecting badge: {0}</string>
+    <string key="msg_name_detected">Name detected from folder: {0} {1}\nDo you want to update the name?</string>
+    <string key="header_name_detected">Name detected from folder</string>
+    <string key="msg_personnel_id_detected">Personnel ID detected from filename: {0}\nDo you want to update the personnel ID?</string>
+    <string key="header_personnel_id_detected">Personnel ID detected</string>
+    <string key="err_select_photo">Error selecting photo: {0}</string>
+    <string key="err_load_photo_preview">Error loading photo preview: {0}</string>
+    <string key="err_name_required">Please enter first and last name or select a photo with filename format FirstName_LastName_PersonnelId.ext</string>
+    <string key="msg_select_role">Please select a role</string>
+    <string key="msg_select_shift_group">Please select a shift group</string>
+    <string key="search_groups">Search groups...</string>
+    <string key="unspecified_name">Unspecified name</string>
+    <string key="no_description">No description</string>
+    <string key="unknown_group">Unknown group</string>
+    <string key="error_displaying_group">Error displaying group</string>
+    <string key="shift_capacities_format">Morning: {0} | Afternoon: {1} | Night: {2}</string>
+    <string key="msg_group_added">Shift group '{0}' was added successfully.</string>
+    <string key="err_add_group">Error adding shift group: {0}</string>
+    <string key="err_edit_group">Error editing shift group: {0}</string>
+    <string key="err_delete_group">Error deleting shift group: {0}</string>
+    <string key="msg_group_updated">Shift group '{0}' was updated successfully.</string>
+    <string key="msg_group_deleted">Shift group '{0}' was deleted successfully.</string>
+    <string key="err_cannot_delete_default_group">Cannot delete the default group</string>
+    <string key="msg_confirm_delete_group">Are you sure you want to delete group '{0}'?\n\nThis action cannot be undone.</string>
+    <string key="new_group">New group</string>
+    
+    <!-- Status Card Defaults -->
+    <string key="status_out_of_order">Out of Order</string>
+    <string key="status_empty">Empty</string>
+    <string key="status_available">Available</string>
+
+    <!-- Label Panel -->
+    <string key="header_employee_labels">Employee Labels</string>
+    <string key="header_create_new_label">Create New Label</string>
+    <string key="btn_create_label">Create Label</string>
+    <string key="header_label_archive">Label Archive</string>
+    <string key="label_archive_empty">No labels yet. Create one above!</string>
+    <string key="menu_delete_from_archive">Delete from Archive</string>
+    <string key="tooltip_drag_to_employee">Drag to employee</string>
+
+    <!-- Shift Slot -->
+    <string key="cell_empty">Empty</string>
+    <string key="menu_remove">Remove</string>
+    <string key="status_card_fallback">Status card</string>
+
+    <!-- Shift Group -->
+    <!-- Tooltip/hint text shown when hovering over supervisor assignment area in shift management. 
+         To change "supervisor" to "foreman", edit this value -->
+    <string key="hint_drag_drop_supervisor">Drag and drop to assign supervisor</string>
+    <!-- Displayed in shift group management when no supervisor is assigned. 
+         To change "Supervisor" to "Foreman", edit this value -->
+    <string key="supervisor_not_assigned">Supervisor: Not assigned</string>
+
+    <!-- DisplayApp -->
+    <string key="display_app_title">Employee Management System</string>
+    <string key="display_window_title">Display App</string>
+    <string key="btn_exit_fullscreen">Exit fullscreen</string>
+    <string key="btn_close">Close</string>
+    <string key="display_last_update_label">Last Update: --:--:--</string>
+    <string key="display_next_update_label">Next update: 30</string>
+    <string key="header_work_groups">Work Groups</string>
+    <string key="header_performance_chart">Performance Chart</string>
+    <string key="header_ai_recommendation">AI recommendation</string>
+    <string key="display_loading">Loading...</string>
+    <string key="display_chart_formula_short">Formula: Base (70) + Employees (x2) + Shift (x3) - Absence (x2) + Daily changes (±12)</string>
+    <string key="category_on_leave">On Leave</string>
+    <string key="category_sick">Sick</string>
+    <string key="category_absent">Absent</string>
+    <string key="tooltip_capacity_per_slot">Capacity is 1 per slot in this mode</string>
+</resources>

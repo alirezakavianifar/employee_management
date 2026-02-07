@@ -133,6 +133,19 @@ namespace Shared.Utils
         }
 
         /// <summary>
+        /// Converts a Shamsi date string to Georgian and formats for display.
+        /// </summary>
+        /// <param name="shamsiDate">Shamsi date in yyyy/MM/dd or yyyy-MM-dd format</param>
+        /// <returns>Formatted Georgian date for display</returns>
+        public static string FormatShamsiAsGeorgianForDisplay(string shamsiDate)
+        {
+            if (string.IsNullOrEmpty(shamsiDate))
+                return FormatForDisplay(GetCurrentGeorgianDate());
+            var dt = ShamsiDateHelper.FromShamsiString(shamsiDate);
+            return FormatForDisplay(ToGeorgianString(dt));
+        }
+
+        /// <summary>
         /// Gets Georgian month names
         /// </summary>
         /// <returns>Array of month names</returns>

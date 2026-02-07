@@ -121,3 +121,5 @@ E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\refin
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.pdb
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.genruntimeconfig.cache
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
+E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
+E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_MarkupCompile.lref

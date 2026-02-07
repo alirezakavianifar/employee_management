@@ -3,8 +3,8 @@ Employee Management System - Source Code Package Summary
 
 Package Size: ~50 MB (Complete source code with all dependencies)
 Created: January 21, 2025
-Updated: January 03, 2026 (Latest sync)
-Version: v2.3.0 - Daily Task Progress Tracking
+Updated: February 05, 2026 (Latest sync)
+Version: v2.4.0 - Status Cards and Employee Labels
 
 CONTENTS:
 ---------
@@ -18,10 +18,10 @@ SOURCE CODE INCLUDED:
 --------------------
 1. ManagementApp/          - WPF application with Georgian calendar support
    - Controllers/          - Business logic and data management
-   - Views/               - User interface (XAML and code-behind)
-   - Controls/            - Custom controls (GeorgianDatePicker, NavigationMenu)
-   - Services/            - Application services (PDF, BadgeGenerator, etc.)
-   - Converters/          - Value converters (EmployeePhotoConverter)
+   - Views/               - User interface (XAML and code-behind; StatusCardDialog, StatusCardEditDialog, etc.)
+   - Controls/            - Custom controls (GeorgianDatePicker, NavigationMenu, LabelCreationPanel, ShiftGroupControl, ShiftSlotControl)
+   - Services/            - Application services (PDF, BadgeGenerator, ShiftGroup, etc.)
+   - Converters/          - Value converters (EmployeePhotoConverter, ResourceExtension, StringToVisibilityConverter)
    - Resources/           - XAML resources and styling
    - Config/              - Configuration files
 
@@ -32,9 +32,9 @@ SOURCE CODE INCLUDED:
    - MainWindow.xaml      - Main display interface
 
 3. Shared/                 - Shared components
-   - Models/              - Data models (Employee with extended properties, Task, Absence, Shift, ShiftGroup, DailyTaskProgress)
-   - Services/            - Shared services (JsonHandler, Logging, SyncManager)
-   - Utils/               - Utility classes (GeorgianDateHelper, AppConfigHelper, etc.)
+   - Models/              - Data models (Employee, EmployeeLabel, Task, Absence, Shift, ShiftGroup, StatusCard, DailyTaskProgress)
+   - Services/            - Shared services (JsonHandler, LabelService, StatusCardService, Logging, SyncManager)
+   - Utils/               - Utility classes (GeorgianDateHelper, AppConfigHelper, ResourceManager, etc.)
 
 KEY FEATURES IN SOURCE:
 -----------------------
@@ -55,6 +55,11 @@ KEY FEATURES IN SOURCE:
 ✅ Category-based absence display (Leave, Sick, Absent)
 ✅ Daily task progress tracking (v2.3.0)
 ✅ Progress status management with weekly and daily tracking
+✅ Status card management (v2.4.0) - StatusCard model and StatusCardService
+✅ Employee label system - EmployeeLabel model and LabelService
+✅ LabelCreationPanel, ShiftGroupControl, ShiftSlotControl - New shift management controls
+✅ StatusCardDialog and StatusCardEditDialog - Status card configuration dialogs
+✅ ResourceManager utility for resource loading
 
 DEVELOPMENT REQUIREMENTS:
 -------------------------
@@ -73,8 +78,17 @@ Command Line:
 - dotnet run --project ManagementApp/ManagementApp.csproj
 - dotnet run --project DisplayApp/DisplayApp.csproj
 
-RECENT CHANGES (v2.3.0):
+RECENT CHANGES (v2.4.0):
 ------------------------
+✅ Status Card Management - StatusCard model and StatusCardService for status card configuration
+✅ Employee Labels - EmployeeLabel model and LabelService for custom employee labels
+✅ Shift Management Controls - LabelCreationPanel, ShiftGroupControl, ShiftSlotControl for shift configuration
+✅ StatusCardDialog and StatusCardEditDialog - Dialogs for managing status cards
+✅ ResourceManager - Utility class for loading resources from resources.xml
+✅ ResourceExtension and StringToVisibilityConverter - New XAML converters
+
+PREVIOUS CHANGES (v2.3.0):
+--------------------------
 ✅ Daily Task Progress Tracking - New DailyTaskProgress model for tracking daily task completion
 ✅ Progress Status Management - ProgressStatus and WeeklyProgressStatus classes for progress analysis
 ✅ DailyTaskProgressManager - Manager class for handling progress records with JSON serialization

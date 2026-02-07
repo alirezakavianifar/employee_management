@@ -43,8 +43,16 @@ namespace ManagementApp.Views
         private Employee? _selectedEmployee;
         private Shared.Models.Task? _selectedTask;
         
+        // Label service for employee labels
+        private LabelService? _labelService;
+        /// <summary>Exposed for controls (e.g. ShiftGroupControl) to assign labels to employees.</summary>
+        public LabelService? LabelService => _labelService;
+        
         // Converter instance as property for XAML binding
         public ManagementApp.Converters.EmployeePhotoConverter EmployeePhotoConverter { get; } = new ManagementApp.Converters.EmployeePhotoConverter();
+        
+        // Collection for Table Layout binding
+        public System.Collections.ObjectModel.ObservableCollection<ShiftGroup> ShiftGroups { get; } = new System.Collections.ObjectModel.ObservableCollection<ShiftGroup>();
 
         public MainWindow()
         {
@@ -59,8 +67,8 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "MainWindow: Failed during InitializeComponent");
-                MessageBox.Show($"خطا در بارگذاری رابط کاربری:\n\n{ex.Message}\n\nجزئیات:\n{ex}", 
-                    "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} loading UI:\n\n{ex.Message}\n\nDetails:\n{ex}", 
+                    ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 throw; // Re-throw to let App.xaml.cs handle it
             }
             
@@ -92,6 +100,7 @@ namespace ManagementApp.Views
                 _controller.ShiftGroupsUpdated += OnShiftGroupsUpdated;
                 _controller.AbsencesUpdated += OnDailyPreviewDataUpdated;
                 _controller.ShiftGroupsUpdated += OnDailyPreviewDataUpdated;
+                _controller.StatusCardsUpdated += OnStatusCardsUpdated;
                 _logger.LogInformation("MainWindow: Controller events subscribed");
                 
                 // Initialize settings display
@@ -119,8 +128,8 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "MainWindow: Error during initialization");
-                MessageBox.Show($"خطا در راه‌اندازی پنجره اصلی:\n\n{ex.Message}\n\nجزئیات:\n{ex}", 
-                    "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} starting main window:\n\n{ex.Message}\n\nDetails:\n{ex}", 
+                    ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 throw; // Re-throw to let App.xaml.cs handle it
             }
         }
@@ -162,7 +171,7 @@ namespace ManagementApp.Views
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
                 {
-                    if (EmployeeSearchBox.Text == "جستجو...")
+                    if (EmployeeSearchBox.Text == "Search...")
                     {
                         EmployeeSearchBox.Text = "";
                         EmployeeSearchBox.Foreground = Brushes.Black;
@@ -173,14 +182,14 @@ namespace ManagementApp.Views
                 {
                     if (string.IsNullOrEmpty(EmployeeSearchBox.Text))
                     {
-                        EmployeeSearchBox.Text = "جستجو...";
+                        EmployeeSearchBox.Text = "Search...";
                         EmployeeSearchBox.Foreground = Brushes.Gray;
                     }
                 };
 
                 EmployeeSearchBox.TextChanged += (s, e) =>
                 {
-                    if (EmployeeSearchBox.Text != "جستجو...")
+                    if (EmployeeSearchBox.Text != "Search...")
                     {
                         FilterEmployees(EmployeeSearchBox.Text);
                     }
@@ -189,7 +198,7 @@ namespace ManagementApp.Views
                 // Setup shift employee search
                 ShiftEmployeeSearchBox.GotFocus += (s, e) =>
                 {
-                    if (ShiftEmployeeSearchBox.Text == "جستجو...")
+                    if (ShiftEmployeeSearchBox.Text == "Search...")
                     {
                         ShiftEmployeeSearchBox.Text = "";
                         ShiftEmployeeSearchBox.Foreground = Brushes.Black;
@@ -200,14 +209,14 @@ namespace ManagementApp.Views
                 {
                     if (string.IsNullOrEmpty(ShiftEmployeeSearchBox.Text))
                     {
-                        ShiftEmployeeSearchBox.Text = "جستجو...";
+                        ShiftEmployeeSearchBox.Text = "Search...";
                         ShiftEmployeeSearchBox.Foreground = Brushes.Gray;
                     }
                 };
 
                 ShiftEmployeeSearchBox.TextChanged += (s, e) =>
                 {
-                    if (ShiftEmployeeSearchBox.Text != "جستجو...")
+                    if (ShiftEmployeeSearchBox.Text != "Search...")
                     {
                         FilterShiftEmployees(ShiftEmployeeSearchBox.Text);
                     }
@@ -219,6 +228,9 @@ namespace ManagementApp.Views
 
                 // Initialize rotation configuration
                 InitializeRotationConfiguration();
+
+                // Initialize label service and panel
+                InitializeLabelPanel();
 
                 _logger.LogInformation("UI initialized successfully");
             }
@@ -233,12 +245,12 @@ namespace ManagementApp.Views
             try
             {
                 // Add common management positions
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر کل" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر منابع انسانی" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "سرپرست شیفت" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "کارشناس منابع انسانی" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "مدیر عملیات" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "معاون مدیر" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "CEO" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "HR Manager" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Shift Supervisor" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "HR Specialist" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Operations Manager" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Deputy Manager" });
                 
                 // Add current employees
                 var employees = _controller.GetAllEmployees();
@@ -328,22 +340,59 @@ namespace ManagementApp.Views
             }
         }
 
+        private void InitializeLabelPanel()
+        {
+            try
+            {
+                // Create label service with the same data directory as the controller
+                var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data");
+                _labelService = new LabelService(dataDir);
+                _labelService.LoadLabelArchive();
+                
+                // Initialize the label panel
+                LabelPanel.Initialize(_labelService);
+                
+                // Subscribe to label events
+                LabelPanel.LabelCreated += (s, label) =>
+                {
+                    _logger.LogInformation("Label created: {Text}", label.Text);
+                };
+                
+                LabelPanel.LabelDeleted += (s, labelId) =>
+                {
+                    _logger.LogInformation("Label deleted from archive: {LabelId}", labelId);
+                };
+                
+                LabelPanel.LabelDragStarted += (s, label) =>
+                {
+                    _logger.LogDebug("Label drag started: {Text}", label.Text);
+                };
+                
+                _logger.LogInformation("Label panel initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error initializing label panel");
+            }
+        }
+
         private void LoadData()
         {
             try
             {
                 LoadEmployees();
                 LoadShifts();
+                LoadStatusCards();
                 LoadAbsences();
                 LoadTasks();
-                UpdateStatus("داده‌ها بارگذاری شدند");
+                UpdateStatus(ResourceManager.GetString("msg_data_loaded", "Data loaded"));
                 
                 _logger.LogInformation("Data loaded successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading data");
-                UpdateStatus("خطا در بارگذاری داده‌ها");
+                UpdateStatus(ResourceManager.GetString("msg_error_loading_data", "Error loading data"));
             }
         }
 
@@ -433,7 +482,7 @@ namespace ManagementApp.Views
         {
             try
             {
-                if (string.IsNullOrEmpty(query) || query == "جستجو...")
+                if (string.IsNullOrEmpty(query) || query == "Search...")
                 {
                     LoadEmployees();
                     return;
@@ -454,7 +503,7 @@ namespace ManagementApp.Views
             {
                 var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
                 
-                if (string.IsNullOrEmpty(query) || query == "جستجو...")
+                if (string.IsNullOrEmpty(query) || query == "Search...")
                 {
                     // Reload all available employees for shift assignment
                     var employees = _controller.GetAllEmployees();
@@ -571,18 +620,19 @@ namespace ManagementApp.Views
                 if (dialog.ShowDialog() == true)
                 {
                     var success = _controller.AddEmployee(dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
-                                                         dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
+                                                         dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId,
+                                                         dialog.Phone, dialog.ShowPhone);
                     if (success)
                     {
                         LoadEmployees();
-                        UpdateStatus($"کارمند {dialog.FirstName} {dialog.LastName} اضافه شد");
+                        UpdateStatus(string.Format(ResourceManager.GetString("msg_employee_added", "Employee {0} {1} added"), dialog.FirstName, dialog.LastName));
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding employee");
-                MessageBox.Show($"خطا در افزودن کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -592,7 +642,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(ResourceManager.GetString("msg_select_employee", "Please select an employee"), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -600,19 +650,20 @@ namespace ManagementApp.Views
                 if (dialog.ShowDialog() == true)
                 {
                     var success = _controller.UpdateEmployee(_selectedEmployee.EmployeeId, dialog.FirstName, dialog.LastName, dialog.RoleId, dialog.ShiftGroupId, dialog.PhotoPath, dialog.IsManager,
-                                                           dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId);
+                                                           dialog.ShieldColor, dialog.ShowShield, dialog.StickerPaths, dialog.MedalBadgePath, dialog.PersonnelId,
+                                                           dialog.Phone, dialog.ShowPhone);
                     if (success)
                     {
                         LoadEmployees();
                         LoadEmployeeDetails(_selectedEmployee);
-                        UpdateStatus($"کارمند {dialog.FirstName} {dialog.LastName} بروزرسانی شد");
+                        UpdateStatus(string.Format(ResourceManager.GetString("msg_employee_updated", "Employee {0} {1} updated"), dialog.FirstName, dialog.LastName));
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error editing employee");
-                MessageBox.Show($"خطا در ویرایش کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -623,12 +674,12 @@ namespace ManagementApp.Views
                 var dialog = new RoleDialog(_controller);
                 dialog.ShowDialog();
                 // Roles are automatically saved when modified in the dialog
-                UpdateStatus("مدیریت نقش‌ها تکمیل شد");
+                UpdateStatus(ResourceManager.GetString("msg_role_mgmt_completed", "Role management completed"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error managing roles");
-                MessageBox.Show($"خطا در مدیریت نقش‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -639,12 +690,28 @@ namespace ManagementApp.Views
                 var dialog = new ShiftGroupDialog(_controller);
                 dialog.ShowDialog();
                 // Shift groups are automatically saved when modified in the dialog
-                UpdateStatus("مدیریت گروه‌های شیفت تکمیل شد");
+                UpdateStatus(ResourceManager.GetString("msg_shift_group_mgmt_completed", "Shift group management completed"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error managing shift groups");
-                MessageBox.Show($"خطا در مدیریت گروه‌های شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ManageStatusCards_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new StatusCardDialog(_controller);
+                dialog.ShowDialog();
+                // Status cards are automatically saved when modified in the dialog
+                UpdateStatus(ResourceManager.GetString("msg_status_card_mgmt_completed", "Status card management completed"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error managing status cards");
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -657,15 +724,15 @@ namespace ManagementApp.Views
                 if (_selectedEmployee == null)
                 {
                     _logger.LogWarning("DeleteEmployee_Click: No employee selected");
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(ResourceManager.GetString("msg_select_employee", "Please select an employee"), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 _logger.LogInformation("DeleteEmployee_Click: Selected employee: {FullName} (ID: {EmployeeId})", 
                     _selectedEmployee.FullName, _selectedEmployee.EmployeeId);
 
-                var result = MessageBox.Show($"آیا از حذف کارمند {_selectedEmployee.FullName} اطمینان دارید؟", 
-                    "تأیید حذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var result = MessageBox.Show(string.Format(ResourceManager.GetString("msg_confirm_delete_employee", "Are you sure you want to delete employee {0}?"), _selectedEmployee.FullName), 
+                    ResourceManager.GetString("header_confirm_delete", "Confirm Delete"), MessageBoxButton.YesNo, MessageBoxImage.Question);
                 
                 if (result == MessageBoxResult.Yes)
                 {
@@ -674,7 +741,7 @@ namespace ManagementApp.Views
                     if (_controller == null)
                     {
                         _logger.LogError("DeleteEmployee_Click: Controller is null!");
-                        MessageBox.Show("خطا در کنترلر", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show(ResourceManager.GetString("msg_controller_error", "Controller error"), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
                     
@@ -691,7 +758,7 @@ namespace ManagementApp.Views
                         _selectedEmployee = null;
                         
                         LoadEmployees();
-                        UpdateStatus($"کارمند {employeeName} حذف شد");
+                        UpdateStatus(string.Format(ResourceManager.GetString("msg_employee_deleted", "Employee {0} deleted"), employeeName));
                     }
                     else
                     {
@@ -706,7 +773,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting employee in UI: {Message}", ex.Message);
-                MessageBox.Show($"خطا در حذف کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -717,20 +784,20 @@ namespace ManagementApp.Views
                 var openFileDialog = new OpenFileDialog
                 {
                     Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
-                    Title = "انتخاب فایل CSV"
+                    Title = ResourceManager.GetString("msg_select_csv", "Select CSV File")
                 };
 
                 if (openFileDialog.ShowDialog() == true)
                 {
                     var (imported, skipped) = _controller.ImportEmployeesFromCsv(openFileDialog.FileName);
                     LoadEmployees();
-                    UpdateStatus($"{imported} کارمند وارد شد، {skipped} کارمند نادیده گرفته شد");
+                    UpdateStatus(string.Format(ResourceManager.GetString("msg_import_result", "{0} employees imported, {1} skipped"), imported, skipped));
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error importing CSV");
-                MessageBox.Show($"خطا در وارد کردن CSV: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -740,14 +807,14 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 var openFileDialog = new OpenFileDialog
                 {
                     Filter = "Image files (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|All files (*.*)|*.*",
-                    Title = "انتخاب عکس کارمند"
+                    Title = "Select Employee Photo"
                 };
 
                 if (openFileDialog.ShowDialog() == true)
@@ -769,8 +836,8 @@ namespace ManagementApp.Views
                         else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
                         {
                             var result = MessageBox.Show(
-                                $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
-                                "تشخیص کد پرسنلی",
+                                $"Personnel ID detected from file name: {detectedPersonnelId}\nDo you want to update the employee's personnel ID?",
+                                "Personnel ID Detected",
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Question);
                             
@@ -787,8 +854,8 @@ namespace ManagementApp.Views
                         if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
                         {
                             var result = MessageBox.Show(
-                                $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
-                                "تشخیص نام از پوشه",
+                                $"Name detected from folder: {detectedFirstName} {detectedLastName}\nDo you want to update the employee name?",
+                                "Name Detected from Folder",
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Question);
                             
@@ -824,13 +891,13 @@ namespace ManagementApp.Views
                     
                     LoadEmployees();
                     LoadEmployeeDetails(_selectedEmployee);
-                    UpdateStatus("عکس کارمند بروزرسانی شد");
+                    UpdateStatus("Employee photo updated");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error selecting photo");
-                MessageBox.Show($"خطا در انتخاب عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error selecting photo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -840,14 +907,14 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 // Validate employee has photo
                 if (string.IsNullOrEmpty(_selectedEmployee.PhotoPath) || !_selectedEmployee.HasPhoto())
                 {
-                    MessageBox.Show("کارمند انتخاب شده عکس ندارد. لطفاً ابتدا عکس کارمند را انتخاب کنید.", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("The selected employee has no photo. Please select a photo for the employee first.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -856,8 +923,8 @@ namespace ManagementApp.Views
 
                 if (!string.IsNullOrEmpty(badgePath))
                 {
-                    MessageBox.Show($"کارت شناسایی با موفقیت تولید شد:\n{badgePath}", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
-                    UpdateStatus("کارت شناسایی تولید شد");
+                    MessageBox.Show($"ID card generated successfully:\n{badgePath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    UpdateStatus("ID card generated");
                     
                     // Optionally display the generated badge
                     try
@@ -880,13 +947,13 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    MessageBox.Show("خطا در تولید کارت شناسایی. لطفاً مطمئن شوید که قالب کارت شناسایی در مسیر صحیح قرار دارد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error generating ID card. Please ensure the ID card template is in the correct path.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating badge");
-                MessageBox.Show($"خطا در تولید کارت شناسایی: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error generating ID card: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -896,7 +963,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -907,13 +974,13 @@ namespace ManagementApp.Views
                 if (success)
                 {
                     LoadEmployees();
-                    UpdateStatus("تغییرات کارمند ذخیره شد");
+                    UpdateStatus("Employee changes saved");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving employee changes");
-                MessageBox.Show($"خطا در ذخیره تغییرات: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error saving changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -923,14 +990,14 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 var selectedType = (AbsenceTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
                 if (string.IsNullOrEmpty(selectedType))
                 {
-                    MessageBox.Show("لطفاً نوع غیبت را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an absence type", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -941,14 +1008,14 @@ namespace ManagementApp.Views
                     LoadEmployeeAbsences(_selectedEmployee);
                     LoadEmployees(); // Refresh to update shift availability
                     LoadAbsenceLists(); // Refresh categorized absence lists
-                    UpdateStatus($"کارمند {_selectedEmployee.FullName} به عنوان {selectedType} ثبت شد");
+                    UpdateStatus($"Employee {_selectedEmployee.FullName} marked as {selectedType}");
                     AbsenceNotesTextBox.Clear();
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error marking employee absent");
-                MessageBox.Show($"خطا در ثبت غیبت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error recording absence: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -958,7 +1025,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -968,13 +1035,13 @@ namespace ManagementApp.Views
                     LoadEmployeeAbsences(_selectedEmployee);
                     LoadEmployees(); // Refresh to update shift availability
                     LoadAbsenceLists(); // Refresh categorized absence lists
-                    UpdateStatus($"غیبت کارمند {_selectedEmployee.FullName} حذف شد");
+                    UpdateStatus($"Absence for {_selectedEmployee.FullName} removed");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error removing absence");
-                MessageBox.Show($"خطا در حذف غیبت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error removing absence: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -986,48 +1053,48 @@ namespace ManagementApp.Views
         {
             try
             {
-                // Preserve current selection if any
-                string? previouslySelectedGroupId = null;
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem currentItem && currentItem.Tag is string currentGroupId)
-                {
-                    previouslySelectedGroupId = currentGroupId;
-                }
-
-                var shiftGroups = _controller.GetAllShiftGroups();
-                ShiftGroupComboBox.Items.Clear();
+                var groups = _controller.GetAllShiftGroups().OrderBy(g => g.Name).ToList();
                 
-                foreach (var group in shiftGroups)
+                // Update ShiftGroups collection
+                if (ShiftGroups != null)
                 {
-                    var item = new ComboBoxItem
+                    ShiftGroups.Clear();
+                    foreach (var group in groups)
                     {
-                        Content = group.Name,
-                        Tag = group.GroupId,
-                        ToolTip = group.Description
-                    };
-                    ShiftGroupComboBox.Items.Add(item);
-                }
-                
-                // Reselect previous group if possible; otherwise select default
-                if (ShiftGroupComboBox.Items.Count > 0)
-                {
-                    ComboBoxItem? toSelect = null;
-                    if (!string.IsNullOrEmpty(previouslySelectedGroupId))
-                    {
-                        toSelect = ShiftGroupComboBox.Items.Cast<ComboBoxItem>()
-                            .FirstOrDefault(item => item.Tag?.ToString() == previouslySelectedGroupId);
+                        ShiftGroups.Add(group);
                     }
+                }
 
-                    if (toSelect == null)
+                // Update ShiftGroupComboBox
+                if (ShiftGroupComboBox != null)
+                {
+                    var selectedId = (ShiftGroupComboBox.SelectedItem as ComboBoxItem)?.Tag as string;
+                    ShiftGroupComboBox.Items.Clear();
+                    
+                    var allItem = new ComboBoxItem { Content = "All groups", Tag = "all" };
+                    ShiftGroupComboBox.Items.Add(allItem);
+                    
+                    foreach (var group in groups)
                     {
-                        toSelect = ShiftGroupComboBox.Items.Cast<ComboBoxItem>()
-                            .FirstOrDefault(item => item.Tag?.ToString() == "default")
-                            ?? (ComboBoxItem)ShiftGroupComboBox.Items[0];
+                        var item = new ComboBoxItem { Content = group.Name, Tag = group.GroupId };
+                        ShiftGroupComboBox.Items.Add(item);
+                        if (group.GroupId == selectedId)
+                        {
+                            ShiftGroupComboBox.SelectedItem = item;
+                        }
                     }
-
-                    ShiftGroupComboBox.SelectedItem = toSelect;
+                    
+                    if (ShiftGroupComboBox.SelectedItem == null && ShiftGroupComboBox.Items.Count > 0)
+                    {
+                        ShiftGroupComboBox.SelectedIndex = 0;
+                    }
                 }
                 
-                _logger.LogInformation("Loaded {Count} shift groups", shiftGroups.Count);
+                // Ensure ItemsControl is bound
+                if (ShiftGroupsItemsControl != null && ShiftGroupsItemsControl.ItemsSource == null && ShiftGroups != null)
+                {
+                    ShiftGroupsItemsControl.ItemsSource = ShiftGroups;
+                }
             }
             catch (Exception ex)
             {
@@ -1036,414 +1103,21 @@ namespace ManagementApp.Views
         }
 
 
-        private void ShiftGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            try
-            {
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    _logger.LogInformation("Shift group changed to: {GroupId}", groupId);
-                    LoadShiftSlots();
-                    UpdateShiftStatistics();
-                    
-                    // Load auto-rotation setting
-                    // Note: AutoRotateCheckBox not yet implemented in XAML
-                    // if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
-                    // {
-                    //     AutoRotateCheckBox.IsChecked = enabled;
-                    // }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error handling shift group selection change");
-            }
-        }
+
 
         private void LoadShifts()
         {
-            try
-            {
-                LoadShiftGroups();
-                LoadShiftSlots();
-                UpdateShiftStatistics();
-                
-                // Initialize auto-rotate checkbox state from settings
-                if (AutoRotateCheckBox != null)
-                {
-                    if (_controller.Settings.TryGetValue("auto_rotate_shifts", out var autoRotate) && autoRotate is bool enabled)
-                    {
-                        AutoRotateCheckBox.IsChecked = enabled;
-                    }
-                    else
-                    {
-                        AutoRotateCheckBox.IsChecked = false;
-                    }
-                }
-                
-                // Load categorized absence lists
-                LoadAbsenceLists();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading shifts");
-            }
+             LoadShiftGroups();
+             LoadAbsenceLists();
         }
 
-        private void LoadShiftSlots()
-        {
-            try
-            {
-                // Get the selected shift group
-                ShiftGroup? selectedGroup = null;
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    selectedGroup = _controller.GetShiftGroup(groupId);
-                }
-                
-                // Fallback to default group if no selection
-                if (selectedGroup == null)
-                {
-                    selectedGroup = _controller.GetShiftGroup("default");
-                }
-                
-                // Use shift group capacities or fallback to default ShiftManager
-                int morningCapacity = selectedGroup?.MorningCapacity ?? _controller.ShiftManager.Capacity;
-                int eveningCapacity = selectedGroup?.EveningCapacity ?? _controller.ShiftManager.Capacity;
-                
-                _logger.LogInformation("LoadShiftSlots: Selected group: {GroupName}, Morning: {MorningCapacity}, Evening: {EveningCapacity}", 
-                    selectedGroup?.Name ?? "Default", morningCapacity, eveningCapacity);
-                
-                // Clear existing slots
-                MorningShiftPanel.Children.Clear();
-                EveningShiftPanel.Children.Clear();
 
-                // Update capacity text box to show morning capacity (primary)
-                ShiftCapacityTextBox.Text = morningCapacity.ToString();
-                _logger.LogInformation("LoadShiftSlots: TextBox updated to {Capacity}", morningCapacity);
 
-                // Update supervisor displays
-                UpdateSupervisorDisplay("morning");
-                UpdateSupervisorDisplay("evening");
 
-                // Create morning shift slots in a grid layout
-                var morningGrid = CreateShiftGrid("morning", morningCapacity, selectedGroup);
-                MorningShiftPanel.Children.Add(morningGrid);
 
-                // Create evening shift slots in a grid layout
-                var eveningGrid = CreateShiftGrid("evening", eveningCapacity, selectedGroup);
-                EveningShiftPanel.Children.Add(eveningGrid);
-                
-                _logger.LogInformation("LoadShiftSlots: Grids created with capacities - Morning: {MorningCapacity}, Evening: {EveningCapacity}", 
-                    morningCapacity, eveningCapacity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading shift slots");
-            }
-        }
 
-        private Grid CreateShiftGrid(string shiftType, int capacity, ShiftGroup? shiftGroup = null)
-        {
-            var grid = new Grid();
-            
-            // Calculate optimal number of columns (aim for 3-4 columns)
-            int columns = Math.Max(2, (int)Math.Ceiling(Math.Sqrt(capacity)));
-            int rows = (int)Math.Ceiling((double)capacity / columns);
 
-            // Add column definitions
-            for (int col = 0; col < columns; col++)
-            {
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            }
 
-            // Add row definitions
-            for (int row = 0; row < rows; row++)
-            {
-                grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
-            }
-
-            // Add slots to the grid
-            for (int i = 0; i < capacity; i++)
-            {
-                var slot = CreateShiftSlot(shiftType, i);
-                int row = i / columns;
-                int col = i % columns;
-                
-                Grid.SetRow(slot, row);
-                Grid.SetColumn(slot, col);
-                
-                grid.Children.Add(slot);
-            }
-
-            return grid;
-        }
-
-        private void UpdateSupervisorDisplay(string shiftType)
-        {
-            try
-            {
-                // Get the supervisor content panel
-                StackPanel? supervisorContent = shiftType == "morning" 
-                    ? MorningSupervisorContent 
-                    : EveningSupervisorContent;
-
-                if (supervisorContent == null)
-                    return;
-
-                // Clear existing content
-                supervisorContent.Children.Clear();
-
-                // Get current group ID
-                string? groupId = null;
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
-                {
-                    groupId = selectedGroupId;
-                }
-
-                // Get current supervisor
-                var supervisor = _controller.GetTeamLeader(shiftType, groupId);
-
-                if (supervisor != null)
-                {
-                    // Display supervisor with photo and name
-                    var supervisorStackPanel = new StackPanel
-                    {
-                        Orientation = Orientation.Vertical,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center
-                    };
-
-                    // Supervisor photo
-                    var image = new Image
-                    {
-                        Width = 60,
-                        Height = 60,
-                        Source = supervisor.GetPhotoImageSource(60),
-                        Stretch = Stretch.UniformToFill,
-                        Margin = new Thickness(0, 0, 0, 5),
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    };
-
-                    // Supervisor name
-                    var nameTextBlock = new TextBlock
-                    {
-                        Text = supervisor.FullName,
-                        FontFamily = new FontFamily("Tahoma"),
-                        FontSize = 11,
-                        FontWeight = FontWeights.Bold,
-                        TextAlignment = TextAlignment.Center,
-                        Foreground = Brushes.DarkBlue,
-                        HorizontalAlignment = HorizontalAlignment.Center
-                    };
-
-                    supervisorStackPanel.Children.Add(image);
-                    supervisorStackPanel.Children.Add(nameTextBlock);
-                    supervisorContent.Children.Add(supervisorStackPanel);
-                }
-                else
-                {
-                    // Display placeholder
-                    var placeholderText = new TextBlock
-                    {
-                        Text = "هیچ سرپرستی انتخاب نشده\n(کارمند را اینجا بکشید)",
-                        FontFamily = new FontFamily("Tahoma"),
-                        FontSize = 10,
-                        TextAlignment = TextAlignment.Center,
-                        Foreground = Brushes.Gray,
-                        TextWrapping = TextWrapping.Wrap,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center
-                    };
-                    supervisorContent.Children.Add(placeholderText);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating supervisor display for {ShiftType}", shiftType);
-            }
-        }
-
-        private Border CreateShiftSlot(string shiftType, int slotIndex)
-        {
-            var border = new Border
-            {
-                Width = 120,
-                Height = 120,
-                BorderBrush = Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                Margin = new Thickness(2),
-                Background = Brushes.LightGray,
-                Cursor = Cursors.Hand,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            // Get employee from selected shift group
-            Employee? employee = null;
-            if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-            {
-                var selectedGroup = _controller.GetShiftGroup(groupId);
-                if (selectedGroup != null)
-                {
-                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
-                    employee = shift?.GetEmployeeAtSlot(slotIndex);
-                }
-            }
-            
-            // Fallback to default ShiftManager if no group selected
-            if (employee == null)
-            {
-                employee = _controller.ShiftManager.GetShift(shiftType)?.GetEmployeeAtSlot(slotIndex);
-            }
-            
-            // Note: Absent employees are now properly removed from shift assignments
-            // in the MarkEmployeeAbsent method, so no need to hide them here
-            
-            var stackPanel = new StackPanel
-            {
-                Orientation = Orientation.Vertical,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5)
-            };
-
-            if (employee != null)
-            {
-                // Wrap employee content in a draggable container
-                var employeeContainer = new Border
-                {
-                    Cursor = Cursors.Hand,
-                    Background = Brushes.Transparent,
-                    Padding = new Thickness(0)
-                };
-
-                // Employee photo
-                var image = new Image
-                {
-                    Width = 60,
-                    Height = 60,
-                    Source = employee.GetPhotoImageSource(60),
-                    Stretch = Stretch.UniformToFill,
-                    Margin = new Thickness(0, 0, 0, 5),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-
-                // Employee name
-                var nameTextBlock = new TextBlock
-                {
-                    Text = $"{employee.FirstName}\n{employee.LastName}",
-                    FontFamily = new FontFamily("Tahoma"),
-                    FontSize = 9,
-                    TextAlignment = TextAlignment.Center,
-                    TextWrapping = TextWrapping.Wrap,
-                    MaxWidth = 100,
-                    Foreground = Brushes.DarkBlue,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-
-                var employeeStackPanel = new StackPanel
-                {
-                    Orientation = Orientation.Vertical,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                employeeStackPanel.Children.Add(image);
-                employeeStackPanel.Children.Add(nameTextBlock);
-
-                employeeContainer.Child = employeeStackPanel;
-
-                // Store employee in Tag for drag operations (shift context is passed via method parameters)
-                employeeContainer.Tag = employee;
-
-                // Add drag handlers to enable dragging employee back to list
-                employeeContainer.PreviewMouseLeftButtonDown += (s, e) => ShiftSlotEmployee_PreviewMouseLeftButtonDown(s, e, employee, shiftType, slotIndex);
-                employeeContainer.MouseMove += (s, e) => ShiftSlotEmployee_MouseMove(s, e, employee, shiftType, slotIndex);
-
-                stackPanel.Children.Add(employeeContainer);
-            }
-            else
-            {
-                // Empty slot
-                var emptyTextBlock = new TextBlock
-                {
-                    Text = $"جایگاه\n{slotIndex + 1}",
-                    FontFamily = new FontFamily("Tahoma"),
-                    FontSize = 10,
-                    TextAlignment = TextAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Foreground = Brushes.Gray
-                };
-
-                stackPanel.Children.Add(emptyTextBlock);
-            }
-
-            border.Child = stackPanel;
-
-            // Enable drop functionality
-            border.AllowDrop = true;
-            border.DragOver += (s, e) => Slot_DragOver(s, e, shiftType, slotIndex);
-            border.DragLeave += (s, e) => Slot_DragLeave(s, e, shiftType, slotIndex);
-            border.Drop += (s, e) => Slot_Drop(s, e, shiftType, slotIndex);
-            
-            // Add click functionality for easier assignment
-            border.MouseLeftButtonUp += (s, e) => Slot_Click(s, e, shiftType, slotIndex);
-            
-            // Add right-click functionality to remove employee
-            border.MouseRightButtonUp += (s, e) => Slot_RightClick(s, e, shiftType, slotIndex);
-
-            return border;
-        }
-
-        private void UpdateShiftStatistics()
-        {
-            try
-            {
-                // Get the selected shift group
-                ShiftGroup? selectedGroup = null;
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId)
-                {
-                    selectedGroup = _controller.GetShiftGroup(groupId);
-                }
-                
-                // Fallback to default group if no selection
-                if (selectedGroup == null)
-                {
-                    selectedGroup = _controller.GetShiftGroup("default");
-                }
-                
-                // Use shift group data or fallback to default ShiftManager
-                int morningCount, eveningCount, morningCapacity, eveningCapacity;
-                
-                if (selectedGroup != null)
-                {
-                    morningCount = selectedGroup.MorningShift.AssignedEmployees.Count(emp => emp != null);
-                    eveningCount = selectedGroup.EveningShift.AssignedEmployees.Count(emp => emp != null);
-                    morningCapacity = selectedGroup.MorningCapacity;
-                    eveningCapacity = selectedGroup.EveningCapacity;
-                }
-                else
-                {
-                    morningCount = _controller.ShiftManager.MorningShift.AssignedEmployees.Count(emp => emp != null);
-                    eveningCount = _controller.ShiftManager.EveningShift.AssignedEmployees.Count(emp => emp != null);
-                    morningCapacity = _controller.ShiftManager.Capacity;
-                    eveningCapacity = _controller.ShiftManager.Capacity;
-                }
-
-                MorningShiftStats.Text = $"{morningCount}/{morningCapacity}";
-                EveningShiftStats.Text = $"{eveningCount}/{eveningCapacity}";
-                
-                _logger.LogInformation("Updated shift statistics - Morning: {MorningCount}/{MorningCapacity}, Evening: {EveningCount}/{EveningCapacity}", 
-                    morningCount, morningCapacity, eveningCount, eveningCapacity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating shift statistics");
-            }
-        }
 
         private void ChangeCapacity_Click(object sender, RoutedEventArgs e)
         {
@@ -1451,85 +1125,75 @@ namespace ManagementApp.Views
             {
                 if (int.TryParse(ShiftCapacityTextBox.Text, out int newCapacity) && newCapacity > 0)
                 {
-                    _logger.LogInformation("ChangeCapacity_Click: Changing capacity from {CurrentCapacity} to {NewCapacity}", 
-                        _controller.ShiftManager.Capacity, newCapacity);
-                    
+                    _logger.LogInformation("Changing capacity to {NewCapacity}", newCapacity);
                     _controller.SetShiftCapacity(newCapacity);
-                    
-                    _logger.LogInformation("ChangeCapacity_Click: After SetShiftCapacity, capacity is {Capacity}", 
-                        _controller.ShiftManager.Capacity);
-                    
-                    LoadShiftSlots();
-                    UpdateShiftStatistics();
-                    UpdateStatus($"ظرفیت شیفت به {newCapacity} تغییر یافت");
+                    LoadShifts();
+                    UpdateStatus($"Shift capacity changed to {newCapacity}");
                 }
                 else
                 {
-                    MessageBox.Show("لطفاً یک عدد صحیح مثبت وارد کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Please enter a positive integer", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error changing shift capacity");
-                MessageBox.Show($"خطا در تغییر ظرفیت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error changing capacity: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void ClearMorningShift_Click(object sender, RoutedEventArgs e)
+        /// <summary>Width below which the shift toolbar action buttons are hidden (e.g. when Absence Management or left pane is expanded).</summary>
+        private const double ShiftToolbarButtonsHideWidthThreshold = 560;
+
+        private void ShiftAssignmentGroupBox_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            try
-            {
-                var result = MessageBox.Show("آیا از پاک کردن شیفت صبح اطمینان دارید؟", 
-                    "تأیید پاک کردن", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
-                if (result == MessageBoxResult.Yes)
-                {
-                    // Get the selected group ID
-                    string? groupId = null;
-                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
-                    {
-                        groupId = selectedGroupId;
-                    }
-                    
-                    _controller.ClearShift("morning", groupId);
-                    LoadShiftSlots();
-                    UpdateShiftStatistics();
-                    UpdateStatus("شیفت صبح پاک شد");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error clearing morning shift");
-                MessageBox.Show($"خطا در پاک کردن شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            if (ShiftToolbarButtonsPanel == null) return;
+            ShiftToolbarButtonsPanel.Visibility = ShiftAssignmentGroupBox.ActualWidth >= ShiftToolbarButtonsHideWidthThreshold
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
-        private void ClearEveningShift_Click(object sender, RoutedEventArgs e)
+        private void ClearShiftButton_Click(object sender, RoutedEventArgs e)
         {
+            if (ClearShiftContextMenu == null || ClearShiftButton == null) return;
+            ClearShiftContextMenu.PlacementTarget = ClearShiftButton;
+            ClearShiftContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            ClearShiftContextMenu.IsOpen = true;
+        }
+
+        private void ClearShiftOption_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.MenuItem menuItem || menuItem.Tag is not string shiftType)
+                return;
+            ClearShiftContextMenu.IsOpen = false;
+
+            string confirmMessage = shiftType switch
+            {
+                "morning" => "Are you sure you want to clear all morning shifts?",
+                "afternoon" => "Are you sure you want to clear all afternoon shifts?",
+                "night" => "Are you sure you want to clear all night shifts?",
+                _ => null
+            };
+            if (string.IsNullOrEmpty(confirmMessage)) return;
+
             try
             {
-                var result = MessageBox.Show("آیا از پاک کردن شیفت عصر اطمینان دارید؟", 
-                    "تأیید پاک کردن", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
-                if (result == MessageBoxResult.Yes)
+                if (MessageBox.Show(confirmMessage, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                    return;
+                _controller.ClearShift(shiftType, null);
+                LoadShifts();
+                string statusMessage = shiftType switch
                 {
-                    // Get the selected group ID
-                    string? groupId = null;
-                    if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
-                    {
-                        groupId = selectedGroupId;
-                    }
-                    
-                    _controller.ClearShift("evening", groupId);
-                    LoadShiftSlots();
-                    UpdateShiftStatistics();
-                    UpdateStatus("شیفت عصر پاک شد");
-                }
+                    "morning" => "Morning shift cleared",
+                    "afternoon" => "Afternoon shift cleared",
+                    "night" => "Night shift cleared",
+                    _ => $"{shiftType} shift cleared"
+                };
+                UpdateStatus(statusMessage);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error clearing evening shift");
-                MessageBox.Show($"خطا در پاک کردن شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                _logger.LogError(ex, "Error clearing {ShiftType} shift", shiftType);
             }
         }
 
@@ -1538,33 +1202,89 @@ namespace ManagementApp.Views
             try
             {
                 string? groupId = null;
-                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
+                if (ShiftGroupComboBox?.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string tag)
                 {
-                    groupId = selectedGroupId;
+                    groupId = tag == "all" ? null : tag;
                 }
 
-                var result = MessageBox.Show("آیا از جابجایی شیفت‌های صبح و عصر اطمینان دارید؟", 
-                    "تأیید جابجایی", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
-                if (result == MessageBoxResult.Yes)
+                if (MessageBox.Show("Are you sure you want to rotate morning, afternoon and night shifts?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     if (_controller.SwapShifts(groupId))
                     {
-                        LoadShiftSlots();
-                        UpdateShiftStatistics();
-                        UpdateStatus("شیفت‌ها با موفقیت جابجا شدند");
+                        LoadShifts();
+                        UpdateStatus("Shifts swapped successfully");
                     }
                     else
                     {
-                        MessageBox.Show("خطا در جابجایی شیفت‌ها", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error rotating shifts", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error swapping shifts");
-                MessageBox.Show($"خطا در جابجایی شیفت‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void OnStatusCardsUpdated()
+        {
+            Dispatcher.Invoke(LoadStatusCards);
+        }
+
+        private void LoadStatusCards()
+        {
+            try
+            {
+                if (_controller.StatusCards != null)
+                {
+                    StatusCardsListBox.ItemsSource = _controller.StatusCards.Values.Where(c => c.IsActive).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading status cards");
+            }
+        }
+
+        private Point _statusCardDragStartPoint;
+        private void StatusCardsListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _statusCardDragStartPoint = e.GetPosition(null);
+        }
+
+        private void StatusCardsListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            Point mousePos = e.GetPosition(null);
+            Vector diff = _statusCardDragStartPoint - mousePos;
+
+            if (e.LeftButton == MouseButtonState.Pressed &&
+                (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                 Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance))
+            {
+                ListBox listBox = sender as ListBox;
+                ListBoxItem listBoxItem = FindVisualParent<ListBoxItem>((DependencyObject)e.OriginalSource);
+
+                if (listBoxItem != null)
+                {
+                    StatusCard card = (StatusCard)listBox.ItemContainerGenerator.
+                        ItemFromContainer(listBoxItem);
+
+                    DataObject dragData = new DataObject(typeof(StatusCard), card); // Use type as key
+                    DragDrop.DoDragDrop(listBoxItem, dragData, DragDropEffects.Copy);
+                }
+            }
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+
+            if (parentObject == null) return null;
+
+            if (parentObject is T parent)
+                return parent;
+            else
+                return FindVisualParent<T>(parentObject);
         }
 
 
@@ -1591,7 +1311,7 @@ namespace ManagementApp.Views
                 // Load rotation settings into UI
                 LoadRotationSettings();
                 
-                UpdateStatus("جابجایی خودکار شیفت‌ها فعال شد");
+                UpdateStatus("Automatic shift rotation enabled");
             }
             catch (Exception ex)
             {
@@ -1611,7 +1331,7 @@ namespace ManagementApp.Views
                 RotationConfigExpander.Visibility = Visibility.Collapsed;
                 RotationConfigExpander.IsExpanded = false;
                 
-                UpdateStatus("جابجایی خودکار شیفت‌ها غیرفعال شد");
+                UpdateStatus("Auto shift rotation disabled");
             }
             catch (Exception ex)
             {
@@ -1637,7 +1357,7 @@ namespace ManagementApp.Views
                     _controller.SaveData();
                     
                     UpdateRotationConfigurationUI();
-                    UpdateStatus($"روز چرخش به {selectedItem.Content} تغییر یافت");
+                    UpdateStatus($"Rotation day changed to {selectedItem.Content}");
                 }
             }
             catch (Exception ex)
@@ -1650,34 +1370,22 @@ namespace ManagementApp.Views
         {
             try
             {
-                // Initialize day combo box with Persian day names
+                // Initialize day combo box with English day names
                 RotationDayComboBox.Items.Clear();
                 
-                // Mapping: Persian day name -> English day name (for storage)
-                var dayMapping = new Dictionary<string, string>
-                {
-                    { "شنبه", "Saturday" },
-                    { "یکشنبه", "Sunday" },
-                    { "دوشنبه", "Monday" },
-                    { "سه‌شنبه", "Tuesday" },
-                    { "چهارشنبه", "Wednesday" },
-                    { "پنج‌شنبه", "Thursday" },
-                    { "جمعه", "Friday" }
-                };
-                
+                var dayNames = new[] { "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
                 var currentDay = _controller.Settings.GetValueOrDefault("auto_rotate_day", "Saturday").ToString() ?? "Saturday";
                 
-                foreach (var day in dayMapping)
+                foreach (var dayName in dayNames)
                 {
                     var item = new ComboBoxItem
                     {
-                        Content = day.Key,
-                        Tag = day.Value
+                        Content = dayName,
+                        Tag = dayName
                     };
                     RotationDayComboBox.Items.Add(item);
                     
-                    // Select the current day
-                    if (day.Value == currentDay)
+                    if (dayName == currentDay)
                     {
                         RotationDayComboBox.SelectedItem = item;
                     }
@@ -1712,31 +1420,31 @@ namespace ManagementApp.Views
                 // Get Persian day name for display
                 var dayMapping = new Dictionary<string, string>
                 {
-                    { "Saturday", "شنبه" },
-                    { "Sunday", "یکشنبه" },
-                    { "Monday", "دوشنبه" },
-                    { "Tuesday", "سه‌شنبه" },
-                    { "Wednesday", "چهارشنبه" },
-                    { "Thursday", "پنج‌شنبه" },
-                    { "Friday", "جمعه" }
+                    { "Saturday", "Saturday" },
+                    { "Sunday", "Sunday" },
+                    { "Monday", "Monday" },
+                    { "Tuesday", "Tuesday" },
+                    { "Wednesday", "Wednesday" },
+                    { "Thursday", "Thursday" },
+                    { "Friday", "Friday" }
                 };
                 
-                var persianDayName = dayMapping.GetValueOrDefault(rotationDay, "شنبه");
+                var dayName = dayMapping.GetValueOrDefault(rotationDay, "Saturday");
                 
                 // Update schedule info
-                RotationScheduleInfo.Text = $"شیفت‌ها به صورت خودکار هر هفته در روز {persianDayName} جابجا می‌شوند.";
+                RotationScheduleInfo.Text = $"Shifts rotate automatically every week on {dayName}.";
                 
                 // Calculate and display next rotation date using controller method
                 var nextRotationDate = _controller.GetNextRotationDate();
                 if (nextRotationDate.HasValue)
                 {
-                    var shamsiDate = ShamsiDateHelper.ToShamsiString(nextRotationDate.Value);
-                    var formattedDate = ShamsiDateHelper.FormatForDisplay(shamsiDate);
-                    NextRotationDate.Text = $"چرخش بعدی: {formattedDate} ({persianDayName})";
+                    var georgianStr = GeorgianDateHelper.ToGeorgianString(nextRotationDate.Value);
+                    var formattedDate = GeorgianDateHelper.FormatForDisplay(georgianStr);
+                    NextRotationDate.Text = $"Next rotation: {formattedDate} ({dayName})";
                 }
                 else
                 {
-                    NextRotationDate.Text = "تاریخ چرخش بعدی محاسبه نشد";
+                    NextRotationDate.Text = "Next rotation date could not be calculated";
                 }
             }
             catch (Exception ex)
@@ -1895,7 +1603,7 @@ namespace ManagementApp.Views
                 }
                 // When daily preview tab is selected, update the preview
                 else if (MainTabControl.SelectedItem is TabItem selectedTab && 
-                         selectedTab.Header?.ToString() == "پیش‌نمایش روزانه")
+                         selectedTab.Header?.ToString() == "Daily Preview")
                 {
                     UpdateDailyPreview();
                 }
@@ -2014,9 +1722,15 @@ namespace ManagementApp.Views
                                     groupId = group.GroupId;
                                     break;
                                 }
-                                else if (group.EveningShift.IsEmployeeAssigned(employee))
+                                else if (group.AfternoonShift.IsEmployeeAssigned(employee))
                                 {
-                                    shiftType = "evening";
+                                    shiftType = "afternoon";
+                                    groupId = group.GroupId;
+                                    break;
+                                }
+                                else if (group.NightShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "night";
                                     groupId = group.GroupId;
                                     break;
                                 }
@@ -2029,9 +1743,13 @@ namespace ManagementApp.Views
                                 {
                                     shiftType = "morning";
                                 }
-                                else if (_controller.ShiftManager.EveningShift.IsEmployeeAssigned(employee))
+                                else if (_controller.ShiftManager.AfternoonShift.IsEmployeeAssigned(employee))
                                 {
-                                    shiftType = "evening";
+                                    shiftType = "afternoon";
+                                }
+                                else if (_controller.ShiftManager.NightShift.IsEmployeeAssigned(employee))
+                                {
+                                    shiftType = "night";
                                 }
                             }
                         }
@@ -2045,11 +1763,11 @@ namespace ManagementApp.Views
                                 LoadShiftSlots();
                                 UpdateShiftStatistics();
                                 LoadEmployees(); // Refresh employee lists
-                                UpdateStatus($"کارمند {employee.FullName} از شیفت {shiftType} حذف شد و به لیست بازگشت");
+                                UpdateStatus($"Employee {employee.FullName} removed from shift {shiftType} and returned to list");
                             }
                             else
                             {
-                                UpdateStatus($"خطا در حذف کارمند {employee.FullName} از شیفت");
+                                UpdateStatus($"Error removing employee {employee.FullName} from shift");
                             }
                         }
                         else
@@ -2068,11 +1786,11 @@ namespace ManagementApp.Views
                                     _controller.SaveData();
                                     LoadAbsenceLists(); // Refresh absence lists
                                     LoadEmployees(); // Refresh employee lists
-                                    UpdateStatus($"{employee.FullName} به لیست اصلی بازگردانده شد");
+                                    UpdateStatus($"{employee.FullName} returned to main list");
                                 }
                                 else
                                 {
-                                    UpdateStatus($"خطا در بازگرداندن {employee.FullName}");
+                                    UpdateStatus($"Error returning {employee.FullName}");
                                 }
                             }
                             else
@@ -2083,11 +1801,11 @@ namespace ManagementApp.Views
                                 {
                                     LoadAbsenceLists();
                                     LoadEmployees();
-                                    UpdateStatus($"{employee.FullName} به لیست اصلی بازگردانده شد");
+                                    UpdateStatus($"{employee.FullName} returned to main list");
                                 }
                                 else
                                 {
-                                    UpdateStatus($"کارمند {employee.FullName} در هیچ شیفتی یافت نشد و غیبتی ندارد");
+                                    UpdateStatus($"Employee {employee.FullName} not found in any shift and has no absence");
                                 }
                             }
                         }
@@ -2097,7 +1815,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ShiftEmployeeListBox_Drop");
-                MessageBox.Show($"خطا در بازگرداندن کارمند به لیست: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error restoring employee to list: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -2255,10 +1973,9 @@ namespace ManagementApp.Views
             {
                 if (sender is Border border)
                 {
-                    // Reset visual feedback
-                    border.Background = new SolidColorBrush(Color.FromArgb(255, 227, 242, 253)); // Original light blue
-                    border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 25, 118, 210)); // Original blue
-                    border.BorderThickness = new Thickness(2);
+                    border.Background = Brushes.Transparent;
+                    border.BorderBrush = Brushes.Gray;
+                    border.BorderThickness = new Thickness(1);
                 }
             }
             catch (Exception ex)
@@ -2267,148 +1984,33 @@ namespace ManagementApp.Views
             }
         }
 
-        private void SupervisorArea_Drop(object sender, DragEventArgs e)
-        {
-            try
-            {
-                // Reset visual feedback first
-                if (sender is Border border)
-                {
-                    border.Background = new SolidColorBrush(Color.FromArgb(255, 227, 242, 253));
-                    border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 25, 118, 210));
-                    border.BorderThickness = new Thickness(2);
-                }
-
-                // Get shift type from Tag
-                if (sender is Border supervisorBorder && supervisorBorder.Tag is string shiftType)
-                {
-                    // Extract employee from drag data
-                    if (e.Data.GetDataPresent(typeof(Employee)))
-                    {
-                        var employee = e.Data.GetData(typeof(Employee)) as Employee;
-                        if (employee != null)
-                        {
-                            // Get current group ID
-                            string? groupId = null;
-                            if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string selectedGroupId)
-                            {
-                                groupId = selectedGroupId;
-                            }
-
-                            // Get current supervisor
-                            var currentSupervisor = _controller.GetTeamLeader(shiftType, groupId);
-
-                            // If there's a current supervisor and they're assigned to the shift, remove them
-                            if (currentSupervisor != null)
-                            {
-                                // Check if current supervisor is assigned to this shift
-                                var selectedGroup = _controller.GetShiftGroup(groupId ?? "default");
-                                if (selectedGroup != null)
-                                {
-                                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
-                                    if (shift != null && shift.IsEmployeeAssigned(currentSupervisor))
-                                    {
-                                        // Remove current supervisor from shift
-                                        var success = _controller.RemoveEmployeeFromShift(currentSupervisor, shiftType, groupId);
-                                        if (success)
-                                        {
-                                            _logger.LogInformation("Removed previous supervisor {SupervisorName} from {ShiftType} shift", 
-                                                currentSupervisor.FullName, shiftType);
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Set new supervisor
-                            var setSuccess = _controller.SetTeamLeader(shiftType, employee.EmployeeId, groupId);
-                            if (setSuccess)
-                            {
-                                // Check if new supervisor is assigned to shift
-                                var selectedGroup = _controller.GetShiftGroup(groupId ?? "default");
-                                if (selectedGroup != null)
-                                {
-                                    var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
-                                    if (shift != null && !shift.IsEmployeeAssigned(employee))
-                                    {
-                                        // Automatically add supervisor to shift if not already assigned
-                                        var assignResult = _controller.AssignEmployeeToShift(employee, shiftType, null, groupId);
-                                        if (assignResult.Success)
-                                        {
-                                            _logger.LogInformation("Automatically added supervisor {SupervisorName} to {ShiftType} shift", 
-                                                employee.FullName, shiftType);
-                                        }
-                                        else if (assignResult.Conflict != null)
-                                        {
-                                            // For supervisor assignment, we'll handle conflicts silently or show a message
-                                            string? targetGroupName = groupId != null ? _controller.ShiftGroupManager.GetShiftGroup(groupId)?.Name : "پیش‌فرض";
-                                            var dialogResult = ShowAssignmentConflictDialog(assignResult.Conflict, employee, targetGroupName ?? "پیش‌فرض", shiftType);
-                                            if (dialogResult == MessageBoxResult.Yes)
-                                            {
-                                                var removed = _controller.RemoveEmployeeFromPreviousAssignment(employee, assignResult.Conflict, groupId);
-                                                if (removed)
-                                                {
-                                                    var retryResult = _controller.AssignEmployeeToShift(employee, shiftType, null, groupId);
-                                                    if (retryResult.Success)
-                                                    {
-                                                        _logger.LogInformation("Automatically added supervisor {SupervisorName} to {ShiftType} shift after conflict resolution", 
-                                                            employee.FullName, shiftType);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Refresh UI
-                                UpdateSupervisorDisplay(shiftType);
-                                LoadShiftSlots();
-                                LoadEmployees();
-                                UpdateShiftStatistics();
-                                UpdateStatus($"کارمند {employee.FullName} به عنوان سرپرست شیفت {shiftType} انتخاب شد");
-                            }
-                            else
-                            {
-                                UpdateStatus($"خطا در انتخاب سرپرست برای شیفت {shiftType}");
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in SupervisorArea_Drop");
-                MessageBox.Show($"خطا در انتخاب سرپرست: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         #endregion
-
         #region Assignment Conflict Resolution
 
         private MessageBoxResult ShowAssignmentConflictDialog(AssignmentConflict conflict, Employee employee, string targetGroupName, string targetShiftType)
         {
             string message;
-            string title = "تایید تخصیص";
+            string title = "Confirm Assignment";
 
-            var targetShiftName = targetShiftType == "morning" ? "صبح" : targetShiftType == "evening" ? "عصر" : targetShiftType;
+            var targetShiftName = targetShiftType == "morning" ? "Morning" : targetShiftType == "evening" ? "Afternoon" : targetShiftType;
 
             switch (conflict.Type)
             {
                 case ConflictType.Absent:
-                    message = $"کارمند {employee.FullName} به عنوان {conflict.AbsenceType} ثبت شده است.\n\nآیا می‌خواهید غیبت را حذف کرده و کارمند را به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص دهید؟";
+                    message = $"Employee {employee.FullName} is marked as {conflict.AbsenceType}.\n\nDo you want to remove the absence and assign them to group {targetGroupName} (shift {targetShiftName})?";
                     break;
 
                 case ConflictType.DifferentShift:
-                    var currentShiftName = conflict.CurrentShiftType == "morning" ? "صبح" : conflict.CurrentShiftType == "evening" ? "عصر" : conflict.CurrentShiftType;
-                    message = $"کارمند {employee.FullName} قبلاً به شیفت {currentShiftName} در این گروه تخصیص داده شده است.\n\nآیا می‌خواهید از شیفت قبلی حذف شده و به شیفت {targetShiftName} تخصیص داده شود؟";
+                    var currentShiftName = conflict.CurrentShiftType == "morning" ? "Morning" : conflict.CurrentShiftType == "evening" ? "Afternoon" : conflict.CurrentShiftType;
+                    message = $"Employee {employee.FullName} is already assigned to the {currentShiftName} shift in this group.\n\nDo you want to remove them from the previous shift and assign them to the {targetShiftName} shift?";
                     break;
 
                 case ConflictType.DifferentGroup:
-                    message = $"کارمند {employee.FullName} قبلاً به گروه {conflict.CurrentGroupName} تخصیص داده شده است.\n\nآیا می‌خواهید از گروه قبلی حذف شده و به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص داده شود؟";
+                    message = $"Employee {employee.FullName} is already assigned to group {conflict.CurrentGroupName}.\n\nDo you want to remove them from the previous group and assign to group {targetGroupName} (shift {targetShiftName})?";
                     break;
 
                 default:
-                    message = $"آیا می‌خواهید کارمند {employee.FullName} را به گروه {targetGroupName} (شیفت {targetShiftName}) تخصیص دهید؟";
+                    message = $"Do you want to assign employee {employee.FullName} to group {targetGroupName} (shift {targetShiftName})?";
                     break;
             }
 
@@ -2430,7 +2032,7 @@ namespace ManagementApp.Views
                     UpdateShiftStatistics();
                     LoadEmployees();
                     LoadAbsenceLists();
-                    UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                    UpdateStatus($"Employee {employee.FullName} assigned to {shiftType} shift");
                 }
             }
             else if (result.Conflict != null)
@@ -2444,7 +2046,7 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    targetGroupName = "پیش‌فرض";
+                    targetGroupName = "Default";
                 }
 
                 var dialogResult = ShowAssignmentConflictDialog(result.Conflict, employee, targetGroupName, shiftType);
@@ -2469,17 +2071,17 @@ namespace ManagementApp.Views
                                 UpdateShiftStatistics();
                                 LoadEmployees();
                                 LoadAbsenceLists();
-                                UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                                UpdateStatus($"Employee {employee.FullName} assigned to {shiftType} shift");
                             }
                         }
                         else
                         {
-                            UpdateStatus($"خطا در تخصیص کارمند {employee.FullName} به شیفت");
+                            UpdateStatus($"Error assigning employee {employee.FullName} to shift");
                         }
                     }
                     else
                     {
-                        UpdateStatus($"خطا در حذف تخصیص قبلی کارمند {employee.FullName}");
+                        UpdateStatus($"Error removing previous assignment for {employee.FullName}");
                     }
                 }
                 // If user clicked No, do nothing
@@ -2487,7 +2089,7 @@ namespace ManagementApp.Views
             else if (!string.IsNullOrEmpty(result.ErrorMessage))
             {
                 // Error occurred
-                UpdateStatus($"خطا: {result.ErrorMessage}");
+                UpdateStatus($"Error: {result.ErrorMessage}");
             }
         }
 
@@ -2520,30 +2122,30 @@ namespace ManagementApp.Views
             {
                 var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
 
-                // Load Absent employees (غایب)
-                var absentEmployees = GetEmployeesByAbsenceCategory("غایب", todayGeorgian);
+                // Load Absent employees
+                var absentEmployees = GetEmployeesByAbsenceCategory("Absent", todayGeorgian);
                 AbsentEmployeesListBox.ItemsSource = absentEmployees;
-                AbsentEmployeesExpander.Header = $"کارمندان غایب ({absentEmployees.Count})";
+                AbsentEmployeesExpander.Header = $"Absent Employees ({absentEmployees.Count})";
 
-                // Load Sick employees (بیمار)
-                var sickEmployees = GetEmployeesByAbsenceCategory("بیمار", todayGeorgian);
+                // Load Sick employees
+                var sickEmployees = GetEmployeesByAbsenceCategory("Sick", todayGeorgian);
                 SickEmployeesListBox.ItemsSource = sickEmployees;
-                SickEmployeesExpander.Header = $"کارمندان بیمار ({sickEmployees.Count})";
+                SickEmployeesExpander.Header = $"Sick Employees ({sickEmployees.Count})";
 
-                // Load Leave employees (مرخصی)
-                var leaveEmployees = GetEmployeesByAbsenceCategory("مرخصی", todayGeorgian);
+                // Load Leave employees
+                var leaveEmployees = GetEmployeesByAbsenceCategory("Leave", todayGeorgian);
                 LeaveEmployeesListBox.ItemsSource = leaveEmployees;
-                LeaveEmployeesExpander.Header = $"کارمندان مرخصی ({leaveEmployees.Count})";
+                LeaveEmployeesExpander.Header = $"Leave Employees ({leaveEmployees.Count})";
 
                 // Update Employee Management section lists
                 EmployeeManagementAbsentListBox.ItemsSource = absentEmployees;
-                EmployeeManagementAbsentExpander.Header = $"کارمندان غایب ({absentEmployees.Count})";
+                EmployeeManagementAbsentExpander.Header = $"Absent Employees ({absentEmployees.Count})";
 
                 EmployeeManagementSickListBox.ItemsSource = sickEmployees;
-                EmployeeManagementSickExpander.Header = $"کارمندان بیمار ({sickEmployees.Count})";
+                EmployeeManagementSickExpander.Header = $"Sick Employees ({sickEmployees.Count})";
 
                 EmployeeManagementLeaveListBox.ItemsSource = leaveEmployees;
-                EmployeeManagementLeaveExpander.Header = $"کارمندان مرخصی ({leaveEmployees.Count})";
+                EmployeeManagementLeaveExpander.Header = $"Leave Employees ({leaveEmployees.Count})";
 
                 _logger.LogInformation("Loaded absence lists - Absent: {AbsentCount}, Sick: {SickCount}, Leave: {LeaveCount}", 
                     absentEmployees.Count, sickEmployees.Count, leaveEmployees.Count);
@@ -2625,8 +2227,8 @@ namespace ManagementApp.Views
 
                         // Show confirmation dialog
                         var result = MessageBox.Show(
-                            $"آیا می‌خواهید {clickedEmployee.FullName} را به لیست اصلی بازگردانید؟",
-                            "بازگرداندن به لیست اصلی",
+                            $"Do you want to restore {clickedEmployee.FullName} to the main list?",
+                            "Restore to main list",
                             MessageBoxButton.YesNo,
                             MessageBoxImage.Question);
 
@@ -2651,11 +2253,11 @@ namespace ManagementApp.Views
                                     LoadAbsenceLists();
                                     LoadEmployees();
                                     
-                                    UpdateStatus($"{clickedEmployee.FullName} به لیست اصلی بازگردانده شد");
+                                    UpdateStatus($"{clickedEmployee.FullName} returned to main list");
                                 }
                                 else
                                 {
-                                    UpdateStatus($"خطا در بازگرداندن {clickedEmployee.FullName}");
+                                    UpdateStatus($"Error restoring {clickedEmployee.FullName}");
                                 }
                             }
                             else
@@ -2666,11 +2268,11 @@ namespace ManagementApp.Views
                                 {
                                     LoadAbsenceLists();
                                     LoadEmployees();
-                                    UpdateStatus($"{clickedEmployee.FullName} به لیست اصلی بازگردانده شد");
+                                    UpdateStatus($"{clickedEmployee.FullName} returned to main list");
                                 }
                                 else
                                 {
-                                    UpdateStatus($"غیبت امروز برای {clickedEmployee.FullName} یافت نشد");
+                                    UpdateStatus($"Today's absence for {clickedEmployee.FullName} not found");
                                 }
                             }
                         }
@@ -2690,7 +2292,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in AbsenceEmployeeListBox_MouseLeftButtonUp");
-                MessageBox.Show($"خطا در بازگرداندن کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error returning employee: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 _draggedEmployee = null; // Clear on error
             }
         }
@@ -2788,17 +2390,17 @@ namespace ManagementApp.Views
 
         private void AbsentEmployeesListBox_Drop(object sender, DragEventArgs e)
         {
-            HandleAbsenceListDrop(e, "غایب", "غایب");
+            HandleAbsenceListDrop(e, "Absent", "Absent");
         }
 
         private void SickEmployeesListBox_Drop(object sender, DragEventArgs e)
         {
-            HandleAbsenceListDrop(e, "بیمار", "بیمار");
+            HandleAbsenceListDrop(e, "Sick", "Sick");
         }
 
         private void LeaveEmployeesListBox_Drop(object sender, DragEventArgs e)
         {
-            HandleAbsenceListDrop(e, "مرخصی", "مرخصی");
+            HandleAbsenceListDrop(e, "Leave", "Leave");
         }
 
         private void HandleAbsenceListDrop(DragEventArgs e, string category, string categoryDisplay)
@@ -2817,7 +2419,7 @@ namespace ManagementApp.Views
                         
                         if (todayAbsence != null)
                         {
-                            UpdateStatus($"{employee.FullName} قبلاً به عنوان {todayAbsence.Category} ثبت شده است");
+                            UpdateStatus($"{employee.FullName} is already registered as {todayAbsence.Category}");
                             return;
                         }
 
@@ -2828,11 +2430,11 @@ namespace ManagementApp.Views
                             LoadEmployees();
                             LoadShiftSlots();
                             UpdateShiftStatistics();
-                            UpdateStatus($"{employee.FullName} به عنوان {categoryDisplay} ثبت شد");
+                            UpdateStatus($"{employee.FullName} registered as {categoryDisplay}");
                         }
                         else
                         {
-                            UpdateStatus($"خطا در ثبت {employee.FullName} به عنوان {categoryDisplay}");
+                            UpdateStatus($"Error registering {employee.FullName} as {categoryDisplay}");
                         }
                     }
                 }
@@ -2841,7 +2443,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in HandleAbsenceListDrop for category {Category}", category);
-                MessageBox.Show($"خطا در ثبت غیبت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error recording absence: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3247,7 +2849,7 @@ namespace ManagementApp.Views
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
                             LoadAbsenceLists(); // Refresh absence lists
-                            UpdateStatus($"کارمند {employee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                            UpdateStatus($"Employee {employee.FullName} assigned to {shiftType} shift");
                         });
                     }
                 }
@@ -3261,7 +2863,7 @@ namespace ManagementApp.Views
                         var ext = Path.GetExtension(file).ToLower();
                         if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp")
                         {
-                            // Try to detect employee name and personnel ID from filename (format: FirstName_LastName_PersonnelId.ext)
+                            // Try to detect employee name from folder (format: FirstName_LastName_PersonnelId.ext)
                             var (detectedFirstName, detectedLastName) = _controller.DetectNameFromFolder(file);
                             var detectedPersonnelId = _controller.DetectPersonnelIdFromFilename(file);
                             
@@ -3290,15 +2892,15 @@ namespace ManagementApp.Views
                                         LoadShiftSlots();
                                         UpdateShiftStatistics();
                                         LoadEmployees();
-                                        UpdateStatus($"عکس کارمند {employee.FullName} به‌روزرسانی شد و به شیفت تخصیص داده شد");
+                                        UpdateStatus($"Employee {employee.FullName} photo updated and assigned to shift");
                                     });
                                 }
                                 else
                                 {
                                     // Create new employee automatically from folder name
                                     var dialogResult = MessageBox.Show(
-                                        $"کارمند {detectedFirstName} {detectedLastName} یافت نشد.\nآیا می‌خواهید کارمند جدیدی با این نام ایجاد شود؟",
-                                        "ایجاد کارمند جدید",
+                                        $"Employee {detectedFirstName} {detectedLastName} not found.\nDo you want to create a new employee with this name?",
+                                        "Create new employee",
                                         MessageBoxButton.YesNo,
                                         MessageBoxImage.Question);
                                     
@@ -3330,20 +2932,20 @@ namespace ManagementApp.Views
                                                     LoadShiftSlots();
                                                     UpdateShiftStatistics();
                                                     LoadEmployees();
-                                                    UpdateStatus($"کارمند جدید {detectedFirstName} {detectedLastName} ایجاد شد و به شیفت تخصیص داده شد");
+                                                    UpdateStatus($"New employee {detectedFirstName} {detectedLastName} created and assigned to shift");
                                                 });
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        UpdateStatus($"کارمند {detectedFirstName} {detectedLastName} یافت نشد.");
+                                        UpdateStatus($"Employee {detectedFirstName} {detectedLastName} not found.");
                                     }
                                 }
                             }
                             else
                             {
-                                UpdateStatus("نام کارمند از نام فایل تشخیص داده نشد. لطفاً نام فایل را به فرمت FirstName_LastName_PersonnelId.ext تغییر دهید.");
+                                UpdateStatus("Employee name could not be detected from file name. Please rename the file to FirstName_LastName_PersonnelId.ext");
                             }
                         }
                     }
@@ -3352,7 +2954,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in slot drop");
-                    MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error assigning to shift: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
         }
 
@@ -3407,7 +3009,7 @@ namespace ManagementApp.Views
 
                 if (_selectedEmployee == null)
                 {
-                    MessageBox.Show("لطفاً یک کارمند را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -3437,8 +3039,8 @@ namespace ManagementApp.Views
                                 else if (_selectedEmployee.PersonnelId != detectedPersonnelId)
                                 {
                                     var result = MessageBox.Show(
-                                        $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی کارمند را به‌روزرسانی کنید؟",
-                                        "تشخیص کد پرسنلی",
+                                        $"Personnel ID detected from file name: {detectedPersonnelId}\nDo you want to update the employee's personnel ID?",
+                                        "Personnel ID detected",
                                         MessageBoxButton.YesNo,
                                         MessageBoxImage.Question);
                                     
@@ -3454,8 +3056,8 @@ namespace ManagementApp.Views
                                 if (detectedFirstName != _selectedEmployee.FirstName || detectedLastName != _selectedEmployee.LastName)
                                 {
                                     var result = MessageBox.Show(
-                                        $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام کارمند را به‌روزرسانی کنید؟",
-                                        "تشخیص نام از پوشه",
+                                        $"Name detected from folder: {detectedFirstName} {detectedLastName}\nDo you want to update the employee's name?",
+                                        "Name detected from folder",
                                         MessageBoxButton.YesNo,
                                         MessageBoxImage.Question);
                                     
@@ -3492,7 +3094,7 @@ namespace ManagementApp.Views
                             LoadEmployees();
                             LoadEmployeeDetails(_selectedEmployee); // Refresh employee details view
                             LoadEmployeeDetails(_selectedEmployee);
-                            UpdateStatus("عکس کارمند بروزرسانی شد");
+                            UpdateStatus("Employee photo updated");
                         }
                     }
                 }
@@ -3500,7 +3102,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in employee photo drop");
-                MessageBox.Show($"خطا در افزودن عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error adding photo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3515,7 +3117,13 @@ namespace ManagementApp.Views
                     var selectedGroup = _controller.GetShiftGroup(groupId);
                     if (selectedGroup != null)
                     {
-                        var shift = shiftType == "morning" ? selectedGroup.MorningShift : selectedGroup.EveningShift;
+                        var shift = shiftType switch
+                        {
+                            "morning" => selectedGroup.MorningShift,
+                            "afternoon" => selectedGroup.AfternoonShift,
+                            "night" => selectedGroup.NightShift,
+                            _ => null
+                        };
                         employee = shift?.GetEmployeeAtSlot(slotIndex);
                     }
                 }
@@ -3535,8 +3143,8 @@ namespace ManagementApp.Views
                 else
                 {
                     var result = MessageBox.Show(
-                        $"کارمند {employee.FullName} در این جایگاه قرار دارد.\n\nآیا می‌خواهید کارمند دیگری را جایگزین کنید؟",
-                        "جایگزینی کارمند",
+                        $"Employee {employee.FullName} is already in this slot.\n\nDo you want to replace them with another employee?",
+                        "Replace employee",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question);
                     
@@ -3549,7 +3157,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in slot click");
-                MessageBox.Show($"خطا در تخصیص شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error assigning to shift: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3562,8 +3170,8 @@ namespace ManagementApp.Views
                 if (employee != null)
                 {
                     var result = MessageBox.Show(
-                        $"آیا می‌خواهید کارمند {employee.FullName} را از شیفت {shiftType} حذف کنید؟",
-                        "حذف کارمند از شیفت",
+                        $"Do you want to remove employee {employee.FullName} from the {shiftType} shift?",
+                        "Remove employee from shift",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question);
                     
@@ -3582,7 +3190,7 @@ namespace ManagementApp.Views
                             LoadShiftSlots();
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
-                            UpdateStatus($"کارمند {employee.FullName} از شیفت {shiftType} حذف شد");
+                            UpdateStatus($"Employee {employee.FullName} removed from {shiftType} shift");
                         }
                     }
                 }
@@ -3590,7 +3198,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in slot right click");
-                MessageBox.Show($"خطا در حذف کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error deleting employee: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3605,14 +3213,14 @@ namespace ManagementApp.Views
 
                 if (availableEmployees.Count == 0)
                 {
-                    MessageBox.Show("هیچ کارمند در دسترسی برای تخصیص وجود ندارد", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("No employees available for assignment", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 // Create a simple selection dialog
                 var dialog = new Window
                 {
-                    Title = $"تخصیص کارمند به {shiftType}",
+                    Title = $"Assign employee to {shiftType}",
                     Width = 300,
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -3624,7 +3232,7 @@ namespace ManagementApp.Views
                 
                 var label = new Label
                 {
-                    Content = "کارمند مورد نظر را انتخاب کنید:",
+                    Content = "Select the employee:",
                     FontFamily = new FontFamily("Tahoma"),
                     FontSize = 12,
                     Margin = new Thickness(0, 0, 0, 10)
@@ -3644,7 +3252,7 @@ namespace ManagementApp.Views
                 
                 var okButton = new Button
                 {
-                    Content = "تأیید",
+                    Content = "Confirm",
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
@@ -3667,7 +3275,7 @@ namespace ManagementApp.Views
                             LoadShiftSlots();
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
-                            UpdateStatus($"کارمند {selectedEmployee.FullName} به شیفت {shiftType} تخصیص داده شد");
+                            UpdateStatus($"Employee {selectedEmployee.FullName} assigned to {shiftType} shift");
                         });
                     }
                     dialog.Close();
@@ -3675,7 +3283,7 @@ namespace ManagementApp.Views
 
                 var cancelButton = new Button
                 {
-                    Content = "انصراف",
+                    Content = "Cancel",
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
@@ -3693,7 +3301,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error showing employee selection dialog");
-                MessageBox.Show($"خطا در نمایش دیالوگ انتخاب: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error showing selection dialog: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3814,14 +3422,14 @@ namespace ManagementApp.Views
                     if (!string.IsNullOrEmpty(taskId))
                     {
                         LoadTasks();
-                        UpdateStatus($"وظیفه {dialog.Title} اضافه شد");
+                        UpdateStatus($"Task {dialog.Title} added");
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding task");
-                MessageBox.Show($"خطا در افزودن وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error adding task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3831,7 +3439,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -3843,14 +3451,14 @@ namespace ManagementApp.Views
                     {
                         LoadTasks();
                         LoadTaskDetails(_selectedTask);
-                        UpdateStatus($"وظیفه {dialog.Title} بروزرسانی شد");
+                        UpdateStatus($"Task {dialog.Title} updated");
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error editing task");
-                MessageBox.Show($"خطا در ویرایش وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error editing task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3860,7 +3468,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -3868,8 +3476,8 @@ namespace ManagementApp.Views
                 var taskId = _selectedTask.TaskId;
                 var taskTitle = _selectedTask.Title;
 
-                var result = MessageBox.Show($"آیا از حذف وظیفه {taskTitle} اطمینان دارید؟", 
-                    "تأیید حذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                var result = MessageBox.Show($"Are you sure you want to delete task {taskTitle}?", 
+                    "Confirm delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 
                 if (result == MessageBoxResult.Yes)
                 {
@@ -3877,7 +3485,7 @@ namespace ManagementApp.Views
                     if (success)
                     {
                         LoadTasks();
-                        UpdateStatus($"وظیفه {taskTitle} حذف شد");
+                        UpdateStatus($"Task {taskTitle} deleted");
                         _selectedTask = null;
                     }
                 }
@@ -3885,7 +3493,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting task");
-                MessageBox.Show($"خطا در حذف وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error deleting task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3895,12 +3503,12 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                var priority = ((ComboBoxItem)TaskPriorityComboBox.SelectedItem)?.Content?.ToString() ?? "متوسط";
-                var status = ((ComboBoxItem)TaskStatusComboBox.SelectedItem)?.Content?.ToString() ?? "در انتظار";
+                var priority = ((ComboBoxItem)TaskPriorityComboBox.SelectedItem)?.Content?.ToString() ?? "Medium";
+                var status = ((ComboBoxItem)TaskStatusComboBox.SelectedItem)?.Content?.ToString() ?? "Pending";
                 
                 double.TryParse(TaskEstimatedHoursTextBox.Text, out double estimatedHours);
                 double.TryParse(TaskActualHoursTextBox.Text, out double actualHours);
@@ -3913,13 +3521,13 @@ namespace ManagementApp.Views
                 if (success)
                 {
                     LoadTasks();
-                    UpdateStatus("تغییرات وظیفه ذخیره شد");
+                    UpdateStatus("Task changes saved");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving task changes");
-                MessageBox.Show($"خطا در ذخیره تغییرات: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error saving changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3932,7 +3540,7 @@ namespace ManagementApp.Views
                 if (_selectedTask == null)
                 {
                     _logger.LogWarning("StartTask_Click: No task selected");
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
                 
@@ -3942,8 +3550,8 @@ namespace ManagementApp.Views
                 var taskId = _selectedTask.TaskId;
                 var taskTitle = _selectedTask.Title;
 
-                _logger.LogInformation("StartTask_Click: Calling UpdateTask with status 'در حال انجام'");
-                var success = _controller.UpdateTask(taskId, status: "در حال انجام");
+                _logger.LogInformation("StartTask_Click: Calling UpdateTask with status 'In Progress'");
+                var success = _controller.UpdateTask(taskId, status: "In Progress");
                 _logger.LogInformation("StartTask_Click: UpdateTask result: {Success}", success);
                 
                 if (success)
@@ -3961,11 +3569,11 @@ namespace ManagementApp.Views
                     {
                         _logger.LogWarning("StartTask_Click: Could not retrieve updated task: {TaskId}", taskId);
                     }
-                    UpdateStatus($"وظیفه {taskTitle} شروع شد");
+                    UpdateStatus($"Task {taskTitle} started");
                     _logger.LogInformation("StartTask_Click: Status updated and method completed successfully");
                     
                     // Debug: Show message to confirm the operation
-                    MessageBox.Show($"وظیفه {taskTitle} با موفقیت شروع شد!\nوضعیت: در حال انجام", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Task {taskTitle} started successfully!\nStatus: In Progress", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
@@ -3975,7 +3583,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error starting task");
-                MessageBox.Show($"خطا در شروع وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error starting task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -3985,7 +3593,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -3994,7 +3602,7 @@ namespace ManagementApp.Views
                 var taskTitle = _selectedTask.Title;
 
                 double.TryParse(TaskActualHoursTextBox.Text, out double actualHours);
-                var success = _controller.UpdateTask(taskId, status: "تکمیل شده", actualHours: actualHours, notes: TaskNotesTextBox.Text);
+                var success = _controller.UpdateTask(taskId, status: "Completed", actualHours: actualHours, notes: TaskNotesTextBox.Text);
                 if (success)
                 {
                     LoadTasks();
@@ -4004,13 +3612,13 @@ namespace ManagementApp.Views
                     {
                         LoadTaskDetails(updatedTask);
                     }
-                    UpdateStatus($"وظیفه {taskTitle} تکمیل شد");
+                    UpdateStatus($"Task {taskTitle} completed");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error completing task");
-                MessageBox.Show($"خطا در تکمیل وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error completing task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4021,7 +3629,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -4030,7 +3638,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error showing employee assignment dialog");
-                MessageBox.Show($"خطا در نمایش دیالوگ تخصیص: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error showing assignment dialog: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4040,7 +3648,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -4053,8 +3661,8 @@ namespace ManagementApp.Views
                     var employee = _controller.GetAllEmployees().FirstOrDefault(emp => emp.EmployeeId == employeeId);
                     if (employee != null)
                     {
-                        var result = MessageBox.Show($"آیا می‌خواهید {employee.FullName} را از این وظیفه حذف کنید؟", 
-                            "تأیید حذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        var result = MessageBox.Show($"Do you want to remove {employee.FullName} from this task?", 
+                            "Confirm remove", MessageBoxButton.YesNo, MessageBoxImage.Question);
                         
                         if (result == MessageBoxResult.Yes)
                         {
@@ -4062,7 +3670,7 @@ namespace ManagementApp.Views
                             if (success)
                             {
                                 LoadTaskAssignments();
-                                UpdateStatus($"{employee.FullName} از وظیفه {taskTitle} حذف شد");
+                                UpdateStatus($"{employee.FullName} removed from task {taskTitle}");
                             }
                         }
                     }
@@ -4071,7 +3679,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error removing employee from task");
-                MessageBox.Show($"خطا در حذف کارمند از وظیفه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error removing employee from task: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4081,7 +3689,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -4090,7 +3698,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error showing employee tasks dialog");
-                MessageBox.Show($"خطا در نمایش وظایف کارمند: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error showing employee tasks: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4100,7 +3708,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedTask == null)
                 {
-                    MessageBox.Show("لطفاً یک وظیفه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a task", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -4112,13 +3720,13 @@ namespace ManagementApp.Views
                 
                 if (availableGroups.Count == 0)
                 {
-                    MessageBox.Show("هیچ گروه شیفت فعالی یافت نشد", "اطلاع", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("No active shift groups found", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 var dialog = new Window
                 {
-                    Title = $"تخصیص گروه شیفت به وظیفه: {taskTitle}",
+                    Title = $"Assign shift group to task: {taskTitle}",
                     Width = 400,
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -4134,7 +3742,7 @@ namespace ManagementApp.Views
 
                 var label = new Label
                 {
-                    Content = "گروه شیفت مورد نظر را انتخاب کنید:",
+                    Content = "Select the shift group:",
                     FontSize = 12,
                     Margin = new Thickness(10, 10, 10, 5),
                     HorizontalAlignment = HorizontalAlignment.Center
@@ -4162,7 +3770,7 @@ namespace ManagementApp.Views
 
                 var assignButton = new Button
                 {
-                    Content = "تخصیص",
+                    Content = "Assign",
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
@@ -4175,7 +3783,7 @@ namespace ManagementApp.Views
                         var employees = _controller.GetEmployeesFromShiftGroup(selectedGroup.GroupId);
                         if (employees.Count == 0)
                         {
-                            MessageBox.Show($"گروه {selectedGroup.Name} هیچ کارمندی ندارد", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            MessageBox.Show($"Group {selectedGroup.Name} has no employees", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                             return;
                         }
 
@@ -4183,23 +3791,23 @@ namespace ManagementApp.Views
                         if (success)
                         {
                             LoadTaskAssignments();
-                            UpdateStatus($"تمام کارمندان گروه {selectedGroup.Name} ({employees.Count} نفر) به وظیفه {taskTitle} تخصیص داده شدند");
+                            UpdateStatus($"All employees in group {selectedGroup.Name} ({employees.Count}) assigned to task {taskTitle}");
                             dialog.Close();
                         }
                         else
                         {
-                            MessageBox.Show($"خطا در تخصیص کارمندان گروه {selectedGroup.Name} به وظیفه", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show($"Error assigning group {selectedGroup.Name} employees to task", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("لطفاً یک گروه شیفت را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Please select a shift group", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 };
 
                 var cancelButton = new Button
                 {
-                    Content = "انصراف",
+                    Content = "Cancel",
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
@@ -4217,7 +3825,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in employee assignment dialog");
-                MessageBox.Show($"خطا در دیالوگ تخصیص: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error in assignment dialog: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4227,7 +3835,7 @@ namespace ManagementApp.Views
             {
                 var dialog = new Window
                 {
-                    Title = "وظایف کارمندان",
+                    Title = "Employee tasks",
                     Width = 600,
                     Height = 500,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -4242,7 +3850,7 @@ namespace ManagementApp.Views
 
                 var label = new Label
                 {
-                    Content = "وظایف تخصیص داده شده به کارمندان:",
+                    Content = "Tasks assigned to employees:",
                     FontSize = 12,
                     Margin = new Thickness(10, 10, 10, 5),
                     HorizontalAlignment = HorizontalAlignment.Center
@@ -4260,28 +3868,28 @@ namespace ManagementApp.Views
 
                 dataGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = "کارمند",
+                    Header = "Employee",
                     Binding = new Binding("EmployeeName"),
                     Width = 150
                 });
 
                 dataGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = "وظیفه",
+                    Header = "Task",
                     Binding = new Binding("Title"),
                     Width = 200
                 });
 
                 dataGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = "وضعیت",
+                    Header = "Status",
                     Binding = new Binding("Status"),
                     Width = 100
                 });
 
                 dataGrid.Columns.Add(new DataGridTextColumn
                 {
-                    Header = "اولویت",
+                    Header = "Priority",
                     Binding = new Binding("Priority"),
                     Width = 80
                 });
@@ -4312,7 +3920,7 @@ namespace ManagementApp.Views
 
                 var closeButton = new Button
                 {
-                    Content = "بستن",
+                    Content = "Close",
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(10),
@@ -4332,7 +3940,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in employee tasks dialog");
-                MessageBox.Show($"خطا در نمایش وظایف کارمندان: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error showing employee tasks: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4382,18 +3990,18 @@ namespace ManagementApp.Views
 
                 if (string.IsNullOrEmpty(startDateGeorgian) || string.IsNullOrEmpty(endDateGeorgian))
                 {
-                    MessageBox.Show("لطفاً تاریخ شروع و پایان را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select start and end dates", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 var report = GenerateReport(reportType, startDateGeorgian, endDateGeorgian);
                 ReportPreviewTextBlock.Text = report;
-                UpdateStatus("گزارش تولید شد");
+                UpdateStatus("Report generated");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating report");
-                MessageBox.Show($"خطا در تولید گزارش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error generating report: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -4404,9 +4012,9 @@ namespace ManagementApp.Views
                 _logger.LogInformation("Generating report: Type={ReportType}, StartDate={StartDate}, EndDate={EndDate}", 
                     reportType, startDateGeorgian, endDateGeorgian);
                 
-                var report = $"گزارش {reportType}\n";
-                report += $"تاریخ شروع: {GeorgianDateHelper.FormatForDisplay(startDateGeorgian)}\n";
-                report += $"تاریخ پایان: {GeorgianDateHelper.FormatForDisplay(endDateGeorgian)}\n\n";
+                var report = $"Report {reportType}\n";
+                report += $"Start date: {GeorgianDateHelper.FormatForDisplay(startDateGeorgian)}\n";
+                report += $"End date: {GeorgianDateHelper.FormatForDisplay(endDateGeorgian)}\n\n";
 
                 // Load historical data for the date range
                 var historicalData = LoadHistoricalData(startDateGeorgian, endDateGeorgian);
@@ -4415,8 +4023,8 @@ namespace ManagementApp.Views
                 
                 if (historicalData.Count == 0)
                 {
-                    report += "هیچ داده‌ای برای این بازه زمانی یافت نشد.\n";
-                    report += $"تاریخ‌های درخواستی: {startDateGeorgian} تا {endDateGeorgian}\n";
+                    report += "No data found for this period.\n";
+                    report += $"Requested dates: {startDateGeorgian} to {endDateGeorgian}\n";
                     return report;
                 }
 
@@ -4425,30 +4033,30 @@ namespace ManagementApp.Views
                 var totalEmployees = GetEmployeeCount(latestData);
                 var totalAbsences = GetTotalAbsences(historicalData);
                 
-                report += "آمار کارمندان:\n";
-                report += $"کل کارمندان: {totalEmployees}\n";
-                report += $"کل غیبت‌ها در بازه: {totalAbsences}\n\n";
+                report += "Employee statistics:\n";
+                report += $"Total employees: {totalEmployees}\n";
+                report += $"Total absences in period: {totalAbsences}\n\n";
 
                 // Shift statistics (average across the period)
                 var shiftStats = GetShiftStatistics(historicalData);
                 
-                report += "آمار شیفت‌ها (میانگین):\n";
-                report += $"شیفت صبح: {shiftStats.AverageMorning:F1}/{shiftStats.Capacity}\n";
-                report += $"شیفت عصر: {shiftStats.AverageEvening:F1}/{shiftStats.Capacity}\n";
-                report += $"حداکثر شیفت صبح: {shiftStats.MaxMorning}/{shiftStats.Capacity}\n";
-                report += $"حداکثر شیفت عصر: {shiftStats.MaxEvening}/{shiftStats.Capacity}\n\n";
+                report += "Shift statistics (average):\n";
+                report += $"Morning shift: {shiftStats.AverageMorning:F1}/{shiftStats.Capacity}\n";
+                report += $"Afternoon shift: {shiftStats.AverageEvening:F1}/{shiftStats.Capacity}\n";
+                report += $"Max morning shift: {shiftStats.MaxMorning}/{shiftStats.Capacity}\n";
+                report += $"Max afternoon shift: {shiftStats.MaxEvening}/{shiftStats.Capacity}\n\n";
 
                 // Task statistics (total across the period)
                 var taskStats = GetTaskStatistics(historicalData);
                 
-                report += "آمار وظایف (کل دوره):\n";
-                report += $"کل وظایف: {taskStats.TotalTasks}\n";
-                report += $"تکمیل شده: {taskStats.CompletedTasks}\n";
-                report += $"در حال انجام: {taskStats.InProgressTasks}\n";
-                report += $"در انتظار: {taskStats.PendingTasks}\n\n";
+                report += "Task statistics (full period):\n";
+                report += $"Total tasks: {taskStats.TotalTasks}\n";
+                report += $"Completed: {taskStats.CompletedTasks}\n";
+                report += $"In progress: {taskStats.InProgressTasks}\n";
+                report += $"Pending: {taskStats.PendingTasks}\n\n";
 
                 // Daily breakdown
-                report += "جزئیات روزانه:\n";
+                report += "Daily details:\n";
                 foreach (var dayData in historicalData.OrderBy(kvp => kvp.Key))
                 {
                     var date = dayData.Key;
@@ -4458,7 +4066,7 @@ namespace ManagementApp.Views
                     var absenceCount = GetAbsenceCount(data);
                     var taskCount = GetTaskCount(data);
                     
-                    report += $"{GeorgianDateHelper.FormatForDisplay(date)}: صبح({morningCount}) عصر({eveningCount}) غیبت({absenceCount}) وظیفه({taskCount})\n";
+                    report += $"{GeorgianDateHelper.FormatForDisplay(date)}: Morning({morningCount}) Afternoon({eveningCount}) Absence({absenceCount}) Task({taskCount})\n";
                 }
 
                 return report;
@@ -4466,7 +4074,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating report content");
-                return $"خطا در تولید گزارش: {ex.Message}";
+                return $"Error generating report: {ex.Message}";
             }
         }
 
@@ -4776,7 +4384,7 @@ namespace ManagementApp.Views
                 LoadEmployees();
                 
                 // Update status to show that shift groups were updated
-                UpdateStatus("گروه‌های شیفت بروزرسانی شدند");
+                UpdateStatus("Shift groups updated");
                 
                 _logger.LogInformation("Shift groups updated - UI refreshed");
             });
@@ -4789,19 +4397,19 @@ namespace ManagementApp.Views
                 var today = Shared.Utils.GeorgianDateHelper.GetCurrentGeorgianDate();
                 
                 // Count sick employees for today
-                var sickAbsences = _controller.AbsenceManager.GetAbsencesByCategory("بیمار")
+                var sickAbsences = _controller.AbsenceManager.GetAbsencesByCategory("Sick")
                     .Where(a => a.Date == today)
                     .ToList();
                 SickCountText.Text = sickAbsences.Count.ToString();
                 
                 // Count employees on leave for today
-                var leaveAbsences = _controller.AbsenceManager.GetAbsencesByCategory("مرخصی")
+                var leaveAbsences = _controller.AbsenceManager.GetAbsencesByCategory("Leave")
                     .Where(a => a.Date == today)
                     .ToList();
                 LeaveCountText.Text = leaveAbsences.Count.ToString();
                 
                 // Count absent employees for today
-                var absentAbsences = _controller.AbsenceManager.GetAbsencesByCategory("غایب")
+                var absentAbsences = _controller.AbsenceManager.GetAbsencesByCategory("Absent")
                     .Where(a => a.Date == today)
                     .ToList();
                 AbsentCountText.Text = absentAbsences.Count.ToString();
@@ -4839,7 +4447,7 @@ namespace ManagementApp.Views
             {
                 // Only update if the daily preview tab is currently selected
                 if (MainTabControl.SelectedItem is TabItem selectedTab && 
-                    selectedTab.Header?.ToString() == "پیش‌نمایش روزانه")
+                    selectedTab.Header?.ToString() == "Daily Preview")
                 {
                     UpdateDailyPreview();
                 }
@@ -4892,13 +4500,13 @@ namespace ManagementApp.Views
                         Padding = new Thickness(15, 20, 15, 20),
                         TextAlignment = TextAlignment.Center
                     };
-                    headerCell.Blocks.Add(new Paragraph(new Run($"خلاصه روزانه - {todayDisplay}"))
+                    headerCell.Blocks.Add(new Paragraph(new Run($"Daily summary - {todayDisplay}"))
                     {
                         FontSize = 22,
                         FontWeight = FontWeights.Bold,
                         Foreground = headerTextColor
                     });
-                    headerCell.Blocks.Add(new Paragraph(new Run($"تاریخ تولید: {generationTime}"))
+                    headerCell.Blocks.Add(new Paragraph(new Run($"Generated: {generationTime}"))
                     {
                         FontSize = 10,
                         Foreground = darkTextColor,
@@ -4910,11 +4518,11 @@ namespace ManagementApp.Views
                     document.Blocks.Add(headerTable);
                     
                     // Absence statistics
-                    var sickCount = _controller.AbsenceManager.GetAbsencesByCategory("بیمار")
+                    var sickCount = _controller.AbsenceManager.GetAbsencesByCategory("Sick")
                         .Count(a => a.Date == today);
-                    var leaveCount = _controller.AbsenceManager.GetAbsencesByCategory("مرخصی")
+                    var leaveCount = _controller.AbsenceManager.GetAbsencesByCategory("Leave")
                         .Count(a => a.Date == today);
-                    var absentCount = _controller.AbsenceManager.GetAbsencesByCategory("غایب")
+                    var absentCount = _controller.AbsenceManager.GetAbsencesByCategory("Absent")
                         .Count(a => a.Date == today);
                     
                     // Absence Statistics Table
@@ -4942,7 +4550,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(12, 10, 12, 10),
                         ColumnSpan = 2
                     };
-                    absenceHeaderCell.Blocks.Add(new Paragraph(new Run("آمار غیبت‌ها"))
+                    absenceHeaderCell.Blocks.Add(new Paragraph(new Run("Absence statistics"))
                     {
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
@@ -4954,9 +4562,9 @@ namespace ManagementApp.Views
                     // Data rows
                     var absenceData = new[]
                     {
-                        new { Label = "کارمندان بیمار", Count = sickCount },
-                        new { Label = "کارمندان مرخصی", Count = leaveCount },
-                        new { Label = "کارمندان غایب", Count = absentCount }
+                        new { Label = "Sick Employees", Count = sickCount },
+                        new { Label = "Leave Employees", Count = leaveCount },
+                        new { Label = "Absent Employees", Count = absentCount }
                     };
                     
                     bool isAlternate = false;
@@ -5041,7 +4649,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(12, 10, 12, 10),
                         ColumnSpan = 2
                     };
-                    groupsHeaderCell.Blocks.Add(new Paragraph(new Run("آمار گروه‌های شیفت"))
+                    groupsHeaderCell.Blocks.Add(new Paragraph(new Run("Shift Group Statistics"))
                     {
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
@@ -5081,7 +4689,7 @@ namespace ManagementApp.Views
                             Padding = new Thickness(15, 10, 15, 10),
                             TextAlignment = TextAlignment.Center
                         };
-                        countCell.Blocks.Add(new Paragraph(new Run($"{count} کارمند"))
+                        countCell.Blocks.Add(new Paragraph(new Run($"{count} employees"))
                         {
                             FontSize = 12,
                             FontWeight = FontWeights.Bold,
@@ -5107,12 +4715,13 @@ namespace ManagementApp.Views
                             ColumnSpan = 2,
                             TextAlignment = TextAlignment.Center
                         };
-                        emptyCell.Blocks.Add(new Paragraph(new Run("گروه فعالی وجود ندارد"))
+                        var noGroupParagraph = new Paragraph(new Run("No active group"))
                         {
                             FontSize = 12,
                             FontStyle = FontStyles.Italic,
                             Foreground = darkTextColor
-                        });
+                        };
+                        emptyCell.Blocks.Add(noGroupParagraph);
                         emptyRow.Cells.Add(emptyCell);
                         groupsRowGroup.Rows.Add(emptyRow);
                     }
@@ -5139,7 +4748,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(15, 12, 15, 12),
                         TextAlignment = TextAlignment.Center
                     };
-                    footerCell.Blocks.Add(new Paragraph(new Run("گزارش تولید شده توسط سیستم مدیریت کارمندان"))
+                    footerCell.Blocks.Add(new Paragraph(new Run("Report generated by Employee Management System"))
                     {
                         FontSize = 9,
                         Foreground = darkTextColor,
@@ -5155,15 +4764,15 @@ namespace ManagementApp.Views
                     document.PageWidth = printDialog.PrintableAreaWidth;
                     
                     var paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
-                    printDialog.PrintDocument(paginator, $"خلاصه روزانه - {todayDisplay}");
+                    printDialog.PrintDocument(paginator, $"Daily summary - {todayDisplay}");
                     
-                    UpdateStatus("خلاصه روزانه چاپ شد");
+                    UpdateStatus("Daily summary printed");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error printing daily preview");
-                MessageBox.Show($"خطا در چاپ: {ex.Message}", "خطا", 
+                MessageBox.Show($"Error printing: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -5175,7 +4784,7 @@ namespace ManagementApp.Views
                 var reportContent = ReportPreviewTextBlock.Text;
                 if (string.IsNullOrWhiteSpace(reportContent))
                 {
-                    MessageBox.Show("لطفاً ابتدا گزارش را تولید کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please generate the report first", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -5204,10 +4813,10 @@ namespace ManagementApp.Views
                     var darkTextColor = new SolidColorBrush(Color.FromRgb(66, 66, 66)); // Dark gray
                     
                     // Get report title
-                    var reportTypeText = "گزارش";
+                    var reportTypeText = "Report";
                     if (ReportTypeComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedReportType)
                     {
-                        reportTypeText = selectedReportType.Content?.ToString() ?? "گزارش";
+                        reportTypeText = selectedReportType.Content?.ToString() ?? "Report";
                     }
                     var reportTitle = !string.IsNullOrEmpty(reportData.ReportType) 
                         ? reportData.ReportType 
@@ -5241,7 +4850,7 @@ namespace ManagementApp.Views
                     
                     if (!string.IsNullOrEmpty(reportData.StartDate) && !string.IsNullOrEmpty(reportData.EndDate))
                     {
-                        headerCell.Blocks.Add(new Paragraph(new Run($"از {reportData.StartDate} تا {reportData.EndDate}"))
+                        headerCell.Blocks.Add(new Paragraph(new Run($"From {reportData.StartDate} to {reportData.EndDate}"))
                         {
                             FontSize = 14,
                             Foreground = darkTextColor,
@@ -5249,7 +4858,7 @@ namespace ManagementApp.Views
                         });
                     }
                     
-                    headerCell.Blocks.Add(new Paragraph(new Run($"تاریخ تولید: {generationTime}"))
+                    headerCell.Blocks.Add(new Paragraph(new Run($"Generated: {generationTime}"))
                     {
                         FontSize = 10,
                         Foreground = darkTextColor,
@@ -5294,7 +4903,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(12, 10, 12, 10),
                         ColumnSpan = 2
                     };
-                    employeeHeaderCell.Blocks.Add(new Paragraph(new Run("آمار کارمندان"))
+                    employeeHeaderCell.Blocks.Add(new Paragraph(new Run("Employee statistics"))
                     {
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
@@ -5306,8 +4915,8 @@ namespace ManagementApp.Views
                     // Data rows
                     var employeeData = new[]
                     {
-                        new { Label = "کل کارمندان", Value = reportData.TotalEmployees.ToString() },
-                        new { Label = "کل غیبت‌ها در بازه", Value = reportData.TotalAbsences.ToString() }
+                        new { Label = "Total employees", Value = reportData.TotalEmployees.ToString() },
+                        new { Label = "Total absences in period", Value = reportData.TotalAbsences.ToString() }
                     };
                     
                     bool isAlternate = false;
@@ -5382,7 +4991,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(12, 10, 12, 10),
                         ColumnSpan = 2
                     };
-                    shiftHeaderCell.Blocks.Add(new Paragraph(new Run("آمار شیفت‌ها (میانگین)"))
+                    shiftHeaderCell.Blocks.Add(new Paragraph(new Run("Shift Statistics (average)"))
                     {
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
@@ -5394,10 +5003,12 @@ namespace ManagementApp.Views
                     // Data rows
                     var shiftData = new[]
                     {
-                        new { Label = "شیفت صبح (میانگین)", Value = $"{reportData.AverageMorningShift:F1}/{capacity}" },
-                        new { Label = "شیفت عصر (میانگین)", Value = $"{reportData.AverageEveningShift:F1}/{capacity}" },
-                        new { Label = "حداکثر شیفت صبح", Value = $"{reportData.MaxMorningShift}/{capacity}" },
-                        new { Label = "حداکثر شیفت عصر", Value = $"{reportData.MaxEveningShift}/{capacity}" }
+                        new { Label = "Morning shift (avg)", Value = $"{reportData.AverageMorningShift:F1}/{capacity}" },
+                        new { Label = "Afternoon shift (avg)", Value = $"{reportData.AverageAfternoonShift:F1}/{capacity}" },
+                        new { Label = "Night shift (avg)", Value = $"{reportData.AverageNightShift:F1}/{capacity}" },
+                        new { Label = "Max morning shift", Value = $"{reportData.MaxMorningShift}/{capacity}" },
+                        new { Label = "Max afternoon shift", Value = $"{reportData.MaxAfternoonShift}/{capacity}" },
+                        new { Label = "Max night shift", Value = $"{reportData.MaxNightShift}/{capacity}" }
                     };
                     
                     isAlternate = false;
@@ -5471,7 +5082,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(12, 10, 12, 10),
                         ColumnSpan = 2
                     };
-                    taskHeaderCell.Blocks.Add(new Paragraph(new Run("آمار وظایف (کل دوره)"))
+                    taskHeaderCell.Blocks.Add(new Paragraph(new Run("Task statistics (full period)"))
                     {
                         FontSize = 16,
                         FontWeight = FontWeights.Bold,
@@ -5483,10 +5094,10 @@ namespace ManagementApp.Views
                     // Data rows
                     var taskData = new[]
                     {
-                        new { Label = "کل وظایف", Value = reportData.TotalTasks.ToString() },
-                        new { Label = "تکمیل شده", Value = reportData.CompletedTasks.ToString() },
-                        new { Label = "در حال انجام", Value = reportData.InProgressTasks.ToString() },
-                        new { Label = "در انتظار", Value = reportData.PendingTasks.ToString() }
+                        new { Label = "Total tasks", Value = reportData.TotalTasks.ToString() },
+                        new { Label = "Completed", Value = reportData.CompletedTasks.ToString() },
+                        new { Label = "In progress", Value = reportData.InProgressTasks.ToString() },
+                        new { Label = "Pending", Value = reportData.PendingTasks.ToString() }
                     };
                     
                     isAlternate = false;
@@ -5557,7 +5168,7 @@ namespace ManagementApp.Views
                             BorderThickness = new Thickness(1),
                             Padding = new Thickness(12, 10, 12, 10)
                         };
-                        dailyHeaderCell.Blocks.Add(new Paragraph(new Run("جزئیات روزانه"))
+                        dailyHeaderCell.Blocks.Add(new Paragraph(new Run("Daily details"))
                         {
                             FontSize = 16,
                             FontWeight = FontWeights.Bold,
@@ -5602,7 +5213,7 @@ namespace ManagementApp.Views
                         Padding = new Thickness(15, 12, 15, 12),
                         TextAlignment = TextAlignment.Center
                     };
-                    footerCell.Blocks.Add(new Paragraph(new Run("گزارش تولید شده توسط سیستم مدیریت کارمندان"))
+                    footerCell.Blocks.Add(new Paragraph(new Run("Report generated by Employee Management System"))
                     {
                         FontSize = 9,
                         FontStyle = FontStyles.Italic,
@@ -5620,13 +5231,13 @@ namespace ManagementApp.Views
                     var paginator = ((IDocumentPaginatorSource)document).DocumentPaginator;
                     printDialog.PrintDocument(paginator, reportTitle);
                     
-                    UpdateStatus("گزارش چاپ شد");
+                    UpdateStatus("Report printed");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error printing report");
-                MessageBox.Show($"خطا در چاپ: {ex.Message}", "خطا", 
+                MessageBox.Show($"Error printing: {ex.Message}", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -5639,9 +5250,11 @@ namespace ManagementApp.Views
             public int TotalEmployees { get; set; }
             public int TotalAbsences { get; set; }
             public double AverageMorningShift { get; set; }
-            public double AverageEveningShift { get; set; }
+            public double AverageAfternoonShift { get; set; }
+            public double AverageNightShift { get; set; }
             public int MaxMorningShift { get; set; }
-            public int MaxEveningShift { get; set; }
+            public int MaxAfternoonShift { get; set; }
+            public int MaxNightShift { get; set; }
             public int ShiftCapacity { get; set; }
             public int TotalTasks { get; set; }
             public int CompletedTasks { get; set; }
@@ -5676,42 +5289,42 @@ namespace ManagementApp.Views
                 cleanLine = System.Text.RegularExpressions.Regex.Replace(cleanLine, @"\s+", " ");
 
                 // Parse report type
-                if (cleanLine.StartsWith("گزارش") && !cleanLine.Contains(":"))
+                if (cleanLine.StartsWith("Report") && !cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"گزارش\s+(.+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Report\s+(.+)");
                     if (match.Success)
                         reportData.ReportType = match.Groups[1].Value.Trim();
                 }
                 // Parse dates
-                else if (cleanLine.Contains("تاریخ شروع:"))
+                else if (cleanLine.Contains("Start date:"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تاریخ شروع:\s*(.+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Start date:\s*(.+)");
                     if (match.Success)
                         reportData.StartDate = match.Groups[1].Value.Trim();
                 }
-                else if (cleanLine.Contains("تاریخ پایان:"))
+                else if (cleanLine.Contains("End date:"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تاریخ پایان:\s*(.+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"End date:\s*(.+)");
                     if (match.Success)
                         reportData.EndDate = match.Groups[1].Value.Trim();
                 }
                 // Parse employee statistics
-                else if (cleanLine.Contains("کل کارمندان") && !cleanLine.Contains("مدیران"))
+                else if (cleanLine.Contains("Total employees") && !cleanLine.Contains("managers"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+کارمندان[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Total\s+employees[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.TotalEmployees = count;
                 }
-                else if (cleanLine.Contains("کل غیبت") && (cleanLine.Contains("بازه") || cleanLine.Contains("در بازه")))
+                else if (cleanLine.Contains("Total absences") && cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+غیبت[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Total\s+absences[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.TotalAbsences = count;
                 }
                 // Parse shift statistics
-                else if (cleanLine.Contains("شیفت صبح") && cleanLine.Contains("/") && !cleanLine.Contains("حداکثر"))
+                else if (cleanLine.Contains("Morning shift") && cleanLine.Contains("/") && !cleanLine.Contains("Max"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"شیفت\s+صبح[^:]*:\s*([\d.]+)/(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Morning\s+shift[^:]*:\s*([\d.]+)/(\d+)");
                     if (match.Success)
                     {
                         if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double avg))
@@ -5720,57 +5333,69 @@ namespace ManagementApp.Views
                             reportData.ShiftCapacity = cap;
                     }
                 }
-                else if (cleanLine.Contains("شیفت عصر") && cleanLine.Contains("/") && !cleanLine.Contains("حداکثر"))
+                else if (cleanLine.Contains("Afternoon shift") && cleanLine.Contains("/") && !cleanLine.Contains("Max"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"شیفت\s+عصر[^:]*:\s*([\d.]+)/(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Afternoon\s+shift[^:]*:\s*([\d.]+)/(\d+)");
                     if (match.Success && double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double avg))
-                        reportData.AverageEveningShift = avg;
+                        reportData.AverageAfternoonShift = avg;
                 }
-                else if (cleanLine.Contains("حداکثر") && cleanLine.Contains("شیفت صبح"))
+                else if (cleanLine.Contains("Night shift") && cleanLine.Contains("/") && !cleanLine.Contains("Max"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"حداکثر\s+شیفت\s+صبح[^:]*:\s*(\d+)/(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Night\s+shift[^:]*:\s*([\d.]+)/(\d+)");
+                    if (match.Success && double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double avg))
+                        reportData.AverageNightShift = avg;
+                }
+                else if (cleanLine.Contains("Max") && cleanLine.Contains("Morning shift"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Max\s+morning\s+shift[^:]*:\s*(\d+)/(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int max))
                         reportData.MaxMorningShift = max;
                 }
-                else if (cleanLine.Contains("حداکثر") && cleanLine.Contains("شیفت عصر"))
+                else if (cleanLine.Contains("Max") && cleanLine.Contains("Afternoon shift"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"حداکثر\s+شیفت\s+عصر[^:]*:\s*(\d+)/(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Max\s+afternoon\s+shift[^:]*:\s*(\d+)/(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int max))
-                        reportData.MaxEveningShift = max;
+                        reportData.MaxAfternoonShift = max;
+                }
+                else if (cleanLine.Contains("Max") && cleanLine.Contains("Night shift"))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Max\s+night\s+shift[^:]*:\s*(\d+)/(\d+)");
+                    if (match.Success && int.TryParse(match.Groups[1].Value, out int max))
+                        reportData.MaxNightShift = max;
                 }
                 // Parse task statistics
-                else if (cleanLine.Contains("کل وظایف") && cleanLine.Contains(":"))
+                else if (cleanLine.Contains("Total tasks") && cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"کل\s+وظایف[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Total\s+tasks[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.TotalTasks = count;
                 }
-                else if (cleanLine.Contains("تکمیل شده") && cleanLine.Contains(":"))
+                else if (cleanLine.Contains("Completed") && cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"تکمیل\s+شده[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Completed[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.CompletedTasks = count;
                 }
-                else if (cleanLine.Contains("در حال انجام") && cleanLine.Contains(":"))
+                else if (cleanLine.Contains("In progress") && cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"در\s+حال\s+انجام[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"In\s+progress[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.InProgressTasks = count;
                 }
-                else if (cleanLine.Contains("در انتظار") && cleanLine.Contains(":"))
+                else if (cleanLine.Contains("Pending") && cleanLine.Contains(":"))
                 {
-                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"در\s+انتظار[^:]*:\s*(\d+)");
+                    var match = System.Text.RegularExpressions.Regex.Match(cleanLine, @"Pending[^:]*:\s*(\d+)");
                     if (match.Success && int.TryParse(match.Groups[1].Value, out int count))
                         reportData.PendingTasks = count;
                 }
                 // Check for daily details section
-                else if (cleanLine.Contains("جزئیات روزانه:") || cleanLine == "جزئیات روزانه")
+                else if (cleanLine.Contains("Daily details:") || cleanLine == "Daily details")
                 {
                     inDailyDetails = true;
                 }
-                // Parse daily details
-                else if (inDailyDetails || (cleanLine.Contains("صبح") && cleanLine.Contains("عصر") && 
-                          cleanLine.Contains("غیبت") && cleanLine.Contains("وظیفه")))
+                // Parse daily details (format: Date: Morning(n) Afternoon(n) Absence(n) Task(n))
+                else if (inDailyDetails || (cleanLine.Contains("Morning") && cleanLine.Contains("Afternoon") && 
+                          cleanLine.Contains("Absence") && cleanLine.Contains("Task")))
                 {
                     if (!string.IsNullOrWhiteSpace(cleanLine))
                         reportData.DailyDetails.Add(cleanLine);
@@ -5793,7 +5418,7 @@ namespace ManagementApp.Views
             Dispatcher.Invoke(() =>
             {
                 LoadData();
-                UpdateStatus("داده‌ها همگام‌سازی شدند");
+                UpdateStatus("Data synced");
             });
         }
 
@@ -5835,7 +5460,7 @@ namespace ManagementApp.Views
                 // Use WPF's OpenFolderDialog (available in .NET 8)
                 var dialog = new OpenFolderDialog
                 {
-                    Title = "انتخاب پوشه داده‌های مشترک",
+                    Title = "Select shared data folder",
                     InitialDirectory = DataDirectoryTextBox.Text
                 };
 
@@ -5848,7 +5473,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error selecting data directory");
-                MessageBox.Show($"خطا در انتخاب پوشه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error selecting folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -5860,15 +5485,15 @@ namespace ManagementApp.Views
                 
                 if (string.IsNullOrEmpty(newDataDirectory))
                 {
-                    MessageBox.Show("لطفاً مسیر پوشه داده‌ها را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select the data folder path.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 if (!Directory.Exists(newDataDirectory))
                 {
                     var result = MessageBox.Show(
-                        "پوشه انتخاب شده وجود ندارد. آیا می‌خواهید آن را ایجاد کنید؟",
-                        "تأیید",
+                        "The selected folder does not exist. Do you want to create it?",
+                        "Confirm",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question);
                     
@@ -5897,7 +5522,7 @@ namespace ManagementApp.Views
                 if (saveButton != null)
                 {
                     saveButton.IsEnabled = false;
-                    saveButton.Content = "در حال پردازش...";
+                    saveButton.Content = "Processing...";
                 }
                 
                 // Update configuration asynchronously
@@ -5908,29 +5533,38 @@ namespace ManagementApp.Views
                 
                 if (success)
                 {
+                    // Save display visibility settings to display config
+                    var displayConfigPath = GetDisplayConfigPath();
+                    var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
+                    var showChart = ShowPerformanceChartCheckBox.IsChecked ?? true;
+                    var showAi = ShowAiRecommendationCheckBox.IsChecked ?? true;
+                    displayConfigHelper.SetShowPerformanceChart(showChart);
+                    displayConfigHelper.SetShowAiRecommendation(showAi);
+                    displayConfigHelper.SaveConfig();
+
                     var message = copyExistingData 
-                        ? "تنظیمات با موفقیت ذخیره شد و داده‌های موجود منتقل شدند." 
-                        : "تنظیمات با موفقیت ذخیره شد.";
+                        ? "Settings saved successfully and existing data was moved." 
+                        : "Settings saved successfully.";
                     
-                    MessageBox.Show(message, "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                     
                     // Update UI
                     CurrentDataDirectoryTextBlock.Text = newDataDirectory;
                     UpdateSettingsDisplay();
                     
                     // The controller will automatically update through the configuration change event
-                    _logger.LogInformation("Data directory changed to: {NewPath}, Copy existing data: {CopyData}", 
-                        newDataDirectory, copyExistingData);
+                    _logger.LogInformation("Data directory changed to: {NewPath}, Copy existing data: {CopyData}. Display chart: {ShowChart}, AI: {ShowAi}", 
+                        newDataDirectory, copyExistingData, showChart, showAi);
                 }
                 else
                 {
-                    MessageBox.Show("خطا در ذخیره تنظیمات. لطفاً مسیر معتبری انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error saving settings. Please select a valid path.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving settings");
-                MessageBox.Show($"خطا در ذخیره تنظیمات: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error saving settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -5942,7 +5576,7 @@ namespace ManagementApp.Views
                 if (saveButton != null)
                 {
                     saveButton.IsEnabled = true;
-                    saveButton.Content = "ذخیره تنظیمات";
+                    saveButton.Content = "Save settings";
                 }
             }
         }
@@ -5952,8 +5586,8 @@ namespace ManagementApp.Views
             try
             {
                 var result = MessageBox.Show(
-                    "آیا مطمئن هستید که می‌خواهید تنظیمات را به حالت پیش‌فرض بازنشانی کنید؟",
-                    "تأیید",
+                    "Are you sure you want to reset settings to default?",
+                    "Confirm",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
                 
@@ -5975,17 +5609,21 @@ namespace ManagementApp.Views
                     {
                         var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
                         displayConfigHelper.SetBackgroundColor("#1a1a1a");
+                        displayConfigHelper.SetShowPerformanceChart(true);
+                        displayConfigHelper.SetShowAiRecommendation(true);
                         displayConfigHelper.SaveConfig();
                         UpdateDisplayColorPreview("#1a1a1a");
+                        ShowPerformanceChartCheckBox.IsChecked = true;
+                        ShowAiRecommendationCheckBox.IsChecked = true;
                     }
                     
-                    MessageBox.Show("تنظیمات به حالت پیش‌فرض بازنشانی شد.", "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Settings have been reset to default.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resetting settings");
-                MessageBox.Show($"خطا در بازنشانی تنظیمات: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error resetting settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -6017,52 +5655,22 @@ namespace ManagementApp.Views
                     // Update preview
                     UpdateDisplayColorPreview(selectedColor);
                     
-                    MessageBox.Show("رنگ محیط نمایش با موفقیت تغییر کرد. برای اعمال تغییرات، برنامه نمایش را مجدداً راه‌اندازی کنید.", 
-                        "موفق", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Display background color changed successfully. Restart the display app to apply changes.", 
+                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error selecting display color");
-                MessageBox.Show($"خطا در انتخاب رنگ: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error selecting color: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private string GetDisplayConfigPath()
         {
-            // Try multiple possible locations for the display config file
-            // Priority: DisplayApp's bin directory (where it actually runs from), then source directory
-            // From ManagementApp\bin\Debug\net8.0-windows\ we need to go up 4 levels to project root
-            var possiblePaths = new[]
-            {
-                // DisplayApp's bin directory (where it runs from) - 4 levels up from ManagementApp\bin\Debug\net8.0-windows\
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
-                // DisplayApp's source Config directory - 4 levels up
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
-                // Alternative: 3 levels up (if running from different location)
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "DisplayApp", "Config", "display_config.json"),
-                // Fallback: 2 levels up
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "DisplayApp", "Config", "display_config.json")
-            };
-
-            foreach (var path in possiblePaths)
-            {
-                var fullPath = Path.GetFullPath(path);
-                if (File.Exists(fullPath))
-                {
-                    return fullPath;
-                }
-            }
-            
-            // If not found, return the most likely path (DisplayApp's bin directory) - 4 levels up
-            var defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "DisplayApp", "bin", "Debug", "net8.0-windows", "Config", "display_config.json");
-            return Path.GetFullPath(defaultPath);
+            // Use the shared helper so ManagementApp and DisplayApp always point
+            // to the same display configuration file under SharedData.
+            return Shared.Utils.DisplayConfigPathHelper.GetDisplayConfigPath();
         }
 
         private void UpdateDisplayColorPreview(string colorHex)
@@ -6096,14 +5704,20 @@ namespace ManagementApp.Views
                     var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
                     var backgroundColor = displayConfigHelper.GetBackgroundColor();
                     UpdateDisplayColorPreview(backgroundColor);
+
+                    // Load display visibility settings
+                    ShowPerformanceChartCheckBox.IsChecked = displayConfigHelper.GetShowPerformanceChart();
+                    ShowAiRecommendationCheckBox.IsChecked = displayConfigHelper.GetShowAiRecommendation();
                 }
                 else
                 {
                     UpdateDisplayColorPreview("#1a1a1a");
+                    ShowPerformanceChartCheckBox.IsChecked = true;
+                    ShowAiRecommendationCheckBox.IsChecked = true;
                 }
                 
                 // Update sync status
-                SyncStatusTextBlock.Text = config.SyncEnabled ? "فعال" : "غیرفعال";
+                SyncStatusTextBlock.Text = config.SyncEnabled ? "On" : "Off";
                 SyncStatusTextBlock.Foreground = config.SyncEnabled ? Brushes.Green : Brushes.Red;
                 
                 // Update last update time
@@ -6139,13 +5753,13 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    ReportFilesListBox.ItemsSource = new List<string> { "پوشه گزارش‌ها یافت نشد" };
+                    ReportFilesListBox.ItemsSource = new List<string> { "Reports folder not found" };
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating report files list");
-                ReportFilesListBox.ItemsSource = new List<string> { "خطا در بارگذاری فایل‌ها" };
+                ReportFilesListBox.ItemsSource = new List<string> { "Error loading files" };
             }
         }
 
@@ -6178,7 +5792,7 @@ namespace ManagementApp.Views
                         }
                         catch
                         {
-                            logContent.AppendLine("خطا در خواندن فایل لاگ");
+                            logContent.AppendLine("Error reading log file");
                         }
                         logContent.AppendLine();
                     }
@@ -6187,13 +5801,13 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    SystemLogsTextBlock.Text = "پوشه لاگ‌ها یافت نشد";
+                    SystemLogsTextBlock.Text = "Logs folder not found";
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating system logs");
-                SystemLogsTextBlock.Text = $"خطا در بارگذاری لاگ‌ها: {ex.Message}";
+                SystemLogsTextBlock.Text = $"Error loading logs: {ex.Message}";
             }
         }
 
@@ -6348,12 +5962,12 @@ namespace ManagementApp.Views
             string statusText = $"{status.StatusText} ({status.Percentage:F1}%)";
             if (status.IsAhead)
             {
-                statusText += $" - {status.Difference} جعبه جلوتر";
+                statusText += $" - {status.Difference} boxes ahead";
                 DailyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
             }
             else if (status.IsBehind)
             {
-                statusText += $" - {Math.Abs(status.Difference)} جعبه عقب‌تر";
+                statusText += $" - {Math.Abs(status.Difference)} boxes behind";
                 DailyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Red);
             }
             else
@@ -6376,7 +5990,7 @@ namespace ManagementApp.Views
                 
                 if (string.IsNullOrEmpty(groupId))
                 {
-                    MessageBox.Show("لطفاً یک گروه شیفت را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a shift group", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
                 
@@ -6391,7 +6005,7 @@ namespace ManagementApp.Views
                 
                 if (!int.TryParse(DailyProgressBoxesTextBox.Text, out int completedBoxes) || completedBoxes < 0)
                 {
-                    MessageBox.Show("لطفاً تعداد جعبه‌های تکمیل شده را به صورت عدد صحیح غیرمنفی وارد کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please enter a non-negative integer for completed boxes", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
                 
@@ -6400,17 +6014,17 @@ namespace ManagementApp.Views
                 {
                     LoadDailyProgress();
                     LoadWeeklyProgress();
-                    UpdateStatus($"پیشرفت روزانه ثبت شد: {completedBoxes} جعبه");
+                    UpdateStatus($"Daily progress recorded: {completedBoxes} boxes");
                 }
                 else
                 {
-                    MessageBox.Show("خطا در ثبت پیشرفت روزانه", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error recording daily progress", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error recording daily progress");
-                MessageBox.Show($"خطا در ثبت پیشرفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error recording progress: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -6453,7 +6067,7 @@ namespace ManagementApp.Views
                 var weeklyStatus = _controller.GetWeeklyProgressStatus(groupId, shiftType, weekStartDate);
                 
                 // Update UI
-                WeeklyProgressWeekStartTextBlock.Text = Shared.Utils.ShamsiDateHelper.FormatForDisplay(weekStartDate);
+                WeeklyProgressWeekStartTextBlock.Text = Shared.Utils.GeorgianDateHelper.FormatShamsiAsGeorgianForDisplay(weekStartDate);
                 WeeklyProgressTotalCompletedTextBlock.Text = weeklyStatus.TotalCompleted.ToString();
                 WeeklyProgressPercentageTextBlock.Text = weeklyStatus.Percentage.ToString("F1");
                 WeeklyProgressDifferenceTextBlock.Text = weeklyStatus.Difference >= 0 ? $"+{weeklyStatus.Difference}" : weeklyStatus.Difference.ToString();
@@ -6461,12 +6075,12 @@ namespace ManagementApp.Views
                 string statusText = $"{weeklyStatus.StatusText} ({weeklyStatus.Percentage:F1}%)";
                 if (weeklyStatus.IsAhead)
                 {
-                    statusText += $" - {weeklyStatus.Difference} جعبه جلوتر";
+                    statusText += $" - {weeklyStatus.Difference} boxes ahead";
                     WeeklyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Green);
                 }
                 else if (weeklyStatus.IsBehind)
                 {
-                    statusText += $" - {Math.Abs(weeklyStatus.Difference)} جعبه عقب‌تر";
+                    statusText += $" - {Math.Abs(weeklyStatus.Difference)} boxes behind";
                     WeeklyProgressStatusTextBlock.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Red);
                 }
                 else
@@ -6479,13 +6093,13 @@ namespace ManagementApp.Views
                 // Populate daily breakdown DataGrid
                 var dailyBreakdown = weeklyStatus.DailyProgress.Select(p => new
                 {
-                    Date = Shared.Utils.ShamsiDateHelper.FormatForDisplay(p.Date),
+                    Date = Shared.Utils.GeorgianDateHelper.FormatShamsiAsGeorgianForDisplay(p.Date),
                     CompletedBoxes = p.CompletedBoxes,
                     DailyTarget = p.DailyTarget,
                     Percentage = p.DailyTarget > 0 ? Math.Round((p.CompletedBoxes / (double)p.DailyTarget * 100), 1) : 0,
-                    StatusText = p.CompletedBoxes > p.DailyTarget ? "در حال پیشرفت" : 
-                                (p.CompletedBoxes < p.DailyTarget ? "عقب افتاده" : "در مسیر"),
-                    DateDisplay = Shared.Utils.ShamsiDateHelper.FormatForDisplay(p.Date)
+                    StatusText = p.CompletedBoxes > p.DailyTarget ? "Ahead" : 
+                                (p.CompletedBoxes < p.DailyTarget ? "Behind" : "On track"),
+                    DateDisplay = Shared.Utils.GeorgianDateHelper.FormatShamsiAsGeorgianForDisplay(p.Date)
                 }).ToList();
                 
                 WeeklyProgressDataGrid.ItemsSource = dailyBreakdown;
@@ -6493,6 +6107,46 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading weekly progress");
+            }
+
+        }
+
+        private void LoadShiftSlots()
+        {
+            LoadShiftGroups();
+        }
+
+        /// <summary>Public for controls (e.g. ShiftGroupControl) to refresh shift view after label assign/remove.</summary>
+        public void RefreshShiftSlots()
+        {
+            LoadShiftSlots();
+            UpdateShiftStatistics();
+        }
+
+        private void UpdateShiftStatistics()
+        {
+            UpdateDailyPreview();
+        }
+
+        private void ShiftGroupComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (ShiftGroupComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string groupId && ShiftGroupsItemsControl != null && ShiftGroups != null)
+                {
+                    if (groupId == "all")
+                    {
+                        ShiftGroupsItemsControl.ItemsSource = ShiftGroups;
+                    }
+                    else
+                    {
+                        ShiftGroupsItemsControl.ItemsSource = ShiftGroups.Where(g => g.GroupId == groupId).ToList();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in ShiftGroupComboBox_SelectionChanged");
             }
         }
     }

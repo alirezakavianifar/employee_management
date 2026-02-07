@@ -29,24 +29,24 @@
                  BorderThickness="0"
                  Background="Transparent">
             <!-- Management Category -->
-            <TreeViewItem Header="📁 مدیریت" IsExpanded="True">
-                <TreeViewItem Header="👥 کارمندان" Tag="Employees" x:Name="EmployeesItem"/>
-                <TreeViewItem Header="🕐 شیفت‌ها" Tag="Shifts" x:Name="ShiftsItem"/>
-                <TreeViewItem Header="✅ وظایف" Tag="Tasks" x:Name="TasksItem"/>
+            <TreeViewItem Header="📁 Management" IsExpanded="True">
+                <TreeViewItem Header="👥 Employees" Tag="Employees" x:Name="EmployeesItem"/>
+                <TreeViewItem Header="🕐 Shifts" Tag="Shifts" x:Name="ShiftsItem"/>
+                <TreeViewItem Header="✅ Tasks" Tag="Tasks" x:Name="TasksItem"/>
             </TreeViewItem>
             
             <!-- Reports Category -->
-            <TreeViewItem Header="📊 گزارش‌گیری" IsExpanded="True">
-                <TreeViewItem Header="📈 تولید گزارش" Tag="Reports" x:Name="ReportsItem"/>
+            <TreeViewItem Header="📊 Reports" IsExpanded="True">
+                <TreeViewItem Header="📈 Generate report" Tag="Reports" x:Name="ReportsItem"/>
             </TreeViewItem>
             
             <!-- Settings Category -->
-            <TreeViewItem Header="⚙️ تنظیمات" IsExpanded="True">
-                <TreeViewItem Header="📂 داده و ذخیره‌سازی" Tag="Settings_DataStorage" x:Name="SettingsDataStorageItem"/>
-                <TreeViewItem Header="🕐 تنظیمات شیفت" Tag="Settings_ShiftConfig" x:Name="SettingsShiftConfigItem"/>
-                <TreeViewItem Header="🔄 همگام‌سازی" Tag="Settings_Sync" x:Name="SettingsSyncItem"/>
-                <TreeViewItem Header="🎨 ظاهر و نمایش" Tag="Settings_Appearance" x:Name="SettingsAppearanceItem"/>
-                <TreeViewItem Header="ℹ️ اطلاعات سیستم" Tag="Settings_SystemInfo" x:Name="SettingsSystemInfoItem"/>
+            <TreeViewItem Header="⚙️ Settings" IsExpanded="True">
+                <TreeViewItem Header="📂 Data &amp; storage" Tag="Settings_DataStorage" x:Name="SettingsDataStorageItem"/>
+                <TreeViewItem Header="🕐 Shift settings" Tag="Settings_ShiftConfig" x:Name="SettingsShiftConfigItem"/>
+                <TreeViewItem Header="🔄 Sync" Tag="Settings_Sync" x:Name="SettingsSyncItem"/>
+                <TreeViewItem Header="🎨 Appearance" Tag="Settings_Appearance" x:Name="SettingsAppearanceItem"/>
+                <TreeViewItem Header="ℹ️ System info" Tag="Settings_SystemInfo" x:Name="SettingsSystemInfoItem"/>
             </TreeViewItem>
         </TreeView>
     </Border>

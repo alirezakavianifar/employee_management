@@ -319,14 +319,14 @@ namespace Shared.Utils
                 // Check if path is empty or null
                 if (string.IsNullOrWhiteSpace(path))
                 {
-                    errorMessage = "مسیر پوشه نمی‌تواند خالی باشد";
+                    errorMessage = "Folder path cannot be empty";
                     return false;
                 }
 
                 // Check if path is too long
                 if (path.Length > 260)
                 {
-                    errorMessage = "مسیر پوشه خیلی طولانی است (حداکثر 260 کاراکتر)";
+                    errorMessage = "Folder path is too long (maximum 260 characters)";
                     return false;
                 }
 
@@ -334,7 +334,7 @@ namespace Shared.Utils
                 var invalidChars = Path.GetInvalidPathChars();
                 if (path.IndexOfAny(invalidChars) >= 0)
                 {
-                    errorMessage = "مسیر پوشه شامل کاراکترهای نامعتبر است";
+                    errorMessage = "Folder path contains invalid characters";
                     return false;
                 }
 
@@ -344,7 +344,7 @@ namespace Shared.Utils
                 // Check if it's a valid directory path (not a file)
                 if (File.Exists(fullPath))
                 {
-                    errorMessage = "مسیر انتخاب شده یک فایل است، نه پوشه";
+                    errorMessage = "The selected path is a file, not a folder";
                     return false;
                 }
 
@@ -354,7 +354,7 @@ namespace Shared.Utils
                     var parentDir = Path.GetDirectoryName(fullPath);
                     if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
                     {
-                        errorMessage = "پوشه والد وجود ندارد";
+                        errorMessage = "Parent folder does not exist";
                         return false;
                     }
                 }
@@ -378,12 +378,12 @@ namespace Shared.Utils
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    errorMessage = "دسترسی نوشتن به این پوشه وجود ندارد";
+                    errorMessage = "Write access to this folder is not available";
                     return false;
                 }
                 catch (Exception)
                 {
-                    errorMessage = "خطا در بررسی دسترسی‌ها";
+                    errorMessage = "Error checking permissions";
                     return false;
                 }
 
@@ -391,7 +391,7 @@ namespace Shared.Utils
             }
             catch (Exception ex)
             {
-                errorMessage = $"خطا در اعتبارسنجی مسیر: {ex.Message}";
+                errorMessage = $"Error validating path: {ex.Message}";
                 return false;
             }
         }

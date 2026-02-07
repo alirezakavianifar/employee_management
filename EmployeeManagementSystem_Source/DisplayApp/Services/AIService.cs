@@ -54,7 +54,7 @@ namespace DisplayApp.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating AI recommendation");
-                return "خطا در تحلیل داده‌ها";
+                return "Error analyzing data";
             }
         }
 
@@ -74,28 +74,28 @@ namespace DisplayApp.Services
                 if (employeeCount == 0 && totalAbsences > 0)
                 {
                     _logger.LogWarning("Data inconsistency detected: No employees but {AbsenceCount} absences exist", totalAbsences);
-                    return "خطا در داده‌ها: وجود غیبت بدون کارمند";
+                    return "Data error: Absence exists without employees";
                 }
 
                 // Edge Case 2: No employees but has tasks
                 if (employeeCount == 0 && taskCount > 0)
                 {
                     _logger.LogInformation("No employees but {TaskCount} tasks exist - recommending hiring", taskCount);
-                    return "هیچ کارمندی در سیستم وجود ندارد. برای انجام کارها استخدام نیرو ضروری است";
+                    return "No employees in system. Hiring is necessary to perform tasks";
                 }
 
                 // Edge Case 3: No employees and no tasks (empty system)
                 if (employeeCount == 0 && taskCount == 0)
                 {
                     _logger.LogInformation("Empty system detected - no employees or tasks");
-                    return "سیستم خالی است. افزودن کارمند و تعریف کار توصیه می‌شود";
+                    return "System is empty. Adding employees and defining tasks is recommended";
                 }
 
                 // Edge Case 4: Has employees but no tasks
                 if (employeeCount > 0 && taskCount == 0)
                 {
                     _logger.LogInformation("Has {EmployeeCount} employees but no tasks", employeeCount);
-                    return "کارمندان موجود هستند اما کاری تعریف نشده. ایجاد کار یا بررسی بهره‌وری توصیه می‌شود";
+                    return "Employees exist but no tasks defined. Creating tasks or checking productivity is recommended";
                 }
 
                 // Edge Case 5: Critical absence rate (all or most employees absent)
@@ -105,7 +105,7 @@ namespace DisplayApp.Services
                     if (absenceRate >= 0.8) // 80% or more absent
                     {
                         _logger.LogWarning("Critical absence rate: {AbsenceRate:P} of employees absent", absenceRate);
-                        return "وضعیت بحرانی: بیش از ۸۰٪ کارمندان غایب هستند";
+                        return "Critical: Over 80% of employees are absent";
                     }
                 }
 
@@ -114,7 +114,7 @@ namespace DisplayApp.Services
                 if (assignedEmployeeCount > 0 && employeeCount == 0)
                 {
                     _logger.LogWarning("Data corruption detected: {AssignedCount} employees assigned to shifts but no employees in system", assignedEmployeeCount);
-                    return "خطا در داده‌ها: کارمندان در شیفت‌ها تعریف شده‌اند اما در سیستم وجود ندارند";
+                    return "Data error: Employees assigned to shifts but do not exist in system";
                 }
 
                 return string.Empty; // No critical edge cases detected
@@ -155,9 +155,9 @@ namespace DisplayApp.Services
         {
             if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
             {
-                var leaveCount = GetAbsenceCount(absences, "مرخصی");
-                var sickCount = GetAbsenceCount(absences, "بیمار");
-                var absentCount = GetAbsenceCount(absences, "غایب");
+                var leaveCount = GetAbsenceCount(absences, "Leave");
+                var sickCount = GetAbsenceCount(absences, "Sick");
+                var absentCount = GetAbsenceCount(absences, "Absent");
                 return leaveCount + sickCount + absentCount;
             }
             return 0;
@@ -204,13 +204,13 @@ namespace DisplayApp.Services
                     {
                         _logger.LogWarning("Data inconsistency: {AssignedCount} employees assigned to shifts but only {EmployeeCount} employees exist", 
                             totalAssigned, employeeCount);
-                        return "خطا در داده‌ها: تعداد کارمندان تعریف شده در شیفت‌ها بیشتر از کل کارمندان است";
+                        return "Data error: Number of employees in shifts exceeds total employee count";
                     }
 
                     // Check if capacity is overutilized (more than 115% capacity)
                     if (totalAssigned > totalCapacity * 1.15)
                     {
-                        return "اضافه کاری باید برنامه ریزی شود";
+                        return "Overtime should be planned";
                     }
 
                     // Check if capacity is underutilized (less than 70% capacity)
@@ -221,11 +221,11 @@ namespace DisplayApp.Services
                         
                         if (availableSlots >= 3 && unassignedEmployees > 0)
                         {
-                            return "تا ۳ نفر می‌توانند به مرخصی بروند";
+                            return "Up to 3 people can take leave";
                         }
                         else if (unassignedEmployees > 0)
                         {
-                            return "کارمندان تعریف نشده در شیفت‌ها وجود دارند";
+                            return "There are unassigned employees in shifts";
                         }
                     }
 
@@ -235,14 +235,14 @@ namespace DisplayApp.Services
                         var availableSlots = totalCapacity - totalAssigned;
                         if (availableSlots >= 2)
                         {
-                            return "ظرفیت شیفت‌ها برای استخدام نیروی اضافی موجود است";
+                            return "Shift capacity available for hiring additional staff";
                         }
                     }
 
                     // Optimal capacity utilization
                     if (totalAssigned >= totalCapacity * 0.7 && totalAssigned <= totalCapacity * 1.0)
                     {
-                        return "ظرفیت شیفت‌ها بهینه استفاده می‌شود";
+                        return "Shift capacity is optimally utilized";
                     }
                 }
 
@@ -269,9 +269,9 @@ namespace DisplayApp.Services
 
                 if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
                 {
-                    var leaveCount = GetAbsenceCount(absences, "مرخصی");
-                    var sickCount = GetAbsenceCount(absences, "بیمار");
-                    var absentCount = GetAbsenceCount(absences, "غایب");
+                    var leaveCount = GetAbsenceCount(absences, "Leave");
+                    var sickCount = GetAbsenceCount(absences, "Sick");
+                    var absentCount = GetAbsenceCount(absences, "Absent");
                     var totalAbsences = leaveCount + sickCount + absentCount;
 
                     // Calculate absence rate relative to employee count
@@ -285,34 +285,34 @@ namespace DisplayApp.Services
                     {
                         if (sickCount > leaveCount && sickCount > absentCount)
                         {
-                            return "نرخ بیماری بالا است. بررسی شرایط محیط کار توصیه می‌شود";
+                            return "Sick leave rate is high. Checking workspace conditions is recommended";
                         }
                         else if (absentCount > leaveCount && absentCount > sickCount)
                         {
-                            return "نرخ غیبت غیرمجاز بالا است. بررسی انضباط کارکنان ضروری است";
+                            return "Unauthorized absence rate is high. Employee discipline review is necessary";
                         }
                         else
                         {
-                            return "نرخ غیبت بالا است. بررسی علل و راه‌حل‌ها ضروری است";
+                            return "Absence rate is high. Root cause analysis is necessary";
                         }
                     }
 
                     // Moderate absence rate (20-50% of employees absent)
                     if (absenceRate > 0.2)
                     {
-                        return "نرخ غیبت متوسط است. نظارت بیشتر توصیه می‌شود";
+                        return "Absence rate is moderate. More supervision is recommended";
                     }
 
                     // Low absence rate (less than 20% of employees absent)
                     if (totalAbsences > 0 && absenceRate <= 0.2)
                     {
-                        return "وضعیت حضور کارکنان مطلوب است";
+                        return "Employee attendance is satisfactory";
                     }
 
                     // Very low or no absences
                     if (totalAbsences == 0)
                     {
-                        return "وضعیت حضور کارکنان عالی است";
+                        return "Employee attendance is excellent";
                     }
                 }
 
@@ -359,13 +359,13 @@ namespace DisplayApp.Services
                                         var status = statusObj.ToString();
                                         switch (status)
                                         {
-                                            case "تکمیل شده":
+                                            case "Completed":
                                                 completedTasks++;
                                                 break;
-                                            case "در حال انجام":
+                                            case "InProgress":
                                                 inProgressTasks++;
                                                 break;
-                                            case "در انتظار":
+                                            case "Pending":
                                                 pendingTasks++;
                                                 break;
                                         }
@@ -398,13 +398,13 @@ namespace DisplayApp.Services
                                         var status = statusObj.ToString();
                                         switch (status)
                                         {
-                                            case "تکمیل شده":
+                                            case "Completed":
                                                 completedTasks++;
                                                 break;
-                                            case "در حال انجام":
+                                            case "InProgress":
                                                 inProgressTasks++;
                                                 break;
-                                            case "در انتظار":
+                                            case "Pending":
                                                 pendingTasks++;
                                                 break;
                                         }
@@ -429,15 +429,15 @@ namespace DisplayApp.Services
                     {
                         if (employeeCount == 0)
                         {
-                            return "بار کاری بالا است. استخدام نیروی اضافی توصیه می‌شود";
+                            return "Workload is high. Hiring additional staff is recommended";
                         }
                         else if (taskToEmployeeRatio > 5) // More than 5 tasks per employee
                         {
-                            return "بار کاری بسیار بالا است. استخدام نیروی اضافی یا کاهش کارها ضروری است";
+                            return "Workload is very high. Hiring staff or reducing tasks is necessary";
                         }
                         else
                         {
-                            return "بار کاری بالا است. استخدام نیروی اضافی توصیه می‌شود";
+                            return "Workload is high. Hiring additional staff is recommended";
                         }
                     }
 
@@ -446,30 +446,30 @@ namespace DisplayApp.Services
                     {
                         if (completedTasks > totalTasks * 0.7) // More than 70% completed
                         {
-                            return "پیشرفت کارها عالی است";
+                            return "Work progress is excellent";
                         }
                         else
                         {
-                            return "پیشرفت کارها مطلوب است";
+                            return "Work progress is satisfactory";
                         }
                     }
 
                     // Many in-progress tasks
                     if (inProgressTasks > totalTasks * 0.6)
                     {
-                        return "تعداد زیادی کار در حال انجام است. اولویت‌بندی مجدد ضروری است";
+                        return "High number of tasks in progress. Reprioritization is necessary";
                     }
 
                     // Balanced workload
                     if (totalTasks > 0 && employeeCount > 0 && taskToEmployeeRatio <= 3)
                     {
-                        return "بار کاری متعادل است";
+                        return "Workload is balanced";
                     }
 
                     // Low task count relative to employees
                     if (totalTasks > 0 && employeeCount > 0 && taskToEmployeeRatio < 1)
                     {
-                        return "کارمندان آماده دریافت کارهای بیشتر هستند";
+                        return "Employees are ready to receive more tasks";
                     }
                 }
 
@@ -486,10 +486,10 @@ namespace DisplayApp.Services
         {
             var recommendations = new[]
             {
-                "وضعیت کلی سیستم مطلوب است",
-                "همه چیز طبق برنامه پیش می‌رود",
-                "عملکرد تیم در سطح قابل قبولی است",
-                "نیاز به بهبود خاصی مشاهده نمی‌شود"
+                "Overall system status is satisfactory",
+                "Everything is proceeding according to plan",
+                "Team performance is at an acceptable level",
+                "No specific improvements needed"
             };
 
             var random = new Random();
@@ -526,9 +526,10 @@ namespace DisplayApp.Services
         private int GetAbsenceCount(Dictionary<string, object> absences, string category)
         {
             if (absences.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
-            {
                 return categoryList.Count;
-            }
+            var legacyKey = category == "Leave" ? "Leave" : category == "Sick" ? "Sick" : "Absent";
+            if (absences.TryGetValue(legacyKey, out var legacyObj) && legacyObj is List<object> legacyList)
+                return legacyList.Count;
             return 0;
         }
 
@@ -555,9 +556,9 @@ namespace DisplayApp.Services
                 // Absence insights
                 if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
                 {
-                    var leaveCount = GetAbsenceCount(absences, "مرخصی");
-                    var sickCount = GetAbsenceCount(absences, "بیمار");
-                    var absentCount = GetAbsenceCount(absences, "غایب");
+                    var leaveCount = GetAbsenceCount(absences, "Leave");
+                    var sickCount = GetAbsenceCount(absences, "Sick");
+                    var absentCount = GetAbsenceCount(absences, "Absent");
                     var totalAbsences = leaveCount + sickCount + absentCount;
 
                     insights["total_absences"] = totalAbsences;
@@ -593,13 +594,13 @@ namespace DisplayApp.Services
                                         var status = statusObj.ToString();
                                         switch (status)
                                         {
-                                            case "تکمیل شده":
+                                            case "Completed":
                                                 completedTasks++;
                                                 break;
-                                            case "در حال انجام":
+                                            case "InProgress":
                                                 inProgressTasks++;
                                                 break;
-                                            case "در انتظار":
+                                            case "Pending":
                                                 pendingTasks++;
                                                 break;
                                         }
@@ -632,13 +633,13 @@ namespace DisplayApp.Services
                                         var status = statusObj.ToString();
                                         switch (status)
                                         {
-                                            case "تکمیل شده":
+                                            case "Completed":
                                                 completedTasks++;
                                                 break;
-                                            case "در حال انجام":
+                                            case "InProgress":
                                                 inProgressTasks++;
                                                 break;
-                                            case "در انتظار":
+                                            case "Pending":
                                                 pendingTasks++;
                                                 break;
                                         }

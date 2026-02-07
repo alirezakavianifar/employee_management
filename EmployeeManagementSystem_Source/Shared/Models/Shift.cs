@@ -7,9 +7,10 @@ namespace Shared.Models
 {
     public class Shift
     {
-        public string ShiftType { get; set; } = string.Empty; // "morning" or "evening"
+        public string ShiftType { get; set; } = string.Empty; // "morning", "afternoon", or "night"
         public int Capacity { get; set; } = 15;
         public List<Employee?> AssignedEmployees { get; set; } = new();
+        public List<string?> StatusCardIds { get; set; } = new();  // Status card ID per slot (null = no status card)
         public string TeamLeaderId { get; set; } = string.Empty; // Foreman/Team Leader ID
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -18,6 +19,7 @@ namespace Shared.Models
         {
             Capacity = 15;
             AssignedEmployees = new List<Employee?>(new Employee?[Capacity]);
+            StatusCardIds = new List<string?>(new string?[Capacity]);
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }
@@ -27,6 +29,7 @@ namespace Shared.Models
             ShiftType = shiftType;
             Capacity = capacity;
             AssignedEmployees = new List<Employee?>(new Employee?[capacity]);
+            StatusCardIds = new List<string?>(new string?[capacity]);
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }
@@ -40,8 +43,10 @@ namespace Shared.Models
         [JsonIgnore]
         public string DisplayName => ShiftType switch
         {
-            "morning" => "صبح",
-            "evening" => "عصر",
+            "morning" => "Morning",
+            "afternoon" => "Afternoon",
+            "evening" => "Afternoon", // Legacy support - map to afternoon
+            "night" => "Night",
             _ => ShiftType
         };
 
@@ -53,11 +58,23 @@ namespace Shared.Models
                 AssignedEmployees = new List<Employee?>(new Employee?[Capacity]);
             }
             
+            // Ensure StatusCardIds is properly initialized
+            EnsureStatusCardIdsInitialized();
+            
             if (slotIndex < 0 || slotIndex >= Capacity)
                 return false;
 
+            // Check if slot has a status card - if so, clear it first (employee takes priority)
+            if (IsSlotOccupiedByStatusCard(slotIndex))
+            {
+                ClearStatusCardFromSlot(slotIndex);
+            }
+
+            // If slot is occupied, clear it first (replace)
             if (AssignedEmployees[slotIndex] != null)
-                return false;
+            {
+                ClearSlot(slotIndex);
+            }
 
             // Remove employee from other slots first
             RemoveEmployee(employee);
@@ -83,16 +100,28 @@ namespace Shared.Models
 
         public bool ClearSlot(int slotIndex)
         {
+            bool cleared = false;
             if (slotIndex >= 0 && slotIndex < AssignedEmployees.Count)
             {
                 if (AssignedEmployees[slotIndex] != null)
                 {
                     AssignedEmployees[slotIndex] = null;
-                    UpdatedAt = DateTime.Now;
-                    return true;
+                    cleared = true;
                 }
             }
-            return false;
+            
+            // Also clear status card if present
+            EnsureStatusCardIdsInitialized();
+            if (slotIndex >= 0 && slotIndex < StatusCardIds.Count && StatusCardIds[slotIndex] != null)
+            {
+                StatusCardIds[slotIndex] = null;
+                cleared = true;
+            }
+            
+            if (cleared)
+                UpdatedAt = DateTime.Now;
+            
+            return cleared;
         }
 
         public bool AddEmployee(Employee employee)
@@ -185,22 +214,120 @@ namespace Shared.Models
             if (newCapacity > Capacity)
             {
                 // Expand: add null slots
-                var newList = AssignedEmployees.ToList();
+                var newEmployeeList = AssignedEmployees.ToList();
+                var newStatusCardList = StatusCardIds?.ToList() ?? new List<string?>();
                 for (int i = Capacity; i < newCapacity; i++)
                 {
-                    newList.Add(null);
+                    newEmployeeList.Add(null);
+                    newStatusCardList.Add(null);
                 }
-                AssignedEmployees = newList;
+                AssignedEmployees = newEmployeeList;
+                StatusCardIds = newStatusCardList;
             }
             else
             {
                 // Shrink: remove excess employees and slots
                 AssignedEmployees = AssignedEmployees.Take(newCapacity).ToList();
+                if (StatusCardIds != null)
+                    StatusCardIds = StatusCardIds.Take(newCapacity).ToList();
             }
 
             Capacity = newCapacity;
             UpdatedAt = DateTime.Now;
         }
+
+        #region Status Card Methods
+
+        /// <summary>
+        /// Ensures StatusCardIds list is properly initialized with the correct capacity.
+        /// </summary>
+        private void EnsureStatusCardIdsInitialized()
+        {
+            if (StatusCardIds == null)
+            {
+                StatusCardIds = new List<string?>(new string?[Capacity]);
+            }
+            else if (StatusCardIds.Count < Capacity)
+            {
+                // Expand to match capacity
+                while (StatusCardIds.Count < Capacity)
+                {
+                    StatusCardIds.Add(null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Assigns a status card to a specific slot. Clears any existing employee in that slot.
+        /// </summary>
+        public bool AssignStatusCardToSlot(string statusCardId, int slotIndex)
+        {
+            if (string.IsNullOrEmpty(statusCardId))
+                return false;
+
+            if (slotIndex < 0 || slotIndex >= Capacity)
+                return false;
+
+            EnsureStatusCardIdsInitialized();
+
+            // Clear any existing employee in this slot
+            if (AssignedEmployees != null && slotIndex < AssignedEmployees.Count && AssignedEmployees[slotIndex] != null)
+            {
+                AssignedEmployees[slotIndex] = null;
+            }
+
+            StatusCardIds[slotIndex] = statusCardId;
+            UpdatedAt = DateTime.Now;
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the status card ID at a specific slot, or null if no status card is assigned.
+        /// </summary>
+        public string? GetStatusCardAtSlot(int slotIndex)
+        {
+            EnsureStatusCardIdsInitialized();
+            
+            if (slotIndex >= 0 && slotIndex < StatusCardIds.Count)
+                return StatusCardIds[slotIndex];
+            return null;
+        }
+
+        /// <summary>
+        /// Removes the status card from a specific slot.
+        /// </summary>
+        public bool ClearStatusCardFromSlot(int slotIndex)
+        {
+            EnsureStatusCardIdsInitialized();
+            
+            if (slotIndex >= 0 && slotIndex < StatusCardIds.Count && StatusCardIds[slotIndex] != null)
+            {
+                StatusCardIds[slotIndex] = null;
+                UpdatedAt = DateTime.Now;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if a slot is occupied by a status card.
+        /// </summary>
+        public bool IsSlotOccupiedByStatusCard(int slotIndex)
+        {
+            EnsureStatusCardIdsInitialized();
+            return slotIndex >= 0 && slotIndex < StatusCardIds.Count && !string.IsNullOrEmpty(StatusCardIds[slotIndex]);
+        }
+
+        /// <summary>
+        /// Gets the count of slots with status cards assigned.
+        /// </summary>
+        public int GetStatusCardCount()
+        {
+            EnsureStatusCardIdsInitialized();
+            return StatusCardIds.Count(id => !string.IsNullOrEmpty(id));
+        }
+
+        #endregion
 
         public void SetTeamLeader(string employeeId)
         {
@@ -251,6 +378,16 @@ namespace Shared.Models
 
                     // Restore team leader ID
                     shift.TeamLeaderId = shiftData.TeamLeaderId ?? string.Empty;
+
+                    // Restore status card IDs (migration: if not present, use empty list)
+                    if (shiftData.StatusCardIds != null && shiftData.StatusCardIds.Count > 0)
+                    {
+                        shift.StatusCardIds = new List<string?>(new string?[shift.Capacity]);
+                        for (int i = 0; i < shiftData.StatusCardIds.Count && i < shift.Capacity; i++)
+                        {
+                            shift.StatusCardIds[i] = shiftData.StatusCardIds[i];
+                        }
+                    }
 
                     shift.CreatedAt = shiftData.CreatedAt;
                     shift.UpdatedAt = shiftData.UpdatedAt;
@@ -333,11 +470,13 @@ namespace Shared.Models
 
         public string ToJson()
         {
+            EnsureStatusCardIdsInitialized();
             var shiftData = new ShiftData
             {
                 ShiftType = ShiftType,
                 Capacity = Capacity,
                 AssignedEmployeeIds = AssignedEmployees.Select(emp => emp?.EmployeeId).ToList(),
+                StatusCardIds = StatusCardIds.ToList(),
                 TeamLeaderId = TeamLeaderId,
                 CreatedAt = CreatedAt,
                 UpdatedAt = UpdatedAt
@@ -350,6 +489,7 @@ namespace Shared.Models
             public string ShiftType { get; set; } = string.Empty;
             public int Capacity { get; set; }
             public List<string?> AssignedEmployeeIds { get; set; } = new();
+            public List<string?> StatusCardIds { get; set; } = new();  // Status card IDs per slot
             public string TeamLeaderId { get; set; } = string.Empty;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
@@ -359,21 +499,24 @@ namespace Shared.Models
     public class ShiftManager
     {
         public Shift MorningShift { get; set; }
-        public Shift EveningShift { get; set; }
-        public int Capacity { get; set; } = 15; // Changed default from 5 to 15
+        public Shift AfternoonShift { get; set; }
+        public Shift NightShift { get; set; }
+        public int Capacity { get; set; } = 15;
 
         public ShiftManager()
         {
-            Capacity = 15; // Changed default from 5 to 15
+            Capacity = 15;
             MorningShift = new Shift("morning", Capacity);
-            EveningShift = new Shift("evening", Capacity);
+            AfternoonShift = new Shift("afternoon", Capacity);
+            NightShift = new Shift("night", Capacity);
         }
 
         public ShiftManager(int capacity = 15)
         {
             Capacity = capacity;
             MorningShift = new Shift("morning", capacity);
-            EveningShift = new Shift("evening", capacity);
+            AfternoonShift = new Shift("afternoon", capacity);
+            NightShift = new Shift("night", capacity);
         }
 
         public void SetCapacity(int newCapacity)
@@ -381,7 +524,8 @@ namespace Shared.Models
             var oldCapacity = Capacity;
             Capacity = newCapacity;
             MorningShift.SetCapacity(newCapacity);
-            EveningShift.SetCapacity(newCapacity);
+            AfternoonShift.SetCapacity(newCapacity);
+            NightShift.SetCapacity(newCapacity);
             
             // Log capacity changes for debugging
             System.Diagnostics.Debug.WriteLine($"ShiftManager.SetCapacity: Changed from {oldCapacity} to {newCapacity}");
@@ -392,7 +536,9 @@ namespace Shared.Models
             return shiftType switch
             {
                 "morning" => MorningShift,
-                "evening" => EveningShift,
+                "afternoon" => AfternoonShift,
+                "evening" => AfternoonShift, // Legacy support
+                "night" => NightShift,
                 _ => null
             };
         }
@@ -447,8 +593,10 @@ namespace Shared.Models
             var shifts = new List<string>();
             if (MorningShift.IsEmployeeAssigned(employee))
                 shifts.Add("morning");
-            if (EveningShift.IsEmployeeAssigned(employee))
-                shifts.Add("evening");
+            if (AfternoonShift.IsEmployeeAssigned(employee))
+                shifts.Add("afternoon");
+            if (NightShift.IsEmployeeAssigned(employee))
+                shifts.Add("night");
             return shifts;
         }
 
@@ -460,7 +608,7 @@ namespace Shared.Models
 
         public override string ToString()
         {
-            return $"ShiftManager(Morning: {MorningShift}, Evening: {EveningShift})";
+            return $"ShiftManager(Morning: {MorningShift}, Afternoon: {AfternoonShift}, Night: {NightShift})";
         }
 
         public static ShiftManager FromJson(string json, Dictionary<string, Employee> employeesDict)
@@ -476,8 +624,17 @@ namespace Shared.Models
                     if (managerData.MorningShift != null)
                         manager.MorningShift = Shift.FromJson(managerData.MorningShift, employeesDict);
                     
-                    if (managerData.EveningShift != null)
-                        manager.EveningShift = Shift.FromJson(managerData.EveningShift, employeesDict);
+                    // Migration: try AfternoonShift first, fallback to EveningShift
+                    if (managerData.AfternoonShift != null)
+                        manager.AfternoonShift = Shift.FromJson(managerData.AfternoonShift, employeesDict);
+                    else if (managerData.EveningShift != null)
+                    {
+                        manager.AfternoonShift = Shift.FromJson(managerData.EveningShift, employeesDict);
+                        manager.AfternoonShift.ShiftType = "afternoon"; // Update type
+                    }
+                    
+                    if (managerData.NightShift != null)
+                        manager.NightShift = Shift.FromJson(managerData.NightShift, employeesDict);
 
                     return manager;
                 }
@@ -504,14 +661,35 @@ namespace Shared.Models
                     }
                 }
                 
-                // Load evening shift
-                if (shiftsData.ContainsKey("evening"))
+                // Migration: Load afternoon shift (try afternoon first, fallback to evening)
+                if (shiftsData.ContainsKey("afternoon"))
+                {
+                    var afternoonData = shiftsData["afternoon"];
+                    if (afternoonData != null)
+                    {
+                        var afternoonJson = JsonConvert.SerializeObject(afternoonData);
+                        manager.AfternoonShift = Shift.FromJson(afternoonJson, employeesDict);
+                    }
+                }
+                else if (shiftsData.ContainsKey("evening"))
                 {
                     var eveningData = shiftsData["evening"];
                     if (eveningData != null)
                     {
                         var eveningJson = JsonConvert.SerializeObject(eveningData);
-                        manager.EveningShift = Shift.FromJson(eveningJson, employeesDict);
+                        manager.AfternoonShift = Shift.FromJson(eveningJson, employeesDict);
+                        manager.AfternoonShift.ShiftType = "afternoon"; // Migrate type
+                    }
+                }
+                
+                // Load night shift
+                if (shiftsData.ContainsKey("night"))
+                {
+                    var nightData = shiftsData["night"];
+                    if (nightData != null)
+                    {
+                        var nightJson = JsonConvert.SerializeObject(nightData);
+                        manager.NightShift = Shift.FromJson(nightJson, employeesDict);
                     }
                 }
                 
@@ -527,7 +705,8 @@ namespace Shared.Models
             var managerData = new ShiftManagerData
             {
                 MorningShift = MorningShift.ToJson(),
-                EveningShift = EveningShift.ToJson(),
+                AfternoonShift = AfternoonShift.ToJson(),
+                NightShift = NightShift.ToJson(),
                 Capacity = Capacity
             };
             return JsonConvert.SerializeObject(managerData, Formatting.Indented);
@@ -536,7 +715,9 @@ namespace Shared.Models
         private class ShiftManagerData
         {
             public string MorningShift { get; set; } = string.Empty;
-            public string EveningShift { get; set; } = string.Empty;
+            public string? AfternoonShift { get; set; } // Nullable for backward compatibility
+            public string? EveningShift { get; set; } // Legacy - for reading old data
+            public string? NightShift { get; set; } // Nullable for backward compatibility
             public int Capacity { get; set; }
         }
     }

@@ -40,9 +40,9 @@ namespace DisplayApp.Converters
             {
                 drawingContext.DrawRectangle(System.Windows.Media.Brushes.DarkGray, null, new System.Windows.Rect(0, 0, 35, 35));
                 drawingContext.DrawText(
-                    new System.Windows.Media.FormattedText("کارگر", 
+                    new System.Windows.Media.FormattedText("Worker", 
                         CultureInfo.CurrentCulture,
-                        System.Windows.FlowDirection.RightToLeft,
+                        System.Windows.FlowDirection.LeftToRight,
                         new System.Windows.Media.Typeface("Tahoma"),
                         6,
                         System.Windows.Media.Brushes.White,

@@ -88,7 +88,7 @@ namespace Shared.Models
         public int Target { get; set; }
         public double Percentage { get; set; }
         public int Difference { get; set; }
-        public string StatusText { get; set; } = string.Empty; // "در حال پیشرفت", "عقب افتاده", "در مسیر"
+        public string StatusText { get; set; } = string.Empty; // e.g. "In progress", "Behind", "On track"
         public bool IsAhead { get; set; }
         public bool IsBehind { get; set; }
         public bool IsOnTrack { get; set; }

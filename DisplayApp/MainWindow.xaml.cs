@@ -59,8 +59,9 @@ namespace DisplayApp
             _configFilePath = GetDisplayConfigPath();
             _configHelper = new Utils.ConfigHelper(_configFilePath);
             
-            // Load and apply background color from config
+            // Load and apply visual settings from config
             ApplyBackgroundColor();
+            ApplyVisibilitySettings();
             
             // Setup config file watcher
             SetupConfigWatcher();
@@ -96,32 +97,34 @@ namespace DisplayApp
 
         private string GetDisplayConfigPath()
         {
-            // Try multiple possible locations for the display config file
-            var possiblePaths = new[]
-            {
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "Config", "display_config.json"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DisplayApp", "Config", "display_config.json"),
-                Path.Combine(Directory.GetCurrentDirectory(), "DisplayApp", "Config", "display_config.json")
-            };
+            // Use the shared helper so both apps point to the same config
+            var canonicalPath = Shared.Utils.DisplayConfigPathHelper.GetDisplayConfigPath();
 
-            foreach (var path in possiblePaths)
+            // If the canonical file does not exist yet, try to migrate from any legacy locations
+            if (!File.Exists(canonicalPath))
             {
-                var fullPath = Path.GetFullPath(path);
-                if (File.Exists(fullPath))
+                foreach (var legacyPath in Shared.Utils.DisplayConfigPathHelper.GetLegacyCandidatePaths())
                 {
-                    _logger.LogInformation("Found display config at: {ConfigPath}", fullPath);
-                    return fullPath;
+                    var fullLegacyPath = Path.GetFullPath(legacyPath);
+                    if (File.Exists(fullLegacyPath))
+                    {
+                        try
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(canonicalPath)!);
+                            File.Copy(fullLegacyPath, canonicalPath, overwrite: true);
+                            _logger.LogInformation("Migrated display config from legacy path {LegacyPath} to {CanonicalPath}", fullLegacyPath, canonicalPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to migrate display config from legacy path {LegacyPath}", fullLegacyPath);
+                        }
+                        break;
+                    }
                 }
             }
-            
-            // If not found, return the most likely path (relative to executable)
-            var defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "display_config.json");
-            var defaultFullPath = Path.GetFullPath(defaultPath);
-            _logger.LogInformation("Using default display config path: {ConfigPath}", defaultFullPath);
-            return defaultFullPath;
+
+            _logger.LogInformation("Using display config path: {ConfigPath}", canonicalPath);
+            return canonicalPath;
         }
 
         private void ApplyBackgroundColor()
@@ -214,6 +217,7 @@ namespace DisplayApp
                         Dispatcher.Invoke(() =>
                         {
                             ApplyBackgroundColor();
+                            ApplyVisibilitySettings();
                         });
                         success = true;
                     }
@@ -235,6 +239,33 @@ namespace DisplayApp
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error reloading config file");
+            }
+        }
+
+        private void ApplyVisibilitySettings()
+        {
+            try
+            {
+                // Ensure we are working with the latest configuration
+                _configHelper.LoadConfig();
+
+                var showChart = _configHelper.GetShowPerformanceChart();
+                var showAi = _configHelper.GetShowAiRecommendation();
+
+                var chartVisibility = showChart ? Visibility.Visible : Visibility.Collapsed;
+                ChartTitle.Visibility = chartVisibility;
+                PerformanceChart.Visibility = chartVisibility;
+                ChartFormulaText.Visibility = chartVisibility;
+
+                var aiVisibility = showAi ? Visibility.Visible : Visibility.Collapsed;
+                AIRecommendationTitle.Visibility = aiVisibility;
+                AIRecommendation.Visibility = aiVisibility;
+
+                _logger.LogInformation("Applied visibility settings. Chart: {Chart}, AI: {Ai}", showChart, showAi);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying visibility settings");
             }
         }
 
@@ -275,7 +306,7 @@ namespace DisplayApp
             // Initialize with empty data - will be populated when real data loads
             SeriesCollection.Add(new LineSeries
             {
-                Title = "عملکرد",
+                Title = "Performance",
                 Values = new ChartValues<double> { 80.0 },
                 PointGeometry = DefaultGeometries.Circle,
                 PointGeometrySize = 8,
@@ -312,7 +343,7 @@ namespace DisplayApp
                     
                     UpdateUI(reportData);
                     _lastUpdateTime = DateTime.Now;
-                    LastUpdateText.Text = $"آخرین بروزرسانی: {_lastUpdateTime:HH:mm:ss}";
+                    LastUpdateText.Text = string.Format(ResourceManager.GetString("display_last_update", "Last update: {0}"), _lastUpdateTime.ToString("HH:mm:ss"));
                     // StatusText removed - no longer needed
                 }
                 else
@@ -325,7 +356,7 @@ namespace DisplayApp
             {
                 _logger.LogError(ex, "Error loading data");
                 // StatusText removed - no longer needed
-                ShowErrorDialog("خطا در بارگذاری داده‌ها", ex.Message);
+                ShowErrorDialog("Error loading data", ex.Message);
             }
         }
 
@@ -492,13 +523,15 @@ namespace DisplayApp
                 Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
-            if (managerData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
+            var managerPhotoPath = managerData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
+            var resolvedManagerPhoto = Employee.ResolvePhotoPath(managerPhotoPath);
+            if (!string.IsNullOrEmpty(resolvedManagerPhoto))
             {
                 try
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.UriSource = new Uri(resolvedManagerPhoto, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -515,6 +548,38 @@ namespace DisplayApp
             }
             
             photoContainer.Children.Add(image);
+
+            // Phone overlay at bottom of photo (inside image area)
+            var managerPhone = managerData.GetValueOrDefault("phone", "").ToString() ?? "";
+            var managerShowPhone = ParseShowPhone(managerData, true);
+            if (managerShowPhone && !string.IsNullOrWhiteSpace(managerPhone))
+            {
+                var phoneOverlay = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)), // semi-transparent black
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Padding = new Thickness(2, 0, 2, 1)
+                };
+
+                var phoneTextBlock = new TextBlock
+                {
+                    Text = managerPhone,
+                    Foreground = Brushes.White,
+                    FontSize = Math.Max(7, largeRectHeight * 0.10),
+                    FontWeight = FontWeights.SemiBold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+
+                phoneOverlay.Child = phoneTextBlock;
+                photoContainer.Children.Add(phoneOverlay);
+                Panel.SetZIndex(phoneOverlay, 80);
+            }
+
             Grid.SetRow(photoContainer, 0);
             badgeGrid.Children.Add(photoContainer);
             
@@ -573,9 +638,9 @@ namespace DisplayApp
             {
                 drawingContext.DrawRectangle(Brushes.Gray, null, new System.Windows.Rect(0, 0, 40, 40));
                 drawingContext.DrawText(
-                    new FormattedText("مدیر", 
+                    new FormattedText("Manager", 
                         System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.RightToLeft,
+                        FlowDirection.LeftToRight,
                         new Typeface("Tahoma"),
                         12,
                         Brushes.White,
@@ -663,15 +728,15 @@ namespace DisplayApp
             {
                 Style = Application.Current.FindResource("CardStyle") as Style,
                 Margin = new Thickness(5),
-                MinWidth = 400,
-                MaxWidth = 500
+                MinWidth = 200, // Reduced width since it's now vertical stack
+                MaxWidth = 250
             };
             
             var groupGrid = new Grid();
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             
-            // Group header with supervisor
+            // Group header: head worker (photo + name) above group number/name; team can exist without head worker
             var headerBorder = new Border
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 45)),
@@ -684,7 +749,67 @@ namespace DisplayApp
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             
-            // Group name
+            // 1) Head worker (supervisor) photo and name above group number
+            if (!string.IsNullOrEmpty(group.SupervisorName) || !string.IsNullOrEmpty(group.SupervisorPhotoPath))
+            {
+                var supervisorStack = new StackPanel
+                {
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, 0, 0, 4)
+                };
+                // Always show an image (photo or placeholder) when supervisor row is visible
+                var supervisorImage = new Image
+                {
+                    Width = 40,
+                    Height = 40,
+                    Stretch = Stretch.UniformToFill
+                };
+                var resolvedSupervisorPhoto = Employee.ResolvePhotoPath(group.SupervisorPhotoPath);
+                if (!string.IsNullOrEmpty(resolvedSupervisorPhoto))
+                {
+                    try
+                    {
+                        supervisorImage.Source = new BitmapImage(new Uri(resolvedSupervisorPhoto, UriKind.Absolute));
+                    }
+                    catch
+                    {
+                        supervisorImage.Source = CreateEmployeePlaceholderImage(40);
+                    }
+                }
+                else
+                {
+                    supervisorImage.Source = CreateEmployeePlaceholderImage(40);
+                }
+                supervisorStack.Children.Add(supervisorImage);
+                var supervisorText = new TextBlock
+                {
+                    Text = !string.IsNullOrEmpty(group.SupervisorName)
+                        ? string.Format(ResourceManager.GetString("display_supervisor", "Supervisor: {0}"), group.SupervisorName)
+                        : ResourceManager.GetString("display_no_supervisor", "No Supervisor"),
+                    Style = Application.Current.FindResource("BodyTextStyle") as Style,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    FontSize = 11,
+                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                    Margin = new Thickness(0, 2, 0, 0)
+                };
+                supervisorStack.Children.Add(supervisorText);
+                headerStackPanel.Children.Add(supervisorStack);
+            }
+            else
+            {
+                var noSupervisorText = new TextBlock
+                {
+                    Text = ResourceManager.GetString("display_no_supervisor", "No Supervisor"),
+                    Style = Application.Current.FindResource("BodyTextStyle") as Style,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.FromRgb(150, 150, 150)),
+                    Margin = new Thickness(0, 0, 0, 2)
+                };
+                headerStackPanel.Children.Add(noSupervisorText);
+            }
+            
+            // 2) Group name (group number) below head worker
             var groupNameText = new TextBlock
             {
                 Text = group.GroupName,
@@ -693,32 +818,19 @@ namespace DisplayApp
                 FontWeight = FontWeights.Bold,
                 FontSize = 14
             };
-            
-            // Supervisor name
-            var supervisorText = new TextBlock
-            {
-                Text = !string.IsNullOrEmpty(group.SupervisorName) ? $"سرپرست: {group.SupervisorName}" : "بدون سرپرست",
-                Style = Application.Current.FindResource("BodyTextStyle") as Style,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
-                Margin = new Thickness(0, 2, 0, 0)
-            };
-            
             headerStackPanel.Children.Add(groupNameText);
-            headerStackPanel.Children.Add(supervisorText);
             headerBorder.Child = headerStackPanel;
             Grid.SetRow(headerBorder, 0);
             groupGrid.Children.Add(headerBorder);
             
-            // Shifts container
+            // Shifts container (Vertical stack: Morning, Afternoon, Night)
             var shiftsGrid = new Grid
             {
                 Margin = new Thickness(5)
             };
-            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Night (Left)
-            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Afternoon (Center)
-            shiftsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Morning (Right)
+            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Morning (Row 0)
+            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Afternoon (Row 1)
+            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Night (Row 2)
             
             // Convert group color to WPF format (add FF prefix for alpha if not present)
             var groupColor = group.Color ?? "#4CAF50";
@@ -730,20 +842,20 @@ namespace DisplayApp
                 groupColor = "#FF" + groupColor.Substring(1);
             // If color already has 8 hex digits, use as-is
             
-            // Night Shift (Left side/End in RTL)
-            var nightBorder = CreateShiftPanel("شیفت شب", group.NightShiftEmployees, groupColor, group.NightForemanName);
-            Grid.SetColumn(nightBorder, 0);
-            shiftsGrid.Children.Add(nightBorder);
+            // Morning Shift (Top)
+            var morningBorder = CreateShiftPanel(ResourceManager.GetString("shift_morning", "Morning"), group.MorningShiftEmployees, groupColor, group.MorningForemanName, group.MorningShiftStatusCards);
+            Grid.SetRow(morningBorder, 0);
+            shiftsGrid.Children.Add(morningBorder);
 
-            // Afternoon Shift (Center)
-            var afternoonBorder = CreateShiftPanel("شیفت عصر", group.AfternoonShiftEmployees, groupColor, group.AfternoonForemanName);
-            Grid.SetColumn(afternoonBorder, 1);
+            // Afternoon Shift (Middle)
+            var afternoonBorder = CreateShiftPanel(ResourceManager.GetString("shift_afternoon", "Afternoon"), group.AfternoonShiftEmployees, groupColor, group.AfternoonForemanName, group.AfternoonShiftStatusCards);
+            Grid.SetRow(afternoonBorder, 1);
             shiftsGrid.Children.Add(afternoonBorder);
             
-            // Morning Shift (Right side/Start in RTL)
-            var morningBorder = CreateShiftPanel("شیفت صبح", group.MorningShiftEmployees, groupColor, group.MorningForemanName);
-            Grid.SetColumn(morningBorder, 2);
-            shiftsGrid.Children.Add(morningBorder);
+            // Night Shift (Bottom)
+            var nightBorder = CreateShiftPanel(ResourceManager.GetString("shift_night", "Night"), group.NightShiftEmployees, groupColor, group.NightForemanName, group.NightShiftStatusCards);
+            Grid.SetRow(nightBorder, 2);
+            shiftsGrid.Children.Add(nightBorder);
             
             Grid.SetRow(shiftsGrid, 1);
             groupGrid.Children.Add(shiftsGrid);
@@ -752,7 +864,7 @@ namespace DisplayApp
             return groupBorder;
         }
         
-        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color, string foremanName = "")
+        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color, string foremanName = "", List<DisplayApp.Models.StatusCardDisplayModel>? statusCards = null)
         {
             var shiftBorder = new Border
             {
@@ -787,7 +899,7 @@ namespace DisplayApp
             {
                 var foremanText = new TextBlock
                 {
-                    Text = $"سرکارگر: {foremanName}",
+                    Text = string.Format(ResourceManager.GetString("display_foreman", "Foreman: {0}"), foremanName),
                     Style = Application.Current.FindResource("BodyTextStyle") as Style,
                     FontSize = 10,
                     Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
@@ -832,14 +944,27 @@ namespace DisplayApp
                     { "role", employee.Role },
                     { "shield_color", employee.ShieldColor },
                     { "show_shield", employee.ShowShield },
+                    { "phone", employee.Phone },
+                    { "show_phone", employee.ShowPhone },
                     { "sticker_paths", employee.StickerPaths ?? new List<string>() },
                     { "medal_badge_path", employee.MedalBadgePath },
-                    { "personnel_id", employee.PersonnelId }
+                    { "personnel_id", employee.PersonnelId },
+                    { "labels", employee.Labels }
                 };
                 
                 // Create card using the same method as other cards
                 var employeeCard = CreateEmployeeCard(employeeData, "");
                 itemsControl.Items.Add(employeeCard);
+            }
+            
+            // Create status card cards (Phase 2 feature)
+            if (statusCards != null && statusCards.Count > 0)
+            {
+                foreach (var statusCard in statusCards)
+                {
+                    var statusCardCard = CreateStatusCardCard(statusCard);
+                    itemsControl.Items.Add(statusCardCard);
+                }
             }
             
             scrollViewer.Content = itemsControl;
@@ -922,15 +1047,19 @@ namespace DisplayApp
             // Badge dimensions
             double badgeWidth = 80;
             double badgeHeight = 100;
-            double borderThickness = 4; // Thick blue border
+            double borderThickness = 4; // Thick border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
-            
-            // Create main badge container with blue border
+
+            var showShield = ParseShowShield(employeeData);
+            var shieldColorName = employeeData.GetValueOrDefault("shield_color", "Blue")?.ToString() ?? "Blue";
+            var borderBrush = showShield ? GetShieldColorBrush(shieldColorName) : new SolidColorBrush(Color.FromRgb(0, 100, 200));
+
+            // Create main badge container
             var card = new Border
             {
                 Background = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)), // Blue border
+                BorderBrush = borderBrush,
                 BorderThickness = new Thickness(borderThickness),
                 CornerRadius = new CornerRadius(4),
                 Margin = new Thickness(3),
@@ -968,13 +1097,15 @@ namespace DisplayApp
                 Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
-            if (employeeData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
+            var rawPhotoPath = employeeData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
+            var resolvedPhoto = Employee.ResolvePhotoPath(rawPhotoPath);
+            if (!string.IsNullOrEmpty(resolvedPhoto))
             {
                 try
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.UriSource = new Uri(resolvedPhoto, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -991,6 +1122,39 @@ namespace DisplayApp
             }
             
             photoContainer.Children.Add(image);
+
+            // Phone overlay at bottom of photo (inside image area)
+            var phone = employeeData.GetValueOrDefault("phone", "").ToString() ?? "";
+            var showPhone = ParseShowPhone(employeeData, true);
+            if (showPhone && !string.IsNullOrWhiteSpace(phone))
+            {
+                var phoneOverlay = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)), // semi-transparent black
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Padding = new Thickness(2, 0, 2, 1)
+                };
+
+                var phoneTextBlock = new TextBlock
+                {
+                    Text = phone,
+                    Foreground = Brushes.White,
+                    FontSize = Math.Max(7, largeRectHeight * 0.10),
+                    FontWeight = FontWeights.SemiBold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+
+                phoneOverlay.Child = phoneTextBlock;
+                photoContainer.Children.Add(phoneOverlay);
+                // Above the photo, but below stickers / medals / labels (which use higher Z-indices)
+                Panel.SetZIndex(phoneOverlay, 80);
+            }
+
             Grid.SetRow(photoContainer, 0);
             badgeGrid.Children.Add(photoContainer);
             
@@ -1009,7 +1173,7 @@ namespace DisplayApp
             var personnelId = employeeData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             
             var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
-            var blueColor = new SolidColorBrush(Color.FromRgb(0, 100, 200)); // Blue matching border
+            var nameColor = showShield ? GetShieldColorBrush(shieldColorName) : new SolidColorBrush(Color.FromRgb(0, 100, 200));
             
             // Create StackPanel for name and personnel ID on separate lines
             var textStack = new StackPanel
@@ -1020,10 +1184,12 @@ namespace DisplayApp
             };
             
             // Name TextBlock
+            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
+            
             var nameText = new TextBlock
             {
-                Text = fullName,
-                Foreground = blueColor,
+                Text = displayName,
+                Foreground = nameColor,
                 FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Tahoma"),
@@ -1033,24 +1199,6 @@ namespace DisplayApp
             };
             
             textStack.Children.Add(nameText);
-            
-            // Personnel ID TextBlock (only if available)
-            if (!string.IsNullOrEmpty(personnelId))
-            {
-                var personnelIdText = new TextBlock
-                {
-                    Text = personnelId,
-                    Foreground = blueColor,
-                    FontSize = fontSize * 0.9, // Slightly smaller
-                    FontWeight = FontWeights.Bold,
-                    FontFamily = new FontFamily("Tahoma"),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    TextAlignment = TextAlignment.Center,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 2, 0, 0) // Small spacing from name
-                };
-                textStack.Children.Add(personnelIdText);
-            }
             
             nameContainer.Children.Add(textStack);
             Grid.SetRow(nameContainer, 1);
@@ -1180,6 +1328,77 @@ namespace DisplayApp
                 }
             }
             
+            // Process labels
+            if (employeeData.TryGetValue("labels", out var labelsObj))
+            {
+                 List<Shared.Models.EmployeeLabel> labels = null;
+                 
+                 if (labelsObj is List<Shared.Models.EmployeeLabel> typedLabels)
+                 {
+                     labels = typedLabels;
+                 }
+                 else if (labelsObj is List<object> objList)
+                 {
+                     labels = new List<Shared.Models.EmployeeLabel>();
+                     foreach (var obj in objList)
+                     {
+                         if (obj is Dictionary<string, object> labelDict)
+                         {
+                             labels.Add(Shared.Models.EmployeeLabel.FromDictionary(labelDict));
+                         }
+                         else if (obj is Newtonsoft.Json.Linq.JObject jObj)
+                         {
+                             var dict = ConvertJObjectToDictionary(jObj);
+                             labels.Add(Shared.Models.EmployeeLabel.FromDictionary(dict));
+                         }
+                     }
+                 }
+
+                 if (labels != null && labels.Count > 0)
+                 {
+                     var labelsPanel = new StackPanel
+                     {
+                         Orientation = Orientation.Vertical,
+                         HorizontalAlignment = HorizontalAlignment.Left,
+                         VerticalAlignment = VerticalAlignment.Bottom,
+                         Margin = new Thickness(2, 0, 0, 2),
+                         Background = Brushes.Transparent,
+                         MaxWidth = badgeWidth * 0.4
+                     };
+
+                     foreach (var label in labels)
+                     {
+                         var labelBorder = new Border
+                         {
+                             Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E3F2FD")),
+                             BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#90CAF9")),
+                             BorderThickness = new Thickness(1),
+                             CornerRadius = new CornerRadius(2),
+                             Padding = new Thickness(2, 0, 2, 0),
+                             Margin = new Thickness(0, 1, 0, 1),
+                             SnapsToDevicePixels = true
+                         };
+
+                         var labelText = new TextBlock
+                         {
+                             Text = label.Text,
+                             FontFamily = new FontFamily("Tahoma"),
+                             FontSize = 8,
+                             Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1976D2")),
+                             TextAlignment = TextAlignment.Center,
+                             TextWrapping = TextWrapping.NoWrap,
+                             TextTrimming = TextTrimming.CharacterEllipsis
+                         };
+
+                         labelBorder.Child = labelText;
+                         labelsPanel.Children.Add(labelBorder);
+                     }
+
+                     photoContainer.Children.Add(labelsPanel);
+                     Panel.SetZIndex(labelsPanel, 85);
+                 }
+            }
+
             card.Child = badgeGrid;
             return card;
         }
@@ -1191,9 +1410,9 @@ namespace DisplayApp
             {
                 drawingContext.DrawRectangle(Brushes.DarkGray, null, new System.Windows.Rect(0, 0, size, size));
                 drawingContext.DrawText(
-                    new FormattedText("کارگر", 
+                    new FormattedText("Worker", 
                         System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.RightToLeft,
+                        FlowDirection.LeftToRight,
                         new Typeface("Tahoma"),
                         size * 0.16, // Scale font size with image size
                         Brushes.White,
@@ -1208,14 +1427,92 @@ namespace DisplayApp
             return ConvertToBitmapImage(renderTargetBitmap);
         }
 
+        /// <summary>
+        /// Creates a visual card for a status card that can be displayed in shift slots.
+        /// Status cards are colored rectangles with text, used to indicate special slot states.
+        /// </summary>
+        private Border CreateStatusCardCard(DisplayApp.Models.StatusCardDisplayModel statusCard)
+        {
+            _logger.LogInformation("Creating status card: {StatusCardId} - {Name}", statusCard.StatusCardId, statusCard.Name);
+            
+            // Parse colors
+            Color backgroundColor;
+            Color textColor;
+            
+            try
+            {
+                var bgColorStr = statusCard.Color ?? "#FF5722";
+                if (!bgColorStr.StartsWith("#")) bgColorStr = "#" + bgColorStr;
+                if (bgColorStr.Length == 7) bgColorStr = "#FF" + bgColorStr.Substring(1);
+                backgroundColor = (Color)ColorConverter.ConvertFromString(bgColorStr);
+            }
+            catch
+            {
+                backgroundColor = Color.FromRgb(255, 87, 34); // Default orange
+            }
+            
+            try
+            {
+                var txtColorStr = statusCard.TextColor ?? "#FFFFFF";
+                if (!txtColorStr.StartsWith("#")) txtColorStr = "#" + txtColorStr;
+                if (txtColorStr.Length == 7) txtColorStr = "#FF" + txtColorStr.Substring(1);
+                textColor = (Color)ColorConverter.ConvertFromString(txtColorStr);
+            }
+            catch
+            {
+                textColor = Colors.White;
+            }
+            
+            // Badge dimensions (same as employee cards)
+            double badgeWidth = 80;
+            double badgeHeight = 100;
+            double borderThickness = 4;
+            
+            // Create main card container
+            var card = new Border
+            {
+                Background = new SolidColorBrush(backgroundColor),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(
+                    (byte)Math.Max(0, backgroundColor.R - 40),
+                    (byte)Math.Max(0, backgroundColor.G - 40),
+                    (byte)Math.Max(0, backgroundColor.B - 40))),
+                BorderThickness = new Thickness(borderThickness),
+                CornerRadius = new CornerRadius(4),
+                Margin = new Thickness(3),
+                Width = badgeWidth,
+                Height = badgeHeight,
+                ClipToBounds = true,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            
+            // Create centered text
+            var nameText = new TextBlock
+            {
+                Text = statusCard.Name ?? "Status Card",
+                Foreground = new SolidColorBrush(textColor),
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Tahoma"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(5)
+            };
+            
+            card.Child = nameText;
+            return card;
+        }
+
         private void UpdateAbsencePanel(Dictionary<string, object> reportData)
         {
             // Update absence counts and cards
             if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
             {
-                LeaveCount.Text = GetAbsenceCount(absences, "مرخصی").ToString();
-                SickCount.Text = GetAbsenceCount(absences, "بیمار").ToString();
-                AbsentCount.Text = GetAbsenceCount(absences, "غایب").ToString();
+                LeaveCount.Text = GetAbsenceCount(absences, "Leave").ToString();
+                SickCount.Text = GetAbsenceCount(absences, "Sick").ToString();
+                AbsentCount.Text = GetAbsenceCount(absences, "Absent").ToString();
                 
                 // Update absence cards in separate panels
                 UpdateAbsenceCards(absences);
@@ -1238,43 +1535,43 @@ namespace DisplayApp
             SickPanel.Items.Clear();
             AbsentPanel.Items.Clear();
             
-            // Process Leave (مرخصی) category
-            if (absences.TryGetValue("مرخصی", out var leaveObj) && leaveObj is List<object> leaveList)
+            // Process Leave category
+            if (absences.TryGetValue("Leave", out var leaveObj) && leaveObj is List<object> leaveList)
             {
                 _logger.LogInformation("Found {Count} leave absences", leaveList.Count);
                 foreach (var absenceObj in leaveList)
                 {
                     if (absenceObj is Dictionary<string, object> absenceData)
                     {
-                        var absenceCard = CreateAbsenceCard(absenceData, "مرخصی");
+                        var absenceCard = CreateAbsenceCard(absenceData, "Leave");
                         LeavePanel.Items.Add(absenceCard);
                     }
                 }
             }
             
-            // Process Sick (بیمار) category
-            if (absences.TryGetValue("بیمار", out var sickObj) && sickObj is List<object> sickList)
+            // Process Sick category
+            if (absences.TryGetValue("Sick", out var sickObj) && sickObj is List<object> sickList)
             {
                 _logger.LogInformation("Found {Count} sick absences", sickList.Count);
                 foreach (var absenceObj in sickList)
                 {
                     if (absenceObj is Dictionary<string, object> absenceData)
                     {
-                        var absenceCard = CreateAbsenceCard(absenceData, "بیمار");
+                        var absenceCard = CreateAbsenceCard(absenceData, "Sick");
                         SickPanel.Items.Add(absenceCard);
                     }
                 }
             }
             
-            // Process Absent (غایب) category
-            if (absences.TryGetValue("غایب", out var absentObj) && absentObj is List<object> absentList)
+            // Process Absent category
+            if (absences.TryGetValue("Absent", out var absentObj) && absentObj is List<object> absentList)
             {
                 _logger.LogInformation("Found {Count} absent absences", absentList.Count);
                 foreach (var absenceObj in absentList)
                 {
                     if (absenceObj is Dictionary<string, object> absenceData)
                     {
-                        var absenceCard = CreateAbsenceCard(absenceData, "غایب");
+                        var absenceCard = CreateAbsenceCard(absenceData, "Absent");
                         AbsentPanel.Items.Add(absenceCard);
                     }
                 }
@@ -1291,7 +1588,10 @@ namespace DisplayApp
             var fullName = $"{firstName} {lastName}".Trim();
             var personnelId = absenceData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             var employeeId = absenceData.GetValueOrDefault("employee_id", "").ToString();
-            var photoPath = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            var photoPathRaw = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            var photoPath = Employee.ResolvePhotoPath(photoPathRaw) ?? photoPathRaw;
+            var phone = absenceData.GetValueOrDefault("phone", "").ToString() ?? "";
+            var showPhone = ParseShowPhone(absenceData, true);
             
             // Display name with personnel ID if available
             var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
@@ -1318,19 +1618,24 @@ namespace DisplayApp
                 VerticalAlignment = VerticalAlignment.Center
             };
             
-            // Add image
-            var image = new Image
+            // Add image with optional phone overlay at the bottom (inside the image)
+            var imageContainer = new Grid
             {
                 Width = 45,
                 Height = 45,
-                Stretch = Stretch.Uniform
+                ClipToBounds = true
+            };
+
+            var image = new Image
+            {
+                Stretch = Stretch.UniformToFill
             };
             
             if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
             {
                 try
                 {
-                    image.Source = new BitmapImage(new Uri(photoPath));
+                    image.Source = new BitmapImage(new Uri(photoPath, UriKind.Absolute));
                 }
                 catch (Exception ex)
                 {
@@ -1343,7 +1648,37 @@ namespace DisplayApp
                 image.Source = CreateEmployeePlaceholderImage(45);
             }
             
-            stackPanel.Children.Add(image);
+            imageContainer.Children.Add(image);
+
+            if (showPhone && !string.IsNullOrWhiteSpace(phone))
+            {
+                var phoneOverlay = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Padding = new Thickness(1, 0, 1, 0)
+                };
+
+                var phoneText = new TextBlock
+                {
+                    Text = phone,
+                    Foreground = Brushes.White,
+                    FontSize = 7,
+                    FontWeight = FontWeights.SemiBold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+
+                phoneOverlay.Child = phoneText;
+                imageContainer.Children.Add(phoneOverlay);
+                Panel.SetZIndex(phoneOverlay, 10);
+            }
+
+            stackPanel.Children.Add(imageContainer);
             
             // Add name below photo
             var nameText = new TextBlock
@@ -1364,10 +1699,12 @@ namespace DisplayApp
         
         private int GetAbsenceCount(Dictionary<string, object> absences, string category)
         {
-            if (absences.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
-            {
-                return categoryList.Count;
-            }
+            // Try English key first, then legacy Persian for backward compatibility
+            if (absences.TryGetValue(category, out var obj) && obj is List<object> list)
+                return list.Count;
+            var legacyKey = category == "Leave" ? "Leave" : category == "Sick" ? "Sick" : "Absent";
+            if (absences.TryGetValue(legacyKey, out var legacyObj) && legacyObj is List<object> legacyList)
+                return legacyList.Count;
             return 0;
         }
 
@@ -1381,7 +1718,7 @@ namespace DisplayApp
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting AI recommendation");
-                AIRecommendation.Text = "خطا در دریافت توصیه";
+                AIRecommendation.Text = "Error getting recommendation";
             }
         }
 
@@ -1402,23 +1739,23 @@ namespace DisplayApp
                     var dataPoints = chartData.Values.Count;
                     if (dataPoints == 0)
                     {
-                        ChartTitle.Text = "نمودار عملکرد - داده‌ای موجود نیست";
+                        ChartTitle.Text = "Performance - No data available";
                         _logger.LogInformation("Chart has no data - no employees found");
                     }
                     else if (dataPoints == 1)
                     {
-                        ChartTitle.Text = "عملکرد امروز";
+                        ChartTitle.Text = "Today's Performance";
                     }
                     else
                     {
-                        ChartTitle.Text = $"عملکرد {dataPoints} روز اخیر";
+                        ChartTitle.Text = $"Performance - Last {dataPoints} days";
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating chart");
-                ChartTitle.Text = "نمودار عملکرد - خطا در بارگذاری";
+                ChartTitle.Text = "Performance - Error loading";
             }
         }
 
@@ -1440,7 +1777,7 @@ namespace DisplayApp
         private void CountdownTimer_Tick(object sender, EventArgs e)
         {
             _countdownSeconds--;
-            CountdownText.Text = $"بروزرسانی بعدی: {_countdownSeconds}";
+            CountdownText.Text = $"Next update: {_countdownSeconds}";
             
             if (_countdownSeconds <= 0)
             {
@@ -1518,9 +1855,51 @@ namespace DisplayApp
         }
 
 
+        private Dictionary<string, DisplayApp.Models.StatusCardDisplayModel> BuildStatusCardsLookup(Dictionary<string, object> reportData)
+        {
+            var lookup = new Dictionary<string, DisplayApp.Models.StatusCardDisplayModel>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                if (!reportData.TryGetValue("status_cards", out var statusCardsObj))
+                    return lookup;
+                if (statusCardsObj is not Dictionary<string, object> statusCardsDict)
+                    return lookup;
+                foreach (var kvp in statusCardsDict)
+                {
+                    var cardId = kvp.Key;
+                    Dictionary<string, object>? cardDict = null;
+                    if (kvp.Value is Dictionary<string, object> d)
+                        cardDict = d;
+                    else if (kvp.Value is JObject jo)
+                        cardDict = ConvertJObjectToDictionary(jo);
+                    if (cardDict != null)
+                    {
+                        var name = cardDict.GetValueOrDefault("name", "")?.ToString() ?? "";
+                        var color = cardDict.GetValueOrDefault("color", "#FF5722")?.ToString() ?? "#FF5722";
+                        var textColor = cardDict.GetValueOrDefault("text_color", "#FFFFFF")?.ToString() ?? "#FFFFFF";
+                        lookup[cardId] = new DisplayApp.Models.StatusCardDisplayModel
+                        {
+                            StatusCardId = cardId,
+                            Name = name,
+                            Color = color,
+                            TextColor = textColor,
+                            SlotIndex = 0
+                        };
+                    }
+                }
+                _logger.LogInformation("Built status cards lookup with {Count} cards", lookup.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error building status cards lookup");
+            }
+            return lookup;
+        }
+
         private List<DisplayApp.Models.GroupDisplayModel> GetAllGroupsData(Dictionary<string, object> reportData)
         {
             var groups = new List<DisplayApp.Models.GroupDisplayModel>();
+            var statusCardsLookup = BuildStatusCardsLookup(reportData);
             
             try
             {
@@ -1554,7 +1933,7 @@ namespace DisplayApp
                                         var groupData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(groupDataStr);
                                         if (groupData != null)
                                         {
-                                            var groupModel = CreateGroupDisplayModelFromParsedData(groupData, groupId, reportData);
+                                            var groupModel = CreateGroupDisplayModelFromParsedData(groupData, groupId, reportData, statusCardsLookup);
                                             if (groupModel != null)
                                             {
                                                 groups.Add(groupModel);
@@ -1577,7 +1956,7 @@ namespace DisplayApp
                         {
                             if (groupObj is Dictionary<string, object> groupData)
                             {
-                                var groupModel = CreateGroupDisplayModel(groupData);
+                                var groupModel = CreateGroupDisplayModel(groupData, statusCardsLookup, reportData);
                                 if (groupModel != null)
                                 {
                                     groups.Add(groupModel);
@@ -1586,7 +1965,7 @@ namespace DisplayApp
                             else if (groupObj is JObject groupJObject)
                             {
                                 var groupDict = ConvertJObjectToDictionary(groupJObject);
-                                var groupModel = CreateGroupDisplayModel(groupDict);
+                                var groupModel = CreateGroupDisplayModel(groupDict, statusCardsLookup, reportData);
                                 if (groupModel != null)
                                 {
                                     groups.Add(groupModel);
@@ -1603,7 +1982,7 @@ namespace DisplayApp
                             if (groupItem is JObject groupJObject)
                             {
                                 var groupDict = ConvertJObjectToDictionary(groupJObject);
-                                var groupModel = CreateGroupDisplayModel(groupDict);
+                                var groupModel = CreateGroupDisplayModel(groupDict, statusCardsLookup, reportData);
                                 if (groupModel != null)
                                 {
                                     groups.Add(groupModel);
@@ -1625,7 +2004,7 @@ namespace DisplayApp
                         if (shifts.ContainsKey("selected_group") && shifts["selected_group"] is Dictionary<string, object> selectedGroupData)
                         {
                             _logger.LogInformation("Found selected_group data, creating fallback group");
-                            var groupModel = CreateGroupDisplayModel(selectedGroupData);
+                            var groupModel = CreateGroupDisplayModel(selectedGroupData, statusCardsLookup, reportData);
                             if (groupModel != null)
                             {
                                 groups.Add(groupModel);
@@ -1637,8 +2016,8 @@ namespace DisplayApp
                             _logger.LogInformation("Creating default group from morning/evening shifts");
                             var defaultGroup = new DisplayApp.Models.GroupDisplayModel
                             {
-                                GroupName = "گروه پیش‌فرض",
-                                GroupDescription = "گروه پیش‌فرض سیستم",
+                                GroupName = "Default Group",
+                                GroupDescription = "System default group",
                                 Color = "#4CAF50" // Default green color
                             };
                             
@@ -1706,7 +2085,7 @@ namespace DisplayApp
                 var combinedModel = new DisplayApp.Models.CombinedDisplayModel
                 {
                     TotalGroups = groups.Count,
-                    DisplayTitle = "همه کارکنان"
+                    DisplayTitle = "All Staff"
                 };
                 
                 // Debug: Log details about each group
@@ -1775,14 +2154,51 @@ namespace DisplayApp
             }
         }
 
-        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModel(Dictionary<string, object> groupData)
+        private void AddStatusCardFromShiftIfPresent(Dictionary<string, object> shiftDict, List<DisplayApp.Models.StatusCardDisplayModel> list, Dictionary<string, DisplayApp.Models.StatusCardDisplayModel> lookup, int slotIndex = 0)
+        {
+            if (lookup == null || lookup.Count == 0) return;
+            if (!shiftDict.TryGetValue("StatusCardIds", out var idsObj) && !shiftDict.TryGetValue("status_card_ids", out idsObj))
+                return;
+            string? cardId = null;
+            if (idsObj is List<object> idList && slotIndex < idList.Count && idList[slotIndex] != null)
+                cardId = idList[slotIndex].ToString();
+            else if (idsObj is JArray jArr && slotIndex < jArr.Count && jArr[slotIndex] != null)
+                cardId = jArr[slotIndex]?.ToString();
+            else if (idsObj is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                var idx = 0;
+                foreach (var item in je.EnumerateArray())
+                {
+                    if (idx == slotIndex)
+                    {
+                        if (item.ValueKind == System.Text.Json.JsonValueKind.String)
+                            cardId = item.GetString();
+                        break;
+                    }
+                    idx++;
+                }
+            }
+            if (string.IsNullOrEmpty(cardId) || !lookup.TryGetValue(cardId, out var card))
+                return;
+            list.Add(new DisplayApp.Models.StatusCardDisplayModel
+            {
+                StatusCardId = card.StatusCardId,
+                Name = card.Name,
+                Color = card.Color,
+                TextColor = card.TextColor,
+                SlotIndex = slotIndex
+            });
+        }
+
+        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModel(Dictionary<string, object> groupData, Dictionary<string, DisplayApp.Models.StatusCardDisplayModel>? statusCardsLookup = null, Dictionary<string, object>? reportData = null)
         {
             try
             {
-                var groupName = groupData.GetValueOrDefault("name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
+                var groupName = groupData.GetValueOrDefault("name", "Unknown Group")?.ToString() ?? "Unknown Group";
                 var groupDescription = groupData.GetValueOrDefault("description", "")?.ToString() ?? "";
                 var groupColor = groupData.GetValueOrDefault("color", "#4CAF50")?.ToString() ?? "#4CAF50";
                 var supervisorName = groupData.GetValueOrDefault("supervisor_name", "")?.ToString() ?? "";
+                var supervisorId = GetStringFromGroupData(groupData, "supervisor_id", "SupervisorId");
                 
                 _logger.LogInformation("Creating group display model for: {GroupName} with color: {Color}", groupName, groupColor);
                 
@@ -1791,10 +2207,21 @@ namespace DisplayApp
                     GroupName = groupName,
                     GroupDescription = groupDescription,
                     Color = groupColor,
+                    SupervisorId = supervisorId ?? "",
                     SupervisorName = supervisorName
                 };
+                // Prefer supervisor_photo_path from group data (report); fall back to employee lookup
+                groupModel.SupervisorPhotoPath = groupData.GetValueOrDefault("supervisor_photo_path", "")?.ToString() ?? groupData.GetValueOrDefault("SupervisorPhotoPath", "")?.ToString() ?? "";
+                if (string.IsNullOrEmpty(groupModel.SupervisorPhotoPath) && reportData != null && !string.IsNullOrEmpty(supervisorId))
+                {
+                    var supervisorEmployees = GetEmployeesByIds(new List<object> { supervisorId! }, reportData);
+                    if (supervisorEmployees.Count > 0 && supervisorEmployees[0] is Dictionary<string, object> supervisorDict)
+                    {
+                        groupModel.SupervisorPhotoPath = supervisorDict.GetValueOrDefault("photo_path", "")?.ToString() ?? supervisorDict.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
+                    }
+                }
                 
-                // Get morning shift employees and foreman
+                // Get morning shift employees, foreman, and status cards
                 if (groupData.TryGetValue("morning_shift", out var morningShiftObj))
                 {
                     Dictionary<string, object>? morningShift = null;
@@ -1830,6 +2257,8 @@ namespace DisplayApp
                                 }
                             }
                         }
+                        if (statusCardsLookup != null)
+                            AddStatusCardFromShiftIfPresent(morningShift, groupModel.MorningShiftStatusCards, statusCardsLookup);
                     }
                 }
                 
@@ -1869,6 +2298,8 @@ namespace DisplayApp
                                 }
                             }
                         }
+                        if (statusCardsLookup != null)
+                            AddStatusCardFromShiftIfPresent(afternoonShift, groupModel.AfternoonShiftStatusCards, statusCardsLookup);
                     }
                 }
 
@@ -1908,6 +2339,8 @@ namespace DisplayApp
                                 }
                             }
                         }
+                        if (statusCardsLookup != null)
+                            AddStatusCardFromShiftIfPresent(nightShift, groupModel.NightShiftStatusCards, statusCardsLookup);
                     }
                 }
                 
@@ -1920,14 +2353,15 @@ namespace DisplayApp
             }
         }
 
-        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModelFromParsedData(Dictionary<string, object> groupData, string groupId, Dictionary<string, object> reportData)
+        private DisplayApp.Models.GroupDisplayModel? CreateGroupDisplayModelFromParsedData(Dictionary<string, object> groupData, string groupId, Dictionary<string, object> reportData, Dictionary<string, DisplayApp.Models.StatusCardDisplayModel>? statusCardsLookup = null)
         {
             try
             {
-                var groupName = groupData.GetValueOrDefault("Name", "گروه نامشخص")?.ToString() ?? "گروه نامشخص";
+                var groupName = groupData.GetValueOrDefault("Name", "Unknown Group")?.ToString() ?? "Unknown Group";
                 var groupDescription = groupData.GetValueOrDefault("Description", "")?.ToString() ?? "";
                 var groupColor = groupData.GetValueOrDefault("Color", "#4CAF50")?.ToString() ?? "#4CAF50";
                 var supervisorName = groupData.GetValueOrDefault("SupervisorName", "")?.ToString() ?? "";
+                var supervisorId = GetStringFromGroupData(groupData, "SupervisorId", "supervisor_id");
                 
                 _logger.LogInformation("Creating group display model from parsed data for: {GroupName} (ID: {GroupId}) with color: {Color}", groupName, groupId, groupColor);
                 _logger.LogInformation("Group data keys: {Keys}", string.Join(", ", groupData.Keys));
@@ -1937,8 +2371,19 @@ namespace DisplayApp
                     GroupName = groupName,
                     GroupDescription = groupDescription,
                     Color = groupColor,
+                    SupervisorId = supervisorId ?? "",
                     SupervisorName = supervisorName
                 };
+                // Prefer supervisor_photo_path from group data (report); fall back to employee lookup
+                groupModel.SupervisorPhotoPath = groupData.GetValueOrDefault("SupervisorPhotoPath", "")?.ToString() ?? groupData.GetValueOrDefault("supervisor_photo_path", "")?.ToString() ?? "";
+                if (string.IsNullOrEmpty(groupModel.SupervisorPhotoPath) && !string.IsNullOrEmpty(supervisorId))
+                {
+                    var supervisorEmployees = GetEmployeesByIds(new List<object> { supervisorId! }, reportData);
+                    if (supervisorEmployees.Count > 0 && supervisorEmployees[0] is Dictionary<string, object> supervisorDict)
+                    {
+                        groupModel.SupervisorPhotoPath = supervisorDict.GetValueOrDefault("photo_path", "")?.ToString() ?? supervisorDict.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
+                    }
+                }
                 
                 // Parse morning shift from JSON string
                 if (groupData.TryGetValue("MorningShift", out var morningShiftObj))
@@ -2025,6 +2470,8 @@ namespace DisplayApp
                             {
                                 _logger.LogWarning("No AssignedEmployeeIds found in morning shift data for group {GroupName}", groupName);
                             }
+                            if (statusCardsLookup != null)
+                                AddStatusCardFromShiftIfPresent(morningShiftData, groupModel.MorningShiftStatusCards, statusCardsLookup);
                         }
                         else
                         {
@@ -2098,6 +2545,8 @@ namespace DisplayApp
                                         }
                                     }
                                 }
+                                if (statusCardsLookup != null)
+                                    AddStatusCardFromShiftIfPresent(afternoonShiftData, groupModel.AfternoonShiftStatusCards, statusCardsLookup);
                             }
                         }
                         catch (Exception ex)
@@ -2215,6 +2664,8 @@ namespace DisplayApp
                                         }
                                     }
                                 }
+                                if (statusCardsLookup != null)
+                                    AddStatusCardFromShiftIfPresent(nightShiftData, groupModel.NightShiftStatusCards, statusCardsLookup);
                             }
                         }
                         catch (Exception ex)
@@ -2319,6 +2770,58 @@ namespace DisplayApp
             return "";
         }
 
+        private static string? GetStringFromGroupData(Dictionary<string, object> groupData, string key1, string key2)
+        {
+            if (groupData.TryGetValue(key1, out var v1))
+            {
+                if (v1 is string s1 && !string.IsNullOrEmpty(s1)) return s1;
+                if (v1 is System.Text.Json.JsonElement je1 && je1.ValueKind == System.Text.Json.JsonValueKind.String)
+                    return je1.GetString();
+                var t1 = v1?.ToString();
+                if (!string.IsNullOrEmpty(t1)) return t1;
+            }
+            if (groupData.TryGetValue(key2, out var v2))
+            {
+                if (v2 is string s2 && !string.IsNullOrEmpty(s2)) return s2;
+                if (v2 is System.Text.Json.JsonElement je2 && je2.ValueKind == System.Text.Json.JsonValueKind.String)
+                    return je2.GetString();
+                var t2 = v2?.ToString();
+                if (!string.IsNullOrEmpty(t2)) return t2;
+            }
+            return null;
+        }
+
+        private static bool ParseFlag(Dictionary<string, object> dict, string key, bool defaultValue = true)
+        {
+            if (!dict.TryGetValue(key, out var obj)) return defaultValue;
+            if (obj is bool b) return b;
+            return bool.TryParse(obj?.ToString(), out var parsed) ? parsed : defaultValue;
+        }
+
+        private static bool ParseShowShield(Dictionary<string, object> dict, bool defaultValue = true)
+        {
+            return ParseFlag(dict, "show_shield", defaultValue);
+        }
+
+        private static bool ParseShowPhone(Dictionary<string, object> dict, bool defaultValue = true)
+        {
+            return ParseFlag(dict, "show_phone", defaultValue);
+        }
+
+        private static SolidColorBrush GetShieldColorBrush(string colorName)
+        {
+            var name = (colorName ?? "Blue").Trim();
+            return name.ToUpperInvariant() switch
+            {
+                "RED" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e74c3c")),
+                "YELLOW" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f1c40f")),
+                "BLACK" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#000000")),
+                "ORANGE" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f39c12")),
+                "GRAY" => new SolidColorBrush((Color)ColorConverter.ConvertFromString("#95a5a6")),
+                _ => new SolidColorBrush(Color.FromRgb(0, 100, 200)) // Blue (default)
+            };
+        }
+
         private List<EmployeeDisplayModel> ConvertToEmployeeDisplayModels(List<object> employeeObjects, string groupName = "")
         {
             var employeeModels = new List<EmployeeDisplayModel>();
@@ -2343,6 +2846,24 @@ namespace DisplayApp
                             }
                         }
                         
+                        // Extract labels
+                        var labels = new List<Shared.Models.EmployeeLabel>();
+                        if (employeeDict.TryGetValue("labels", out var labelsObj) && labelsObj is List<object> labelsList)
+                        {
+                            foreach (var item in labelsList)
+                            {
+                                if (item is Dictionary<string, object> labelDict)
+                                {
+                                    labels.Add(Shared.Models.EmployeeLabel.FromDictionary(labelDict));
+                                }
+                                else if (item is Newtonsoft.Json.Linq.JObject labelJObj)
+                                {
+                                     var dict = ConvertJObjectToDictionary(labelJObj);
+                                     labels.Add(Shared.Models.EmployeeLabel.FromDictionary(dict));
+                                }
+                            }
+                        }
+
                         var employeeModel = new EmployeeDisplayModel
                         {
                             EmployeeId = employeeDict.GetValueOrDefault("employee_id", "").ToString() ?? "",
@@ -2352,10 +2873,13 @@ namespace DisplayApp
                             Role = employeeDict.GetValueOrDefault("role", "").ToString() ?? "",
                             GroupName = groupName,
                             ShieldColor = employeeDict.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
-                            ShowShield = false, // Shields are no longer displayed
+                            ShowShield = ParseShowShield(employeeDict),
+                            Phone = employeeDict.GetValueOrDefault("phone", "").ToString() ?? "",
+                            ShowPhone = ParseShowPhone(employeeDict),
                             StickerPaths = stickerPaths,
                             MedalBadgePath = employeeDict.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
-                            PersonnelId = employeeDict.GetValueOrDefault("personnel_id", "").ToString() ?? ""
+                            PersonnelId = employeeDict.GetValueOrDefault("personnel_id", "").ToString() ?? "",
+                            Labels = labels
                         };
                         employeeModels.Add(employeeModel);
                     }
@@ -2377,6 +2901,24 @@ namespace DisplayApp
                             }
                         }
                         
+                        // Extract labels
+                        var labels = new List<Shared.Models.EmployeeLabel>();
+                        if (employeeDictFromJObject.TryGetValue("labels", out var labelsObj2) && labelsObj2 is List<object> labelsList2)
+                        {
+                            foreach (var item in labelsList2)
+                            {
+                                if (item is Dictionary<string, object> labelDict)
+                                {
+                                    labels.Add(Shared.Models.EmployeeLabel.FromDictionary(labelDict));
+                                }
+                                else if (item is Newtonsoft.Json.Linq.JObject labelJObj)
+                                {
+                                     var dict = ConvertJObjectToDictionary(labelJObj);
+                                     labels.Add(Shared.Models.EmployeeLabel.FromDictionary(dict));
+                                }
+                            }
+                        }
+
                         var employeeModel = new EmployeeDisplayModel
                         {
                             EmployeeId = employeeDictFromJObject.GetValueOrDefault("employee_id", "").ToString() ?? "",
@@ -2386,10 +2928,13 @@ namespace DisplayApp
                             Role = employeeDictFromJObject.GetValueOrDefault("role", "").ToString() ?? "",
                             GroupName = groupName,
                             ShieldColor = employeeDictFromJObject.GetValueOrDefault("shield_color", "Blue").ToString() ?? "Blue",
-                            ShowShield = false, // Shields are no longer displayed
+                            ShowShield = ParseShowShield(employeeDictFromJObject),
+                            Phone = employeeDictFromJObject.GetValueOrDefault("phone", "").ToString() ?? "",
+                            ShowPhone = ParseShowPhone(employeeDictFromJObject),
                             StickerPaths = stickerPaths,
                             MedalBadgePath = employeeDictFromJObject.GetValueOrDefault("medal_badge_path", "").ToString() ?? "",
-                            PersonnelId = employeeDictFromJObject.GetValueOrDefault("personnel_id", "").ToString() ?? ""
+                            PersonnelId = employeeDictFromJObject.GetValueOrDefault("personnel_id", "").ToString() ?? "",
+                            Labels = labels
                         };
                         employeeModels.Add(employeeModel);
                     }

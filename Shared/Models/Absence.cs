@@ -8,11 +8,18 @@ namespace Shared.Models
 {
     public class Absence
     {
-        public static readonly Dictionary<string, string> Categories = new()
+        /// <summary>Valid category keys (English).</summary>
+        public static readonly HashSet<string> ValidCategories = new(StringComparer.OrdinalIgnoreCase) { "Leave", "Sick", "Absent" };
+
+        /// <summary>Maps legacy Persian category keys to English for loading old data.</summary>
+        public static readonly Dictionary<string, string> CategoryNormalize = new()
         {
             { "مرخصی", "Leave" },
             { "بیمار", "Sick" },
-            { "غایب", "Absent" }
+            { "غایب", "Absent" },
+            { "Leave", "Leave" },
+            { "Sick", "Sick" },
+            { "Absent", "Absent" }
         };
 
         public Employee Employee { get; set; }
@@ -41,7 +48,7 @@ namespace Shared.Models
         }
 
         [JsonIgnore]
-        public string CategoryDisplay => Category;
+        public string CategoryDisplay => Category; // Already English
 
         [JsonIgnore]
         public string EmployeeName => Employee.FullName;
@@ -57,7 +64,14 @@ namespace Shared.Models
 
         public bool IsValidCategory()
         {
-            return Categories.ContainsKey(Category);
+            return ValidCategories.Contains(Category) || CategoryNormalize.ContainsKey(Category);
+        }
+
+        /// <summary>Maps Persian or legacy category to English key.</summary>
+        public static string NormalizeCategory(string category)
+        {
+            if (string.IsNullOrEmpty(category)) return "Absent";
+            return CategoryNormalize.TryGetValue(category, out var en) ? en : category;
         }
 
         public override string ToString()
@@ -75,7 +89,8 @@ namespace Shared.Models
                 ? employeesDict[absenceData.EmployeeId]
                 : new Employee(absenceData.EmployeeId, absenceData.FirstName, absenceData.LastName, "Employee", absenceData.PhotoPath);
 
-            var absence = new Absence(employee, absenceData.Category, absenceData.Date, absenceData.Notes)
+            var category = NormalizeCategory(absenceData.Category);
+            var absence = new Absence(employee, category, absenceData.Date, absenceData.Notes)
             {
                 CreatedAt = absenceData.CreatedAt,
                 UpdatedAt = absenceData.UpdatedAt
@@ -93,6 +108,8 @@ namespace Shared.Models
                 LastName = Employee.LastName,
                 EmployeeName = Employee.FullName,
                 PhotoPath = Employee.PhotoPath,
+                Phone = Employee.Phone,
+                ShowPhone = Employee.ShowPhone,
                 Category = Category,
                 Date = Date,
                 Notes = Notes,
@@ -109,6 +126,8 @@ namespace Shared.Models
             public string LastName { get; set; } = string.Empty;
             public string EmployeeName { get; set; } = string.Empty;
             public string PhotoPath { get; set; } = string.Empty;
+            public string Phone { get; set; } = string.Empty;
+            public bool ShowPhone { get; set; } = true;
             public string Category { get; set; } = string.Empty;
             public string Date { get; set; } = string.Empty;
             public string Notes { get; set; } = string.Empty;
@@ -123,11 +142,11 @@ namespace Shared.Models
 
         public AbsenceManager()
         {
-            Absences = new Dictionary<string, List<Absence>>
+            Absences = new Dictionary<string, List<Absence>>(StringComparer.OrdinalIgnoreCase)
             {
-                { "مرخصی", new List<Absence>() },
-                { "بیمار", new List<Absence>() },
-                { "غایب", new List<Absence>() }
+                { "Leave", new List<Absence>() },
+                { "Sick", new List<Absence>() },
+                { "Absent", new List<Absence>() }
             };
         }
 
@@ -208,11 +227,11 @@ namespace Shared.Models
         {
             if (Absences == null)
             {
-                Absences = new Dictionary<string, List<Absence>>
+                Absences = new Dictionary<string, List<Absence>>(StringComparer.OrdinalIgnoreCase)
                 {
-                    { "مرخصی", new List<Absence>() },
-                    { "بیمار", new List<Absence>() },
-                    { "غایب", new List<Absence>() }
+                    { "Leave", new List<Absence>() },
+                    { "Sick", new List<Absence>() },
+                    { "Absent", new List<Absence>() }
                 };
                 return;
             }
@@ -272,17 +291,18 @@ namespace Shared.Models
 
                 foreach (var kvp in managerData)
                 {
-                    var category = kvp.Key;
+                    var categoryKey = Absence.NormalizeCategory(kvp.Key);
                     var absenceJsonList = kvp.Value;
 
-                    if (manager.Absences != null && manager.Absences.ContainsKey(category) && absenceJsonList != null)
+                    if (manager.Absences != null && manager.Absences.ContainsKey(categoryKey) && absenceJsonList != null)
                     {
                         foreach (var absenceJson in absenceJsonList)
                         {
                             var absence = Absence.FromJson(absenceJson, employeesDict);
                             if (absence != null)
                             {
-                                manager.Absences[category].Add(absence);
+                                absence.Category = categoryKey;
+                                manager.Absences[categoryKey].Add(absence);
                             }
                         }
                     }
@@ -292,7 +312,6 @@ namespace Shared.Models
             }
             catch (Exception)
             {
-                // Return a new valid AbsenceManager if deserialization fails
                 return new AbsenceManager();
             }
         }

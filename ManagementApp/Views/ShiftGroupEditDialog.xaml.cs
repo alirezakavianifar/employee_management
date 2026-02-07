@@ -35,7 +35,7 @@ namespace ManagementApp.Views
                 InitializeComponent();
                 _controller = controller;
                 _logger = LoggingService.CreateLogger<ShiftGroupEditDialog>();
-                Title = "افزودن گروه شیفت جدید";
+                Title = "Add new shift group";
                 
                 // Set default values after initialization
                 SetDefaultValues();
@@ -44,7 +44,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error in ShiftGroupEditDialog constructor");
-                MessageBox.Show($"خطا در ایجاد فرم: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error creating form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -52,7 +52,7 @@ namespace ManagementApp.Views
         public ShiftGroupEditDialog(ShiftGroup group, MainController? controller = null) : this(controller)
         {
             _originalGroup = group;
-            Title = "ویرایش گروه شیفت";
+            Title = "Edit shift group";
             
             // Load data after controls are initialized
             this.Loaded += (s, e) => 
@@ -69,14 +69,14 @@ namespace ManagementApp.Views
                         catch (Exception ex)
                         {
                             _logger?.LogError(ex, "Error in delayed LoadGroupData");
-                            MessageBox.Show($"خطا در بارگذاری داده‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }), System.Windows.Threading.DispatcherPriority.Loaded);
                 }
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "Error in Loaded event handler");
-                    MessageBox.Show($"خطا در بارگذاری فرم: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error loading form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
         }
@@ -86,9 +86,9 @@ namespace ManagementApp.Views
             try
             {
                 if (NameTextBox != null)
-                    NameTextBox.Text = "گروه جدید";
+                    NameTextBox.Text = "New group";
                 if (DescriptionTextBox != null)
-                    DescriptionTextBox.Text = "توضیحات گروه";
+                    DescriptionTextBox.Text = "Group description";
                 UpdateColorDisplay("#4CAF50");
             }
             catch (Exception ex)
@@ -154,8 +154,8 @@ namespace ManagementApp.Views
                     _originalGroup.GroupId, _originalGroup.Name);
 
                 // Ensure the group has valid data
-                var safeName = _originalGroup.Name ?? "گروه جدید";
-                var safeDescription = _originalGroup.Description ?? "بدون توضیحات";
+                var safeName = _originalGroup.Name ?? "New group";
+                var safeDescription = _originalGroup.Description ?? "No description";
                 var safeColor = _originalGroup.Color ?? "#4CAF50";
 
                 // Set text with additional safety checks
@@ -250,7 +250,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error loading group data");
-                MessageBox.Show($"خطا در بارگذاری داده‌های گروه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading group data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -261,7 +261,7 @@ namespace ManagementApp.Views
                 // Validate input
                 if (string.IsNullOrWhiteSpace(Name))
                 {
-                    MessageBox.Show("لطفاً نام گروه را وارد کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please enter the group name.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     NameTextBox?.Focus();
                     return;
                 }
@@ -269,7 +269,7 @@ namespace ManagementApp.Views
                 // Validate that morning foreman is selected
                 if (string.IsNullOrEmpty(MorningForemanId))
                 {
-                    MessageBox.Show("لطفاً سرپرست شیفت صبح را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select the morning shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     MorningForemanComboBox?.Focus();
                     return;
                 }
@@ -277,7 +277,7 @@ namespace ManagementApp.Views
                 // Validate that afternoon foreman is selected
                 if (string.IsNullOrEmpty(AfternoonForemanId))
                 {
-                    MessageBox.Show("لطفاً سرپرست شیفت عصر را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select the afternoon shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     AfternoonForemanComboBox?.Focus();
                     return;
                 }
@@ -285,7 +285,7 @@ namespace ManagementApp.Views
                 // Validate that night foreman is selected
                 if (string.IsNullOrEmpty(NightForemanId))
                 {
-                    MessageBox.Show("لطفاً سرپرست شیفت شب را انتخاب کنید.", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select the night shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     NightForemanComboBox?.Focus();
                     return;
                 }
@@ -296,7 +296,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error in OkButton_Click");
-                MessageBox.Show($"خطا در تأیید: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error confirming: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -324,7 +324,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error opening color palette");
-                MessageBox.Show($"خطا در باز کردن پالت رنگ: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error opening color palette: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -12,7 +12,7 @@ namespace DisplayApp.Utils
         private readonly string _configPath;
         private Dictionary<string, object> _config;
 
-        public ConfigHelper(string configPath = "Config/display_config.json")
+        public ConfigHelper(string configPath)
         {
             _configPath = configPath;
             _logger = LoggingService.CreateLogger<ConfigHelper>();
@@ -140,7 +140,10 @@ namespace DisplayApp.Utils
                         { "theme", "dark" },
                         { "fontSize", 14 },
                         { "language", "fa" },
-                        { "backgroundColor", "#1a1a1a" }
+                        { "backgroundColor", "#1a1a1a" },
+                        // Visibility settings for Display sections
+                        { "showPerformanceChart", true },
+                        { "showAiRecommendation", true }
                     }
                 },
                 {
@@ -244,6 +247,8 @@ namespace DisplayApp.Utils
         public bool GetShowTooltips() => GetValue<bool>("ui", "showTooltips", true);
         public string GetAnimationSpeed() => GetValue<string>("ui", "animationSpeed", "normal");
         public string GetBackgroundColor() => GetValue<string>("display", "backgroundColor", "#1a1a1a");
+        public bool GetShowPerformanceChart() => GetValue<bool>("display", "showPerformanceChart", true);
+        public bool GetShowAiRecommendation() => GetValue<bool>("display", "showAiRecommendation", true);
 
         public void SetRefreshInterval(int value) => SetValue("display", "refreshInterval", value);
         public void SetFullscreen(bool value) => SetValue("display", "fullscreen", value);
@@ -251,6 +256,8 @@ namespace DisplayApp.Utils
         public void SetFontSize(int value) => SetValue("display", "fontSize", value);
         public void SetLanguage(string value) => SetValue("display", "language", value);
         public void SetBackgroundColor(string value) => SetValue("display", "backgroundColor", value);
+        public void SetShowPerformanceChart(bool value) => SetValue("display", "showPerformanceChart", value);
+        public void SetShowAiRecommendation(bool value) => SetValue("display", "showAiRecommendation", value);
         public void SetDataPath(string value) => SetValue("data", "dataPath", value);
         public void SetSyncInterval(int value) => SetValue("data", "syncInterval", value);
         public void SetAutoBackup(bool value) => SetValue("data", "autoBackup", value);

@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.Services;
+using Shared.Utils;
 
 namespace ManagementApp.Services
 {
@@ -25,37 +26,37 @@ namespace ManagementApp.Services
 
             if (string.IsNullOrWhiteSpace(groupId))
             {
-                errorMessage = "شناسه گروه نمی‌تواند خالی باشد";
+                errorMessage = ResourceManager.GetString("err_group_id_empty", "Group ID cannot be empty");
                 return false;
             }
-
+ 
             if (string.IsNullOrWhiteSpace(name))
             {
-                errorMessage = "نام گروه نمی‌تواند خالی باشد";
+                errorMessage = ResourceManager.GetString("err_group_name_empty", "Group name cannot be empty");
                 return false;
             }
-
+ 
             if (morningCapacity < 1)
             {
-                errorMessage = "ظرفیت شیفت صبح باید حداقل 1 باشد";
+                errorMessage = ResourceManager.GetString("err_morning_capacity_min", "Morning shift capacity must be at least 1");
                 return false;
             }
-
+ 
             if (afternoonCapacity < 1)
             {
-                errorMessage = "ظرفیت شیفت عصر باید حداقل 1 باشد";
+                errorMessage = ResourceManager.GetString("err_afternoon_capacity_min", "Afternoon shift capacity must be at least 1");
                 return false;
             }
-
+ 
             if (nightCapacity < 1)
             {
-                errorMessage = "ظرفیت شیفت شب باید حداقل 1 باشد";
+                errorMessage = ResourceManager.GetString("err_night_capacity_min", "Night shift capacity must be at least 1");
                 return false;
             }
-
+ 
             if (groupId == "default")
             {
-                errorMessage = "شناسه 'default' برای گروه پیش‌فرض محفوظ است";
+                errorMessage = ResourceManager.GetString("err_default_id_reserved", "The ID 'default' is reserved for the default group");
                 return false;
             }
 
@@ -205,7 +206,7 @@ namespace ManagementApp.Services
                     SuggestedMorningCapacity = suggestedMorning,
                     SuggestedAfternoonCapacity = suggestedAfternoon,
                     SuggestedNightCapacity = suggestedNight,
-                    Reason = $"پیشنهاد بر اساس {employeeCount} کارمند: 40% صبح، 35% عصر، 25% شب"
+                    Reason = string.Format(ResourceManager.GetString("suggest_capacity_reason", "Suggestion based on {0} employees: 40% morning, 35% afternoon, 25% night"), employeeCount)
                 };
             }
             catch (Exception ex)
@@ -216,7 +217,7 @@ namespace ManagementApp.Services
                     SuggestedMorningCapacity = currentMorningCapacity,
                     SuggestedAfternoonCapacity = currentAfternoonCapacity,
                     SuggestedNightCapacity = currentNightCapacity,
-                    Reason = "خطا در محاسبه پیشنهاد"
+                    Reason = ResourceManager.GetString("err_calculate_suggestion", "Error calculating suggestion")
                 };
             }
         }

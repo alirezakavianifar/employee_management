@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Shared.Models
@@ -23,6 +24,11 @@ namespace Shared.Models
         public List<string> StickerPaths { get; set; } = new List<string>();
         public string MedalBadgePath { get; set; } = string.Empty;
         public string PersonnelId { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public bool ShowPhone { get; set; } = true;
+        
+        // Employee labels (text labels displayed below photo)
+        public List<EmployeeLabel> Labels { get; set; } = new List<EmployeeLabel>();
 
         // Backward compatibility property
         [JsonIgnore]
@@ -58,27 +64,44 @@ namespace Shared.Models
             if (string.IsNullOrEmpty(PhotoPath))
                 return false;
 
-            // Try the path as-is first
+            // Try the path as-is first (works when path is already valid on this machine)
             if (File.Exists(PhotoPath))
                 return true;
 
-            var dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SharedData");
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var fileName = Path.GetFileName(PhotoPath);
+            if (string.IsNullOrEmpty(fileName))
+                return false;
 
-            // Try relative to data directory (Images/Staff)
-            var imagesPath = Path.Combine(dataDir, "Images", "Staff", fileName);
-            if (File.Exists(imagesPath))
+            // Candidate SharedData roots: next to exe, parent of exe (deploy), two levels up (dev)
+            var sharedDataRoots = new[]
             {
-                PhotoPath = imagesPath;
-                return true;
+                Path.Combine(baseDir, "SharedData"),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "SharedData")),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "SharedData")),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "SharedData"))
+            };
+
+            foreach (var dataDir in sharedDataRoots)
+            {
+                var imagesPath = Path.Combine(dataDir, "Images", "Staff", fileName);
+                if (File.Exists(imagesPath))
+                {
+                    PhotoPath = imagesPath;
+                    return true;
+                }
             }
 
-            // Try current directory
-            var currentPath = Path.Combine(Directory.GetCurrentDirectory(), PhotoPath);
-            if (File.Exists(currentPath))
+            // Try current directory only when PhotoPath looks relative (no drive, no leading slash)
+            var pathTrimmed = PhotoPath.Trim();
+            if (pathTrimmed.Length > 0 && pathTrimmed[0] != Path.DirectorySeparatorChar && pathTrimmed[0] != '/' && !Path.IsPathRooted(pathTrimmed))
             {
-                PhotoPath = currentPath;
-                return true;
+                var currentPath = Path.Combine(Directory.GetCurrentDirectory(), PhotoPath);
+                if (File.Exists(currentPath))
+                {
+                    PhotoPath = currentPath;
+                    return true;
+                }
             }
 
             return false;
@@ -94,7 +117,8 @@ namespace Shared.Models
         }
 
         public void Update(string? firstName = null, string? lastName = null, string? roleId = null, string? shiftGroupId = null, string? photoPath = null, bool? isManager = null, 
-                          string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null)
+                          string? shieldColor = null, bool? showShield = null, List<string>? stickerPaths = null, string? medalBadgePath = null, string? personnelId = null,
+                          List<EmployeeLabel>? labels = null, string? phone = null, bool? showPhone = null)
         {
             if (!string.IsNullOrEmpty(firstName))
                 FirstName = firstName;
@@ -114,10 +138,16 @@ namespace Shared.Models
                 ShowShield = showShield.Value;
             if (stickerPaths != null)
                 StickerPaths = stickerPaths;
-            if (!string.IsNullOrEmpty(medalBadgePath))
+            if (medalBadgePath != null)
                 MedalBadgePath = medalBadgePath;
             if (!string.IsNullOrEmpty(personnelId))
                 PersonnelId = personnelId;
+            if (labels != null)
+                Labels = labels;
+            if (phone != null)
+                Phone = phone;
+            if (showPhone.HasValue)
+                ShowPhone = showPhone.Value;
             
             UpdatedAt = DateTime.Now;
         }
@@ -165,7 +195,10 @@ namespace Shared.Models
                 { "show_shield", ShowShield },
                 { "sticker_paths", StickerPaths ?? new List<string>() },
                 { "medal_badge_path", MedalBadgePath },
-                { "personnel_id", PersonnelId }
+                { "personnel_id", PersonnelId },
+                { "labels", Labels?.Select(l => l.ToDictionary()).ToList() ?? new List<Dictionary<string, object>>() },
+                { "phone", Phone },
+                { "show_phone", ShowPhone }
             };
         }
     }

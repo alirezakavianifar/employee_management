@@ -249,3 +249,13 @@ E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\re
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\ManagementApp.pdb
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\ManagementApp.genruntimeconfig.cache
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\ref\ManagementApp.dll
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Views\StatusCardDialog.baml
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Views\StatusCardEditDialog.baml
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Views\StatusCardDialog.g.cs
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Views\StatusCardEditDialog.g.cs
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\LabelCreationPanel.baml
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\LabelCreationPanel.g.cs
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftGroupControl.g.cs
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftSlotControl.g.cs
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftGroupControl.baml
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftSlotControl.baml

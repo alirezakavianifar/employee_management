@@ -8,6 +8,7 @@ using System.Windows.Shapes;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.Services;
+using Shared.Utils;
 using ManagementApp.Controllers;
 
 namespace ManagementApp.Views
@@ -30,7 +31,7 @@ namespace ManagementApp.Views
             {
                 if (GroupSearchBox != null)
                 {
-                    GroupSearchBox.Text = "جستجو در گروه‌ها...";
+                    GroupSearchBox.Text = ResourceManager.GetString("search_groups", "Search groups...");
                 }
             }
             catch (Exception ex)
@@ -73,15 +74,17 @@ namespace ManagementApp.Views
                     if (group == null) continue; // Skip null groups
                     
                     if (string.IsNullOrEmpty(group.Name))
-                        group.Name = "نام نامشخص";
+                        group.Name = ResourceManager.GetString("unspecified_name", "Unspecified name");
                     if (string.IsNullOrEmpty(group.Description))
-                        group.Description = "بدون توضیحات";
+                        group.Description = ResourceManager.GetString("no_description", "No description");
                     if (string.IsNullOrEmpty(group.Color))
                         group.Color = "#4CAF50";
                     if (group.MorningCapacity <= 0)
                         group.MorningCapacity = 15;
-                    if (group.EveningCapacity <= 0)
-                        group.EveningCapacity = 15;
+                    if (group.AfternoonCapacity <= 0)
+                        group.AfternoonCapacity = 15;
+                    if (group.NightCapacity <= 0)
+                        group.NightCapacity = 15;
                 }
                 
                 // Clear existing items and add groups manually
@@ -104,7 +107,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error loading shift groups");
-                MessageBox.Show($"خطا در بارگذاری گروه‌های شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_load_shift_groups", "Error loading shift groups: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -115,7 +118,7 @@ namespace ManagementApp.Views
                 if (group == null)
                 {
                     _logger.LogWarning("CreateGroupListItem called with null group");
-                    return new ListBoxItem { Content = "گروه نامشخص" };
+                    return new ListBoxItem { Content = ResourceManager.GetString("unknown_group", "Unknown group") };
                 }
 
                 var listItem = new ListBoxItem();
@@ -154,7 +157,7 @@ namespace ManagementApp.Views
                 // Name
                 var nameText = new TextBlock 
                 { 
-                    Text = group.Name ?? "نام نامشخص", 
+                    Text = group.Name ?? ResourceManager.GetString("unspecified_name", "Unspecified name"), 
                     FontWeight = FontWeights.Bold, 
                     FontSize = 14 
                 };
@@ -162,7 +165,7 @@ namespace ManagementApp.Views
                 // Description
                 var descText = new TextBlock 
                 { 
-                    Text = group.Description ?? "بدون توضیحات", 
+                    Text = group.Description ?? ResourceManager.GetString("no_description", "No description"), 
                     FontSize = 12, 
                     Foreground = Brushes.Gray 
                 };
@@ -170,7 +173,7 @@ namespace ManagementApp.Views
                 // Capacity info
                 var capacityText = new TextBlock 
                 { 
-                    Text = $"صبح: {group.MorningCapacity} | عصر: {group.EveningCapacity}", 
+                    Text = string.Format(ResourceManager.GetString("shift_capacities_format", "Morning: {0} | Afternoon: {1} | Night: {2}"), group.MorningCapacity, group.AfternoonCapacity, group.NightCapacity), 
                     FontSize = 11, 
                     Foreground = Brushes.DarkBlue 
                 };
@@ -188,7 +191,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating group list item");
-                return new ListBoxItem { Content = "خطا در نمایش گروه" };
+                return new ListBoxItem { Content = ResourceManager.GetString("error_displaying_group", "Error displaying group") };
             }
         }
 
@@ -201,7 +204,7 @@ namespace ManagementApp.Views
                 // Clear existing items
                 GroupListBox.Items.Clear();
                 
-                if (string.IsNullOrEmpty(searchText) || searchText == "جستجو در گروه‌ها...")
+                if (string.IsNullOrEmpty(searchText) || searchText == ResourceManager.GetString("search_groups", "Search groups..."))
                 {
                     // Show all groups
                     foreach (var group in _allGroups)
@@ -282,7 +285,8 @@ namespace ManagementApp.Views
                         "", // supervisorName (not used)
                         color, 
                         dialog.MorningCapacity, 
-                        dialog.EveningCapacity);
+                        dialog.AfternoonCapacity,
+                        dialog.NightCapacity);
                     
                     if (success)
                     {
@@ -292,9 +296,14 @@ namespace ManagementApp.Views
                             _controller.SetTeamLeader("morning", dialog.MorningForemanId, groupId);
                         }
 
-                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        if (!string.IsNullOrEmpty(dialog.AfternoonForemanId))
                         {
-                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
+                            _controller.SetTeamLeader("afternoon", dialog.AfternoonForemanId, groupId);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(dialog.NightForemanId))
+                        {
+                            _controller.SetTeamLeader("night", dialog.NightForemanId, groupId);
                         }
                         
                         LoadGroups();
@@ -314,14 +323,14 @@ namespace ManagementApp.Views
                             }
                         }
                         
-                        MessageBox.Show($"گروه شیفت '{groupName}' با موفقیت اضافه شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(string.Format(ResourceManager.GetString("msg_group_added", "Shift group '{0}' was added successfully."), groupName), ResourceManager.GetString("msg_success", "Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error adding shift group");
-                MessageBox.Show($"خطا در افزودن گروه شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_add_group", "Error adding shift group: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -331,7 +340,7 @@ namespace ManagementApp.Views
             {
                 if (_selectedGroup == null)
                 {
-                    MessageBox.Show("لطفاً یک گروه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(ResourceManager.GetString("msg_select_group", "Please select a group"), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -340,9 +349,9 @@ namespace ManagementApp.Views
 
                 // Ensure the selected group has valid data before passing to dialog
                 if (string.IsNullOrEmpty(_selectedGroup.Name))
-                    _selectedGroup.Name = "گروه جدید";
+                    _selectedGroup.Name = ResourceManager.GetString("new_group", "New group");
                 if (string.IsNullOrEmpty(_selectedGroup.Description))
-                    _selectedGroup.Description = "بدون توضیحات";
+                    _selectedGroup.Description = ResourceManager.GetString("no_description", "No description");
                 if (string.IsNullOrEmpty(_selectedGroup.Color))
                     _selectedGroup.Color = "#4CAF50";
 
@@ -353,7 +362,7 @@ namespace ManagementApp.Views
                     var groupId = _selectedGroup?.GroupId;
                     if (string.IsNullOrEmpty(groupId))
                     {
-                        MessageBox.Show("خطا: شناسه گروه نامعتبر است", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error: Invalid group ID", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
                     
@@ -364,7 +373,8 @@ namespace ManagementApp.Views
                         "", // supervisorName (not used)
                         dialog.Color,
                         dialog.MorningCapacity,
-                        dialog.EveningCapacity,
+                        dialog.AfternoonCapacity,
+                        dialog.NightCapacity,
                         dialog.IsGroupActive) ?? false;
                     
                     if (success && _controller != null)
@@ -379,24 +389,33 @@ namespace ManagementApp.Views
                             _controller.SetTeamLeader("morning", string.Empty, groupId);
                         }
 
-                        if (!string.IsNullOrEmpty(dialog.EveningForemanId))
+                        if (!string.IsNullOrEmpty(dialog.AfternoonForemanId))
                         {
-                            _controller.SetTeamLeader("evening", dialog.EveningForemanId, groupId);
+                            _controller.SetTeamLeader("afternoon", dialog.AfternoonForemanId, groupId);
                         }
                         else
                         {
-                            _controller.SetTeamLeader("evening", string.Empty, groupId);
+                            _controller.SetTeamLeader("afternoon", string.Empty, groupId);
+                        }
+                        
+                        if (!string.IsNullOrEmpty(dialog.NightForemanId))
+                        {
+                            _controller.SetTeamLeader("night", dialog.NightForemanId, groupId);
+                        }
+                        else
+                        {
+                            _controller.SetTeamLeader("night", string.Empty, groupId);
                         }
                         
                         LoadGroups();
-                        MessageBox.Show($"گروه شیفت '{dialog.Name}' با موفقیت بروزرسانی شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(string.Format(ResourceManager.GetString("msg_group_updated", "Shift group '{0}' was updated successfully."), dialog.Name), ResourceManager.GetString("msg_success", "Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error editing shift group");
-                MessageBox.Show($"خطا در ویرایش گروه شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_edit_group", "Error editing shift group: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -406,19 +425,19 @@ namespace ManagementApp.Views
             {
                 if (_selectedGroup == null)
                 {
-                    MessageBox.Show("لطفاً یک گروه را انتخاب کنید", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Please select a group", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 if (_selectedGroup.GroupId == "default")
                 {
-                    MessageBox.Show("نمی‌توان گروه پیش‌فرض را حذف کرد", "هشدار", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(ResourceManager.GetString("err_cannot_delete_default_group", "Cannot delete the default group"), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-
+ 
                 var result = MessageBox.Show(
-                    $"آیا مطمئن هستید که می‌خواهید گروه '{_selectedGroup.Name}' را حذف کنید؟\n\nاین عمل غیرقابل بازگشت است.",
-                    "تأیید حذف",
+                    string.Format(ResourceManager.GetString("msg_confirm_delete_group", "Are you sure you want to delete group '{0}'?\n\nThis action cannot be undone."), _selectedGroup.Name),
+                    ResourceManager.GetString("header_confirm_delete", "Confirm Delete"),
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -430,14 +449,14 @@ namespace ManagementApp.Views
                     {
                         _selectedGroup = null; // Clear selection before reloading
                         LoadGroups();
-                        MessageBox.Show($"گروه شیفت '{groupToDelete.Name}' با موفقیت حذف شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(string.Format(ResourceManager.GetString("msg_group_deleted", "Shift group '{0}' was deleted successfully."), groupToDelete.Name), ResourceManager.GetString("msg_success", "Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting shift group");
-                MessageBox.Show($"خطا در حذف گروه شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_delete_group", "Error deleting shift group: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

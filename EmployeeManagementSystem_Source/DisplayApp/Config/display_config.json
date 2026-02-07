@@ -5,7 +5,9 @@
     "theme": "dark",
     "fontSize": 14,
     "language": "en",
-    "backgroundColor": "#1a1a1a"
+    "backgroundColor": "#1a1a1a",
+    "showPerformanceChart": true,
+    "showAiRecommendation": true
   },
   "data": {
     "syncInterval": 30,

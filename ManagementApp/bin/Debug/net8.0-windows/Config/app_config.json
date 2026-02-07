@@ -1,8 +1,8 @@
-{
-  "DataDirectory": "../../../../SharedData",
-  "ReportsDirectory": "../../../../SharedData/Reports",
-  "ImagesDirectory": "../../../../SharedData/Images",
-  "LogsDirectory": "../../../../SharedData/Logs",
+﻿{
+  "DataDirectory": "E:\\projects\\employee_management_csharp\\SharedData",
+  "ReportsDirectory": "E:\\projects\\employee_management_csharp\\SharedData\\Reports",
+  "ImagesDirectory": "E:\\projects\\employee_management_csharp\\SharedData\\Images",
+  "LogsDirectory": "E:\\projects\\employee_management_csharp\\SharedData\\Logs",
   "SyncEnabled": true,
   "SyncIntervalSeconds": 30
 }

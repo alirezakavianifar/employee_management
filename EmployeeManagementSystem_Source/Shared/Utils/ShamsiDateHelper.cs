@@ -106,7 +106,7 @@ namespace Shared.Utils
         }
 
         /// <summary>
-        /// Formats Shamsi date for display
+        /// Formats Shamsi date for display (English month names for UI).
         /// </summary>
         /// <param name="shamsiDate">Shamsi date string</param>
         /// <returns>Formatted date for display</returns>
@@ -121,17 +121,11 @@ namespace Shared.Utils
                 var year = parts[0];
                 var month = parts[1];
                 var day = parts[2];
-                
-                // Get month name in Persian
-                var monthNames = new[]
-                {
-                    "", "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
-                    "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
-                };
+                var monthNames = GetMonthNames();
 
                 if (int.TryParse(month, out int monthNum) && monthNum >= 1 && monthNum <= 12)
                 {
-                    return $"{day} {monthNames[monthNum]} {year}";
+                    return $"{day} {monthNames[monthNum - 1]} {year}";
                 }
             }
 
@@ -139,27 +133,27 @@ namespace Shared.Utils
         }
 
         /// <summary>
-        /// Gets Shamsi month names
+        /// Gets Jalali month names in English for user-facing UI.
         /// </summary>
-        /// <returns>Array of month names</returns>
+        /// <returns>Array of month names (Farvardin, Ordibehesht, ...)</returns>
         public static string[] GetMonthNames()
         {
             return new[]
             {
-                "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
-                "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+                "Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar",
+                "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"
             };
         }
 
         /// <summary>
-        /// Gets Shamsi day names
+        /// Gets Jalali weekday names in English for user-facing UI.
         /// </summary>
-        /// <returns>Array of day names</returns>
+        /// <returns>Array of day names (Saturday, Sunday, ...)</returns>
         public static string[] GetDayNames()
         {
             return new[]
             {
-                "شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"
+                "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
             };
         }
     }

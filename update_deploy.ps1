@@ -80,5 +80,19 @@ if (-not (Test-Path "$displayAppDeploy\Config")) {
     New-Item -ItemType Directory -Path "$displayAppDeploy\Config" -Force | Out-Null
 }
 
+# Sync SharedData from project root to deploy folder
+Write-Host "Syncing SharedData..." -ForegroundColor Yellow
+$sharedDataSource = "SharedData"
+$sharedDataDeploy = "$deployPath\SharedData"
+if (Test-Path $sharedDataSource) {
+    if (-not (Test-Path $sharedDataDeploy)) {
+        New-Item -ItemType Directory -Path $sharedDataDeploy -Force | Out-Null
+    }
+    Copy-Item -Path "$sharedDataSource\*" -Destination $sharedDataDeploy -Recurse -Force
+    Write-Host "  SharedData synced from project" -ForegroundColor Gray
+} else {
+    Write-Host "  SharedData source not found, skipping" -ForegroundColor Yellow
+}
+
 Write-Host "`nDeployment update complete!" -ForegroundColor Green
-Write-Host "Note: Config and SharedData folders have been preserved." -ForegroundColor Cyan
+Write-Host "Note: Config folders have been preserved. SharedData has been synced from project." -ForegroundColor Cyan

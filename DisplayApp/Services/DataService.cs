@@ -135,7 +135,10 @@ namespace DisplayApp.Services
                                         { "photo_path", employeeObj.GetValueOrDefault("PhotoPath", "") },
                                         { "is_manager", employeeObj.GetValueOrDefault("IsManager", false) },
                                         { "created_at", employeeObj.GetValueOrDefault("CreatedAt", "") },
-                                        { "updated_at", employeeObj.GetValueOrDefault("UpdatedAt", "") }
+                                        { "updated_at", employeeObj.GetValueOrDefault("UpdatedAt", "") },
+                                        // Phone fields (for legacy/old-format employees that were serialized as JSON strings)
+                                        { "phone", employeeObj.GetValueOrDefault("Phone", "") },
+                                        { "show_phone", employeeObj.GetValueOrDefault("ShowPhone", true) }
                                     };
                                     transformedEmployees.Add(mappedEmployee);
                                 }
@@ -443,11 +446,14 @@ namespace DisplayApp.Services
                     {
                         var transformedAbsences = new Dictionary<string, object>();
                         
-                        foreach (var category in new[] { "مرخصی", "بیمار", "غایب" })
+                        // Support both English and legacy Persian keys when reading
+                        var categoryKeys = new[] { ("Leave", "Leave"), ("Sick", "Sick"), ("Absent", "Absent") };
+                        foreach (var (enKey, legacyKey) in categoryKeys)
                         {
-                            if (absencesDict.TryGetValue(category, out var categoryObj) && categoryObj is List<object> categoryList)
+                            var categoryObj = absencesDict.TryGetValue(enKey, out var o) ? o : (absencesDict.TryGetValue(legacyKey, out var o2) ? o2 : null);
+                            if (categoryObj is List<object> categoryList)
                             {
-                                _logger.LogInformation("Found {Count} {Category} absences", categoryList.Count, category);
+                                _logger.LogInformation("Found {Count} {Category} absences", categoryList.Count, enKey);
                                 
                                 var transformedCategoryList = new List<object>();
                                 
@@ -474,7 +480,10 @@ namespace DisplayApp.Services
                                                     { "notes", absenceObj.GetValueOrDefault("Notes", "") },
                                                     { "photo_path", absenceObj.GetValueOrDefault("PhotoPath", "") },
                                                     { "created_at", absenceObj.GetValueOrDefault("CreatedAt", "") },
-                                                    { "updated_at", absenceObj.GetValueOrDefault("UpdatedAt", "") }
+                                                    { "updated_at", absenceObj.GetValueOrDefault("UpdatedAt", "") },
+                                                    // Phone information for absence cards
+                                                    { "phone", absenceObj.GetValueOrDefault("Phone", "") },
+                                                    { "show_phone", absenceObj.GetValueOrDefault("ShowPhone", true) }
                                                 };
                                                 transformedCategoryList.Add(mappedAbsence);
                                             }
@@ -497,13 +506,13 @@ namespace DisplayApp.Services
                                     }
                                 }
                                 
-                                transformedAbsences[category] = transformedCategoryList;
-                                _logger.LogInformation("Transformed {Count} {Category} absences", transformedCategoryList.Count, category);
+                                transformedAbsences[enKey] = transformedCategoryList;
+                                _logger.LogInformation("Transformed {Count} {Category} absences", transformedCategoryList.Count, enKey);
                             }
                             else
                             {
                                 // No absences for this category
-                                transformedAbsences[category] = new List<object>();
+                                transformedAbsences[enKey] = new List<object>();
                             }
                         }
                         
@@ -689,7 +698,7 @@ namespace DisplayApp.Services
                             }
                             
                             // Check role-based manager detection
-                            if (!isManager && (role.StartsWith("مدیر") || role.StartsWith("manager")))
+                            if (!isManager && role.StartsWith("manager"))
                             {
                                 isManager = true;
                                 _logger.LogInformation("Employee {EmployeeId} identified as manager by role: {Role}", employeeId, role);
@@ -909,9 +918,9 @@ namespace DisplayApp.Services
                         },
                         { "absences", new Dictionary<string, object>
                             {
-                                { "مرخصی", new List<object>() },
-                                { "بیمار", new List<object>() },
-                                { "غایب", new List<object>() }
+                                { "Leave", new List<object>() },
+                                { "Sick", new List<object>() },
+                                { "Absent", new List<object>() }
                             }
                         },
                         { "tasks", new Dictionary<string, object>

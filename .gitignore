@@ -14,6 +14,15 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Ad-hoc build/error log captures
+build_errors*.txt
+build_error_*.txt
+build_log*.txt
+build_output.txt
+build_mgmt*.txt
+full_build_log.txt
+test_output.txt
+
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 # Uncomment if you have tasks that create the project's static files in wwwroot

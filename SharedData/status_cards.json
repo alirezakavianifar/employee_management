@@ -1,0 +1,29 @@
+[
+  {
+    "StatusCardId": "out_of_order",
+    "Name": "Out of Order",
+    "Color": "#F44336",
+    "TextColor": "#FFFFFF",
+    "IsActive": true,
+    "CreatedAt": "2026-01-30T01:20:38.9235026-08:00",
+    "UpdatedAt": "2026-01-30T01:20:38.9235518-08:00"
+  },
+  {
+    "StatusCardId": "empty",
+    "Name": "Empty",
+    "Color": "#9E9E9E",
+    "TextColor": "#FFFFFF",
+    "IsActive": true,
+    "CreatedAt": "2026-01-30T01:20:38.9242041-08:00",
+    "UpdatedAt": "2026-01-30T01:20:38.9242069-08:00"
+  },
+  {
+    "StatusCardId": "available",
+    "Name": "Available",
+    "Color": "#4CAF50",
+    "TextColor": "#FFFFFF",
+    "IsActive": true,
+    "CreatedAt": "2026-01-30T01:20:38.9242175-08:00",
+    "UpdatedAt": "2026-01-30T01:20:38.9242193-08:00"
+  }
+]

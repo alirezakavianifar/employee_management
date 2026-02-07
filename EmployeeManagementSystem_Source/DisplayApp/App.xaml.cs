@@ -1,15 +1,15 @@
-﻿using System;
+using System;
+using System.IO;
 using System.Windows;
 using Microsoft.Extensions.Logging;
 using Shared.Services;
-using DisplayApp.Utils;
+using Shared.Utils;
 
 namespace DisplayApp
 {
     public partial class App : Application
     {
         private ILogger<App> _logger;
-        private ConfigHelper _configHelper;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -19,9 +19,9 @@ namespace DisplayApp
                 _logger = LoggingService.CreateLogger<App>();
                 _logger.LogInformation("DisplayApp starting up");
 
-                // Initialize configuration
-                _configHelper = new ConfigHelper();
-                _logger.LogInformation("Configuration loaded");
+                // Load localized resources
+                LoadLocalizedResources();
+                _logger.LogInformation("Localized resources loaded");
 
                 // Set up global exception handling
                 AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
@@ -36,11 +36,48 @@ namespace DisplayApp
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error during application startup");
-                MessageBox.Show($"خطا در راه‌اندازی برنامه: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")}: {ex.Message}", 
+                    ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(1);
             }
 
             base.OnStartup(e);
+        }
+
+        private void LoadLocalizedResources()
+        {
+            try
+            {
+                // Get the path to SharedData folder (relative to app location)
+                var appPath = AppDomain.CurrentDomain.BaseDirectory;
+                var sharedDataPath = Path.GetFullPath(Path.Combine(appPath, "..", "..", "..", "SharedData", "resources.xml"));
+                
+                // If not found, try from development structure
+                if (!File.Exists(sharedDataPath))
+                {
+                    sharedDataPath = Path.GetFullPath(Path.Combine(appPath, "..", "..", "..", "..", "SharedData", "resources.xml"));
+                }
+                
+                // If still not found, try absolute path for development
+                if (!File.Exists(sharedDataPath))
+                {
+                    sharedDataPath = @"E:\projects\employee_management_csharp\SharedData\resources.xml";
+                }
+                
+                if (File.Exists(sharedDataPath))
+                {
+                    ResourceManager.LoadResources(sharedDataPath);
+                    _logger?.LogInformation($"Loaded resources from: {sharedDataPath}");
+                }
+                else
+                {
+                    _logger?.LogWarning($"Resources file not found at: {sharedDataPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to load localized resources");
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)
@@ -48,11 +85,6 @@ namespace DisplayApp
             try
             {
                 _logger?.LogInformation("DisplayApp shutting down");
-                
-                // Save configuration
-                _configHelper?.SaveConfig();
-                
-                _logger?.LogInformation("DisplayApp shutdown complete");
             }
             catch (Exception ex)
             {
@@ -69,12 +101,12 @@ namespace DisplayApp
                 var exception = e.ExceptionObject as Exception;
                 _logger?.LogError(exception, "Unhandled exception occurred");
                 
-                MessageBox.Show($"خطای غیرمنتظره: {exception?.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Unexpected error: {exception?.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch
             {
                 // If logging fails, just show a basic error message
-                MessageBox.Show("خطای غیرمنتظره رخ داده است", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("An unexpected error occurred", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -84,7 +116,7 @@ namespace DisplayApp
             {
                 _logger?.LogError(e.Exception, "Dispatcher unhandled exception occurred");
                 
-                MessageBox.Show($"خطا در رابط کاربری: {e.Exception.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"UI Error: {e.Exception.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 
                 // Mark as handled to prevent application crash
                 e.Handled = true;
@@ -92,7 +124,7 @@ namespace DisplayApp
             catch
             {
                 // If logging fails, just show a basic error message
-                MessageBox.Show("خطا در رابط کاربری رخ داده است", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("A UI error has occurred", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 e.Handled = true;
             }
         }

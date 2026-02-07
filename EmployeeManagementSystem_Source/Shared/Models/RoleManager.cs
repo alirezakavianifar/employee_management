@@ -16,12 +16,12 @@ namespace Shared.Models
 
         private void InitializeDefaultRoles()
         {
-            // Add some default roles
-            AddRole("manager", "مدیر", "مدیر سیستم", "#FF5722", 100);
-            AddRole("supervisor", "سرپرست", "سرپرست تیم", "#FF9800", 80);
-            AddRole("employee", "کارمند", "کارمند عادی", "#4CAF50", 50);
-            AddRole("intern", "کارآموز", "کارآموز", "#2196F3", 30);
-            AddRole("contractor", "پیمانکار", "پیمانکار", "#9C27B0", 20);
+            // Add some default roles (English display names)
+            AddRole("manager", "Manager", "System manager", "#FF5722", 100);
+            AddRole("supervisor", "Supervisor", "Team supervisor", "#FF9800", 80);
+            AddRole("employee", "Employee", "Regular employee", "#4CAF50", 50);
+            AddRole("intern", "Intern", "Intern", "#2196F3", 30);
+            AddRole("contractor", "Contractor", "Contractor", "#9C27B0", 20);
         }
 
         public bool AddRole(string roleId, string name, string description = "", string color = "#4CAF50", int priority = 0)

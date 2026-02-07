@@ -14,6 +14,14 @@ namespace Shared.Models
         public int MorningCapacity { get; set; } = 15;
         public int AfternoonCapacity { get; set; } = 15;
         public int NightCapacity { get; set; } = 15;
+        public string SupervisorId { get; set; } = string.Empty;
+        
+        [JsonIgnore]
+        public string SupervisorName { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public string SupervisorPhotoPath { get; set; } = string.Empty;
+
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -31,9 +39,9 @@ namespace Shared.Models
             if (string.IsNullOrEmpty(GroupId))
                 GroupId = $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
             if (string.IsNullOrEmpty(Name))
-                Name = "گروه جدید";
+                Name = "New group";
             if (string.IsNullOrEmpty(Description))
-                Description = "بدون توضیحات";
+                Description = "No description";
             if (string.IsNullOrEmpty(Color))
                 Color = "#4CAF50";
             if (MorningCapacity <= 0)
@@ -52,8 +60,8 @@ namespace Shared.Models
                          int morningCapacity = 15, int afternoonCapacity = 15, int nightCapacity = 15)
         {
             GroupId = groupId ?? $"group_{DateTimeOffset.Now.ToUnixTimeSeconds()}";
-            Name = name ?? "گروه جدید";
-            Description = description ?? "بدون توضیحات";
+            Name = name ?? "New group";
+            Description = description ?? "No description";
             Color = color ?? "#4CAF50";
             MorningCapacity = morningCapacity > 0 ? morningCapacity : 15;
             AfternoonCapacity = afternoonCapacity > 0 ? afternoonCapacity : 15;
@@ -68,7 +76,8 @@ namespace Shared.Models
         }
 
         public void Update(string? name = null, string? description = null, string? color = null, 
-                          int? morningCapacity = null, int? afternoonCapacity = null, int? nightCapacity = null, bool? isActive = null)
+                          int? morningCapacity = null, int? afternoonCapacity = null, int? nightCapacity = null, 
+                          string? supervisorId = null, bool? isActive = null)
         {
             if (!string.IsNullOrEmpty(name))
                 Name = name;
@@ -100,6 +109,8 @@ namespace Shared.Models
                 else
                     NightShift.SetCapacity(nightCapacity.Value);
             }
+            if (supervisorId != null)
+                SupervisorId = supervisorId;
             if (isActive.HasValue)
                 IsActive = isActive.Value;
             
@@ -178,25 +189,42 @@ namespace Shared.Models
 
         public void SwapShifts()
         {
-            // Ensure shifts are initialized  
+            // Ensure shifts are initialized (including Night)
             if (MorningShift == null)
                 MorningShift = new Shift("morning", MorningCapacity);
             if (AfternoonShift == null)
                 AfternoonShift = new Shift("afternoon", AfternoonCapacity);
-            
-            // Swap AssignedEmployees lists
-            var tempEmployees = new List<Employee?>(MorningShift.AssignedEmployees);
-            MorningShift.AssignedEmployees = new List<Employee?>(AfternoonShift.AssignedEmployees);
-            AfternoonShift.AssignedEmployees = tempEmployees;
-            
-            // Swap TeamLeaderId values
-            var tempTeamLeader = MorningShift.TeamLeaderId;
-            MorningShift.TeamLeaderId = AfternoonShift.TeamLeaderId;
-            AfternoonShift.TeamLeaderId = tempTeamLeader;
-            
-            // Update timestamps
+            if (NightShift == null)
+                NightShift = new Shift("night", NightCapacity);
+
+            // 3-way rotation: Morning <- Night, Afternoon <- Morning, Night <- Afternoon
+            var tempEmployeesM = MorningShift.AssignedEmployees;
+            var tempEmployeesA = AfternoonShift.AssignedEmployees;
+            var tempEmployeesN = NightShift.AssignedEmployees;
+            MorningShift.AssignedEmployees = tempEmployeesN;
+            AfternoonShift.AssignedEmployees = tempEmployeesM;
+            NightShift.AssignedEmployees = tempEmployeesA;
+
+            var tempTeamLeaderM = MorningShift.TeamLeaderId;
+            var tempTeamLeaderA = AfternoonShift.TeamLeaderId;
+            var tempTeamLeaderN = NightShift.TeamLeaderId;
+            MorningShift.TeamLeaderId = tempTeamLeaderN;
+            AfternoonShift.TeamLeaderId = tempTeamLeaderM;
+            NightShift.TeamLeaderId = tempTeamLeaderA;
+
+            if (MorningShift.StatusCardIds != null && AfternoonShift.StatusCardIds != null && NightShift.StatusCardIds != null)
+            {
+                var tempStatusM = MorningShift.StatusCardIds;
+                var tempStatusA = AfternoonShift.StatusCardIds;
+                var tempStatusN = NightShift.StatusCardIds;
+                MorningShift.StatusCardIds = tempStatusN;
+                AfternoonShift.StatusCardIds = tempStatusM;
+                NightShift.StatusCardIds = tempStatusA;
+            }
+
             MorningShift.UpdatedAt = DateTime.Now;
             AfternoonShift.UpdatedAt = DateTime.Now;
+            NightShift.UpdatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
         }
 
@@ -263,6 +291,7 @@ namespace Shared.Models
                     
                     var group = new ShiftGroup(groupData.GroupId, groupData.Name, groupData.Description, 
                                              groupData.Color, groupData.MorningCapacity, afternoonCap, nightCap);
+                    group.SupervisorId = groupData.SupervisorId;
                     group.IsActive = groupData.IsActive;
                     group.CreatedAt = groupData.CreatedAt;
                     group.UpdatedAt = groupData.UpdatedAt;
@@ -316,10 +345,18 @@ namespace Shared.Models
                 if (groupDict.ContainsKey("night_capacity") && int.TryParse(groupDict["night_capacity"].ToString(), out int parsedNightCapacity))
                     nightCapacity = parsedNightCapacity;
                 
+                string supervisorId = "";
+                if (groupDict.ContainsKey("supervisor_id"))
+                     supervisorId = groupDict["supervisor_id"]?.ToString() ?? "";
+                
+                if (groupDict.ContainsKey("supervisor_id"))
+                    supervisorId = groupDict["supervisor_id"]?.ToString() ?? "";
+
                 if (groupDict.ContainsKey("is_active") && bool.TryParse(groupDict["is_active"].ToString(), out bool parsedIsActive))
                     isActive = parsedIsActive;
 
                 var group = new ShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity);
+                group.SupervisorId = supervisorId;
                 group.IsActive = isActive;
 
                 // Load morning shift
@@ -387,6 +424,9 @@ namespace Shared.Models
                 MorningCapacity = MorningCapacity,
                 AfternoonCapacity = AfternoonCapacity,
                 NightCapacity = NightCapacity,
+                SupervisorId = SupervisorId,
+                SupervisorName = SupervisorName,
+                SupervisorPhotoPath = SupervisorPhotoPath,
                 IsActive = IsActive,
                 CreatedAt = CreatedAt,
                 UpdatedAt = UpdatedAt,
@@ -408,6 +448,9 @@ namespace Shared.Models
                 { "morning_capacity", MorningCapacity },
                 { "afternoon_capacity", AfternoonCapacity },
                 { "night_capacity", NightCapacity },
+                { "supervisor_id", SupervisorId },
+                { "supervisor_name", SupervisorName },
+                { "supervisor_photo_path", SupervisorPhotoPath },
                 { "is_active", IsActive },
                 { "created_at", CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
                 { "updated_at", UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) },
@@ -427,6 +470,9 @@ namespace Shared.Models
             public int AfternoonCapacity { get; set; } = 15;
             public int EveningCapacity { get; set; } = 15; // Legacy - for reading old data
             public int NightCapacity { get; set; } = 15;
+            public string SupervisorId { get; set; } = string.Empty;
+            public string SupervisorName { get; set; } = string.Empty;
+            public string SupervisorPhotoPath { get; set; } = string.Empty;
             public bool IsActive { get; set; } = true;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
@@ -445,29 +491,30 @@ namespace Shared.Models
         public ShiftGroupManager()
         {
             // Create default group for backward compatibility
-            var defaultGroup = new ShiftGroup("default", "گروه پیش‌فرض", "گروه پیش‌فرض برای سازگاری با نسخه‌های قبلی");
+            var defaultGroup = new ShiftGroup("default", "Default group", "Default group for backward compatibility");
             ShiftGroups["default"] = defaultGroup;
         }
 
         public bool AddShiftGroup(string groupId, string name, string description = "", string color = "#4CAF50", 
-                                 int morningCapacity = 15, int afternoonCapacity = 15, int nightCapacity = 15)
+                                 int morningCapacity = 15, int afternoonCapacity = 15, int nightCapacity = 15, string supervisorId = "")
         {
             if (string.IsNullOrEmpty(groupId) || ShiftGroups.ContainsKey(groupId))
                 return false;
 
             var group = new ShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity);
+            group.SupervisorId = supervisorId;
             ShiftGroups[groupId] = group;
             return true;
         }
 
        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
                                     string? color = null, int? morningCapacity = null, int? afternoonCapacity = null, 
-                                    int? nightCapacity = null, bool? isActive = null)
+                                    int? nightCapacity = null, string? supervisorId = null, bool? isActive = null)
         {
             if (!ShiftGroups.ContainsKey(groupId))
                 return false;
 
-            ShiftGroups[groupId].Update(name, description, color, morningCapacity, afternoonCapacity, nightCapacity, isActive);
+            ShiftGroups[groupId].Update(name, description, color, morningCapacity, afternoonCapacity, nightCapacity, supervisorId, isActive);
             return true;
         }
 

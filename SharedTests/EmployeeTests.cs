@@ -34,7 +34,7 @@ namespace SharedTests
             var isManager = true;
 
             // Act
-            var employee = new Employee(employeeId, firstName, lastName, roleId, photoPath, isManager);
+            var employee = new Employee(employeeId, firstName, lastName, roleId, shiftGroupId: "default", photoPath: photoPath, isManager: isManager);
 
             // Assert
             Assert.Equal(employeeId, employee.EmployeeId);
@@ -58,7 +58,7 @@ namespace SharedTests
             var newIsManager = true;
 
             // Act
-            employee.Update(newFirstName, newLastName, newRoleId, newPhotoPath, newIsManager);
+            employee.Update(newFirstName, newLastName, newRoleId, shiftGroupId: null, photoPath: newPhotoPath, isManager: newIsManager);
 
             // Assert
             Assert.Equal(newFirstName, employee.FirstName);
@@ -79,7 +79,7 @@ namespace SharedTests
             var originalRoleId = employee.RoleId;
 
             // Act
-            employee.Update(null, null, null, null, null);
+            employee.Update(null, null, null, shiftGroupId: null, photoPath: null, isManager: null);
 
             // Assert
             Assert.Equal(originalFirstName, employee.FirstName);
@@ -97,7 +97,7 @@ namespace SharedTests
             var originalRoleId = employee.RoleId;
 
             // Act
-            employee.Update("", "", "", "", null);
+            employee.Update("", "", "", shiftGroupId: "", photoPath: "", isManager: null);
 
             // Assert
             Assert.Equal(originalFirstName, employee.FirstName);
@@ -135,7 +135,7 @@ namespace SharedTests
         public void Employee_ToDictionary_ShouldIncludeAllFields()
         {
             // Arrange
-            var employee = new Employee("emp_001", "John", "Doe", "manager", "/path/photo.jpg", true);
+            var employee = new Employee("emp_001", "John", "Doe", "manager", shiftGroupId: "default", photoPath: "/path/photo.jpg", isManager: true);
 
             // Act
             var dictionary = employee.ToDictionary();
@@ -175,7 +175,7 @@ namespace SharedTests
         public void Employee_FromJson_ShouldDeserializeCorrectly()
         {
             // Arrange
-            var originalEmployee = new Employee("emp_001", "John", "Doe", "manager", "/path/photo.jpg", true);
+            var originalEmployee = new Employee("emp_001", "John", "Doe", "manager", shiftGroupId: "default", photoPath: "/path/photo.jpg", isManager: true);
             var json = originalEmployee.ToJson();
 
             // Act

@@ -8,6 +8,16 @@ $managementAppSource = "ManagementApp"
 $displayAppSource = "DisplayApp"
 $sharedSource = "Shared"
 
+# Pre-copy cleanup: remove destination subfolders to ensure clean sync and remove stale content
+Write-Host "Cleaning destination folders..." -ForegroundColor Yellow
+foreach ($folder in @("ManagementApp", "DisplayApp", "Shared")) {
+    $destFolder = Join-Path $sourcePath $folder
+    if (Test-Path $destFolder) {
+        Remove-Item -Path $destFolder -Recurse -Force
+        Write-Host "  Removed: $folder" -ForegroundColor Gray
+    }
+}
+
 # Function to copy directory excluding build artifacts
 function Copy-SourceDirectory {
     param(
@@ -18,6 +28,10 @@ function Copy-SourceDirectory {
     
     Write-Host "Updating $ProjectName..." -ForegroundColor Yellow
     
+    # Resolve to full paths to avoid incorrect Replace (e.g. "ManagementApp" in filename)
+    $sourceFullPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $SourceDir)).TrimEnd('\', '/')
+    $destFullPath = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) $DestDir)).TrimEnd('\', '/')
+    
     # Create destination directory if it doesn't exist
     if (-not (Test-Path $DestDir)) {
         New-Item -ItemType Directory -Path $DestDir -Force | Out-Null
@@ -25,7 +39,7 @@ function Copy-SourceDirectory {
     
     # Copy all files and folders, excluding build artifacts
     Get-ChildItem -Path $SourceDir -Recurse | Where-Object {
-        $relativePath = $_.FullName.Substring($SourceDir.Length + 1)
+        $relativePath = $_.FullName.Substring($sourceFullPath.Length + 1)
         # Exclude bin, obj, and other build artifacts, and the source folder itself
         -not ($relativePath -like "bin\*" -or 
               $relativePath -like "obj\*" -or
@@ -37,7 +51,7 @@ function Copy-SourceDirectory {
               $relativePath -like "*.suo" -or
               $relativePath -like "*.cache")
     } | ForEach-Object {
-        $destPath = $_.FullName.Replace($SourceDir, $DestDir)
+        $destPath = $_.FullName.Replace($sourceFullPath, $destFullPath)
         $destParent = Split-Path -Path $destPath -Parent
         
         if (-not (Test-Path $destParent)) {

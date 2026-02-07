@@ -12,7 +12,7 @@ namespace ManagementApp.Views
     {
         public new string Title { get; private set; } = string.Empty;
         public string Description { get; private set; } = string.Empty;
-        public string Priority { get; private set; } = "متوسط";
+        public string Priority { get; private set; } = "Medium";
         public double EstimatedHours { get; private set; } = 1.0;
         public string? TargetDate { get; private set; }
 
@@ -40,7 +40,7 @@ namespace ManagementApp.Views
         {
             if (string.IsNullOrWhiteSpace(TitleTextBox.Text))
             {
-                MessageBox.Show("لطفاً عنوان وظیفه را وارد کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please enter the task title", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -56,7 +56,7 @@ namespace ManagementApp.Views
             {
                 var convertedText = ConvertPersianToEnglishNumerals(originalText);
                 System.Diagnostics.Debug.WriteLine($"Parsing failed for: '{originalText}' -> '{convertedText}'");
-                MessageBox.Show($"لطفاً ساعت تخمینی معتبر وارد کنید\nمقدار وارد شده: '{originalText}'\nمقدار تبدیل شده: '{convertedText}'\nطول متن: {originalText?.Length}", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Please enter a valid estimated hours value.\nEntered: '{originalText}'\nConverted: '{convertedText}'\nLength: {originalText?.Length}", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
@@ -64,7 +64,7 @@ namespace ManagementApp.Views
 
             Title = TitleTextBox.Text.Trim();
             Description = DescriptionTextBox.Text.Trim();
-            Priority = ((ComboBoxItem)PriorityComboBox.SelectedItem)?.Content?.ToString() ?? "متوسط";
+            Priority = ((ComboBoxItem)PriorityComboBox.SelectedItem)?.Content?.ToString() ?? "Medium";
             EstimatedHours = estimatedHours;
             TargetDate = TargetDatePicker.SelectedDate;
             

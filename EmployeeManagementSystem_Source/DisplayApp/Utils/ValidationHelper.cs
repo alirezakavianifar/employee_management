@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Shared.Services;
 
@@ -120,7 +121,7 @@ namespace DisplayApp.Utils
             {
                 if (reportData.TryGetValue("absences", out var absencesObj) && absencesObj is Dictionary<string, object> absences)
                 {
-                    var requiredAbsenceTypes = new[] { "مرخصی", "بیمار", "غایب" };
+                    var requiredAbsenceTypes = new[] { "Leave", "Sick", "Absent" };
                     foreach (var absenceType in requiredAbsenceTypes)
                     {
                         if (!absences.ContainsKey(absenceType))
@@ -207,6 +208,16 @@ namespace DisplayApp.Utils
                     }
                 }
 
+                if (employeeData.TryGetValue("phone", out var phoneObj))
+                {
+                    var phone = phoneObj?.ToString() ?? string.Empty;
+                    if (!IsValidPhone(phone))
+                    {
+                        _logger.LogWarning("Invalid phone format for employee {Employee}", employeeData.GetValueOrDefault("id", "unknown"));
+                        return false;
+                    }
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -214,6 +225,18 @@ namespace DisplayApp.Utils
                 _logger.LogError(ex, "Error validating employee data");
                 return false;
             }
+        }
+
+        private bool IsValidPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                return true; // Optional field
+            }
+
+            var trimmed = phone.Trim();
+            var phonePattern = @"^[0-9+\-\s()]{6,20}$";
+            return Regex.IsMatch(trimmed, phonePattern);
         }
 
         public bool ValidateManagerData(Dictionary<string, object> managerData)
@@ -264,7 +287,7 @@ namespace DisplayApp.Utils
                 }
 
                 // Validate status values
-                var validStatuses = new[] { "در انتظار", "در حال انجام", "تکمیل شده", "لغو شده" };
+                var validStatuses = new[] { "Pending", "InProgress", "Completed", "Cancelled" };
                 var status = taskData["status"].ToString();
                 if (!validStatuses.Contains(status))
                 {
@@ -273,7 +296,7 @@ namespace DisplayApp.Utils
                 }
 
                 // Validate priority values
-                var validPriorities = new[] { "کم", "متوسط", "زیاد", "فوری" };
+                var validPriorities = new[] { "Low", "Medium", "High", "Urgent" };
                 var priority = taskData["priority"].ToString();
                 if (!validPriorities.Contains(priority))
                 {

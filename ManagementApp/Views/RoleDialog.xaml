@@ -1,9 +1,9 @@
 <Window x:Class="ManagementApp.Views.RoleDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="مدیریت نقش‌ها" 
+        Title="Role Management" 
         Height="500" Width="600"
-        FlowDirection="RightToLeft"
+        FlowDirection="LeftToRight"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize">
     
@@ -16,16 +16,16 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-            <Button Content="افزودن نقش جدید" x:Name="AddRoleButton" Click="AddRoleButton_Click" 
+            <Button Content="Add Role" x:Name="AddRoleButton" Click="AddRoleButton_Click" 
                    Width="120" Height="30" Margin="0,0,10,0" Background="#4CAF50" Foreground="White"/>
-            <Button Content="ویرایش نقش" x:Name="EditRoleButton" Click="EditRoleButton_Click" 
+            <Button Content="Edit Role" x:Name="EditRoleButton" Click="EditRoleButton_Click" 
                    Width="100" Height="30" Margin="0,0,10,0" Background="#FF9800" Foreground="White"/>
-            <Button Content="حذف نقش" x:Name="DeleteRoleButton" Click="DeleteRoleButton_Click" 
+            <Button Content="Delete Role" x:Name="DeleteRoleButton" Click="DeleteRoleButton_Click" 
                    Width="100" Height="30" Background="#F44336" Foreground="White"/>
         </StackPanel>
 
         <!-- Role List -->
-        <GroupBox Grid.Row="1" Header="لیست نقش‌ها" Margin="0,0,0,20">
+        <GroupBox Grid.Row="1" Header="Role list" Margin="0,0,0,20">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -34,7 +34,7 @@
 
                 <!-- Search Box -->
                 <TextBox Grid.Row="0" x:Name="RoleSearchBox" 
-                        Text="جستجو در نقش‌ها..." 
+                        Text="Search roles..." 
                         Foreground="Gray"
                         Margin="5" 
                         TextChanged="RoleSearchBox_TextChanged"/>
@@ -63,9 +63,9 @@
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="تأیید" x:Name="OkButton" Click="OkButton_Click" 
+            <Button Content="OK" x:Name="OkButton" Click="OkButton_Click" 
                    Width="80" Height="30" Margin="0,0,10,0" IsDefault="True"/>
-            <Button Content="انصراف" x:Name="CancelButton" Click="CancelButton_Click" 
+            <Button Content="Cancel" x:Name="CancelButton" Click="CancelButton_Click" 
                    Width="80" Height="30" IsCancel="True"/>
         </StackPanel>
     </Grid>

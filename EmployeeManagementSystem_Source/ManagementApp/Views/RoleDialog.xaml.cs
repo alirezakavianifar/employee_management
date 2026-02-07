@@ -32,7 +32,7 @@ namespace ManagementApp.Views
                 // Ensure UI controls are initialized
                 if (RoleListBox == null)
                 {
-                    MessageBox.Show("خطا در بارگذاری رابط کاربری.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error loading UI.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                     return;
                 }
@@ -46,13 +46,13 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    MessageBox.Show("خطا در دسترسی به کنترلر اصلی.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Error accessing main controller.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     Close();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در بارگذاری نقش‌ها: {ex.Message}\n\nجزئیات: {ex.StackTrace}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading roles: {ex.Message}\n\nDetails: {ex.StackTrace}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Close();
             }
         }
@@ -95,7 +95,7 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در بروزرسانی لیست نقش‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error updating role list: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -107,7 +107,7 @@ namespace ManagementApp.Views
                 
                 var searchText = RoleSearchBox.Text.ToLower();
                 
-                if (string.IsNullOrEmpty(searchText) || searchText == "جستجو در نقش‌ها...")
+                if (string.IsNullOrEmpty(searchText) || searchText == "Search roles...")
                 {
                     _filteredRoles = new List<Role>(_allRoles);
                 }
@@ -122,7 +122,7 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در جستجو: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error searching: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -138,7 +138,7 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در انتخاب نقش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error selecting role: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -163,22 +163,22 @@ namespace ManagementApp.Views
                         if (success)
                         {
                             LoadRoles();
-                            MessageBox.Show("نقش با موفقیت اضافه شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Role was added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
-                            MessageBox.Show("خطا در افزودن نقش. ممکن است شناسه نقش تکراری باشد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show("Error adding role. The role ID may already exist.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("خطا در دسترسی به کنترلر.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error accessing controller.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در افزودن نقش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error adding role: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -206,22 +206,22 @@ namespace ManagementApp.Views
                         if (success)
                         {
                             LoadRoles();
-                            MessageBox.Show("نقش با موفقیت بروزرسانی شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Role was updated successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
-                            MessageBox.Show("خطا در بروزرسانی نقش.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show("Error updating role.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("خطا در دسترسی به کنترلر.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error accessing controller.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در ویرایش نقش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error editing role: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -233,8 +233,8 @@ namespace ManagementApp.Views
                 if (selectedRole == null) return;
 
                 var result = MessageBox.Show(
-                    $"آیا از حذف نقش '{selectedRole.Name}' اطمینان دارید؟\n\nنکته: نقش‌های پیش‌فرض قابل حذف نیستند.",
-                    "تأیید حذف",
+                    $"Are you sure you want to delete role '{selectedRole.Name}'?\n\nNote: Default roles cannot be deleted.",
+                    "Confirm delete",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -247,22 +247,22 @@ namespace ManagementApp.Views
                         if (success)
                         {
                             LoadRoles();
-                            MessageBox.Show("نقش با موفقیت حذف شد.", "موفقیت", MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Role was deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
-                            MessageBox.Show("خطا در حذف نقش. ممکن است نقش پیش‌فرض باشد یا در حال استفاده باشد.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show("Error deleting role. The role may be default or in use.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        MessageBox.Show("خطا در دسترسی به کنترلر.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error accessing controller.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در حذف نقش: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error deleting role: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

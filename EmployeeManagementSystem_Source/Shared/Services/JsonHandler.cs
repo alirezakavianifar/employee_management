@@ -155,7 +155,7 @@ namespace Shared.Services
                     var empDict = emp as Dictionary<string, object>;
                     var role = empDict?.GetValueOrDefault("role", "").ToString() ?? "";
                     
-                    if (role.ToLower().StartsWith("مدیر") || role.ToLower().StartsWith("manager"))
+                    if (role.ToLower().StartsWith("manager"))
                     {
                         managers.Add(emp);
                     }
@@ -193,9 +193,9 @@ namespace Shared.Services
                     },
                     { "absences", new Dictionary<string, object>
                         {
-                            { "مرخصی", new List<object>() },
-                            { "بیمار", new List<object>() },
-                            { "غایب", new List<object>() }
+                            { "Leave", new List<object>() },
+                            { "Sick", new List<object>() },
+                            { "Absent", new List<object>() }
                         }
                     },
                     { "tasks", new Dictionary<string, object>
@@ -249,9 +249,9 @@ namespace Shared.Services
                 },
                 { "absences", new Dictionary<string, object>
                     {
-                        { "مرخصی", new List<object>() },
-                        { "بیمار", new List<object>() },
-                        { "غایب", new List<object>() }
+                        { "Leave", new List<object>() },
+                        { "Sick", new List<object>() },
+                        { "Absent", new List<object>() }
                     }
                 },
                 { "tasks", new Dictionary<string, object>
@@ -334,7 +334,7 @@ namespace Shared.Services
                                 employee["last_name"] = value;
                                 break;
                             case "role":
-                                employee["role"] = string.IsNullOrEmpty(value) ? "کارگر" : value;
+                                employee["role"] = string.IsNullOrEmpty(value) ? "Employee" : value;
                                 break;
                             case "photo_path":
                                 employee["photo_path"] = value;
@@ -575,9 +575,9 @@ namespace Shared.Services
                 // Clear absences for new day
                 newData["absences"] = new Dictionary<string, object>
                 {
-                    { "مرخصی", new List<object>() },
-                    { "بیمار", new List<object>() },
-                    { "غایب", new List<object>() }
+                    { "Leave", new List<object>() },
+                    { "Sick", new List<object>() },
+                    { "Absent", new List<object>() }
                 };
 
                 // Carry forward tasks from previous day

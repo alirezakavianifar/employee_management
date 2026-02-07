@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using Shared.Models;
 using Shared.Utils;
@@ -25,6 +26,8 @@ namespace ManagementApp.Views
         public List<string> StickerPaths { get; private set; } = new List<string>();
         public string MedalBadgePath { get; private set; } = string.Empty;
         public string PersonnelId { get; private set; } = string.Empty;
+        public string Phone { get; private set; } = string.Empty;
+        public bool ShowPhone { get; private set; } = true;
 
         // Backward compatibility
         public string Role => RoleId;
@@ -45,11 +48,14 @@ namespace ManagementApp.Views
             FirstNameTextBox.Text = employee.FirstName;
             LastNameTextBox.Text = employee.LastName;
             PersonnelIdTextBox.Text = employee.PersonnelId;
+            PhoneTextBox.Text = employee.Phone;
             PhotoPath = employee.PhotoPath;
             IsManagerCheckBox.IsChecked = employee.IsManager;
             ShieldColor = employee.ShieldColor;
             ShowShield = employee.ShowShield;
             ShowShieldCheckBox.IsChecked = employee.ShowShield;
+            ShowPhone = employee.ShowPhone;
+            ShowPhoneCheckBox.IsChecked = employee.ShowPhone;
             StickerPaths = employee.StickerPaths ?? new List<string>();
             MedalBadgePath = employee.MedalBadgePath;
             
@@ -131,12 +137,12 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    MessageBox.Show("خطا در دسترسی به کنترلر.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ResourceManager.GetString("err_access_controller", "Error accessing controller."), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در بارگذاری نقش‌ها: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_load_roles", "Error loading roles: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -171,12 +177,12 @@ namespace ManagementApp.Views
                 }
                 else
                 {
-                    MessageBox.Show("خطا در دسترسی به کنترلر.", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(ResourceManager.GetString("err_access_controller", "Error accessing controller."), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در بارگذاری گروه‌های شیفت: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_load_shift_groups", "Error loading shift groups: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -186,12 +192,12 @@ namespace ManagementApp.Views
             var colors = new[] { "Red", "Blue", "Yellow", "Black", "Orange", "Gray" };
             var colorNames = new Dictionary<string, string>
             {
-                { "Red", "قرمز" },
-                { "Blue", "آبی" },
-                { "Yellow", "زرد" },
-                { "Black", "سیاه" },
-                { "Orange", "نارنجی" },
-                { "Gray", "خاکستری" }
+                { "Red", "Red" },
+                { "Blue", "Blue" },
+                { "Yellow", "Yellow" },
+                { "Black", "Black" },
+                { "Orange", "Orange" },
+                { "Gray", "Gray" }
             };
             
             foreach (var color in colors)
@@ -215,7 +221,7 @@ namespace ManagementApp.Views
             var openFileDialog = new OpenFileDialog
             {
                 Filter = "PNG Files (*.png)|*.png|All Files (*.*)|*.*",
-                Title = "انتخاب فایل استیکر"
+                Title = "Select sticker file"
             };
 
             if (openFileDialog.ShowDialog() == true)
@@ -245,7 +251,7 @@ namespace ManagementApp.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"خطا در افزودن استیکر: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(string.Format(ResourceManager.GetString("err_add_sticker", "Error adding sticker: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -264,7 +270,7 @@ namespace ManagementApp.Views
             var openFileDialog = new OpenFileDialog
             {
                 Filter = "PNG Files (*.png)|*.png|All Files (*.*)|*.*",
-                Title = "انتخاب فایل مدال / نشان"
+                Title = "Select badge file"
             };
 
             if (openFileDialog.ShowDialog() == true)
@@ -317,7 +323,7 @@ namespace ManagementApp.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"خطا در انتخاب مدال: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(string.Format(ResourceManager.GetString("err_select_badge", "Error selecting badge: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -333,7 +339,7 @@ namespace ManagementApp.Views
             var openFileDialog = new OpenFileDialog
             {
                 Filter = "Image files (*.jpg;*.jpeg;*.png;*.bmp)|*.jpg;*.jpeg;*.png;*.bmp|All files (*.*)|*.*",
-                Title = "انتخاب عکس کارمند"
+                Title = "Select employee photo"
             };
 
             if (openFileDialog.ShowDialog() == true)
@@ -363,8 +369,8 @@ namespace ManagementApp.Views
                             {
                                 // Ask user if they want to update existing values
                                 var result = MessageBox.Show(
-                                    $"نام تشخیص داده شده از پوشه: {detectedFirstName} {detectedLastName}\nآیا می‌خواهید نام را به‌روزرسانی کنید؟",
-                                    "تشخیص نام از پوشه",
+                                    string.Format(ResourceManager.GetString("msg_name_detected", "Name detected from folder: {0} {1}\nDo you want to update the name?"), detectedFirstName, detectedLastName),
+                                    ResourceManager.GetString("header_name_detected", "Name detected from folder"),
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Question);
                                 
@@ -385,8 +391,8 @@ namespace ManagementApp.Views
                         {
                             // Ask user if they want to update existing personnel ID
                             var result = MessageBox.Show(
-                                $"کد پرسنلی تشخیص داده شده از نام فایل: {detectedPersonnelId}\nآیا می‌خواهید کد پرسنلی را به‌روزرسانی کنید؟",
-                                "تشخیص کد پرسنلی",
+                                string.Format(ResourceManager.GetString("msg_personnel_id_detected", "Personnel ID detected from filename: {0}\nDo you want to update the personnel ID?"), detectedPersonnelId),
+                                ResourceManager.GetString("header_personnel_id_detected", "Personnel ID detected"),
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Question);
                             
@@ -399,7 +405,7 @@ namespace ManagementApp.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"خطا در انتخاب عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(string.Format(ResourceManager.GetString("err_select_photo", "Error selecting photo: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -426,7 +432,7 @@ namespace ManagementApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطا در بارگذاری پیش‌نمایش عکس: {ex.Message}", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(string.Format(ResourceManager.GetString("err_load_photo_preview", "Error loading photo preview: {0}"), ex.Message), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -481,29 +487,42 @@ namespace ManagementApp.Views
 
             if (!hasNameFields && !hasPhotoWithDetectedName)
             {
-                MessageBox.Show("لطفاً نام و نام خانوادگی را وارد کنید یا عکسی با نام فایل به فرمت FirstName_LastName_PersonnelId.ext انتخاب کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(ResourceManager.GetString("err_name_required", "Please enter first and last name or select a photo with filename format FirstName_LastName_PersonnelId.ext"), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (RoleComboBox.SelectedItem == null)
             {
-                MessageBox.Show("لطفاً یک نقش انتخاب کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(ResourceManager.GetString("msg_select_role", "Please select a role"), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (ShiftGroupComboBox.SelectedItem == null)
             {
-                MessageBox.Show("لطفاً یک گروه شیفت انتخاب کنید", "خطا", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(ResourceManager.GetString("msg_select_shift_group", "Please select a shift group"), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
+            }
+
+            var phoneInput = PhoneTextBox.Text.Trim();
+            if (!string.IsNullOrEmpty(phoneInput))
+            {
+                var phonePattern = @"^[0-9+\-\s()]{6,20}$";
+                if (!Regex.IsMatch(phoneInput, phonePattern))
+                {
+                    MessageBox.Show(ResourceManager.GetString("msg_invalid_phone", "Please enter a valid phone number (digits, +, -, spaces, parentheses)."), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
             }
 
             FirstName = FirstNameTextBox.Text.Trim();
             LastName = LastNameTextBox.Text.Trim();
             PersonnelId = PersonnelIdTextBox.Text.Trim();
+            Phone = PhoneTextBox.Text.Trim();
             RoleId = (RoleComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "employee";
             ShiftGroupId = (ShiftGroupComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "default";
             ShieldColor = (ShieldColorComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Blue";
             ShowShield = ShowShieldCheckBox.IsChecked ?? true;
+            ShowPhone = ShowPhoneCheckBox.IsChecked ?? true;
             IsManager = IsManagerCheckBox.IsChecked ?? false;
             
             DialogResult = true;

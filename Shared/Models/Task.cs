@@ -12,26 +12,26 @@ namespace Shared.Models
     [JsonConverter(typeof(StringEnumConverter))]
     public enum TaskStatus
     {
-        [JsonProperty("در انتظار")]
+        [JsonProperty("Pending")]
         Pending,
-        [JsonProperty("در حال انجام")]
+        [JsonProperty("InProgress")]
         InProgress,
-        [JsonProperty("تکمیل شده")]
+        [JsonProperty("Completed")]
         Completed,
-        [JsonProperty("لغو شده")]
+        [JsonProperty("Cancelled")]
         Cancelled
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
     public enum TaskPriority
     {
-        [JsonProperty("کم")]
+        [JsonProperty("Low")]
         Low,
-        [JsonProperty("متوسط")]
+        [JsonProperty("Medium")]
         Medium,
-        [JsonProperty("زیاد")]
+        [JsonProperty("High")]
         High,
-        [JsonProperty("فوری")]
+        [JsonProperty("Urgent")]
         Urgent
     }
 
@@ -154,7 +154,7 @@ namespace Shared.Models
         public string TargetDateGregorian => GeorgianDateHelper.GeorgianToGregorian(TargetDate);
 
         [JsonIgnore]
-        public string AssignedEmployeesDisplay => AssignedEmployees.Count == 0 ? "تخصیص داده نشده" : string.Join(", ", AssignedEmployees);
+        public string AssignedEmployeesDisplay => AssignedEmployees.Count == 0 ? "Unassigned" : string.Join(", ", AssignedEmployees);
 
         public override string ToString()
         {
@@ -233,6 +233,7 @@ namespace Shared.Models
             public DateTime UpdatedAt { get; set; }
         }
 
+        /// <summary>Serializes enums as English JSON; accepts English or legacy Persian when reading.</summary>
         private class PersianEnumConverter<T> : JsonConverter<T> where T : struct, Enum
         {
             public override void WriteJson(JsonWriter writer, T value, JsonSerializer serializer)
@@ -240,7 +241,6 @@ namespace Shared.Models
                 var field = typeof(T).GetField(value.ToString());
                 var attribute = field?.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
                     .FirstOrDefault() as JsonPropertyAttribute;
-                
                 writer.WriteValue(attribute?.PropertyName ?? value.ToString());
             }
 
@@ -253,23 +253,45 @@ namespace Shared.Models
                 if (string.IsNullOrEmpty(value))
                     return default(T);
 
-                // Try to find enum value by JsonProperty attribute
+                // Try to find enum value by JsonProperty attribute (English)
                 foreach (var field in typeof(T).GetFields())
                 {
                     var attribute = field.GetCustomAttributes(typeof(JsonPropertyAttribute), false)
                         .FirstOrDefault() as JsonPropertyAttribute;
-                    
-                    if (attribute?.PropertyName == value)
-                    {
-                        return (T)field.GetValue(null);
-                    }
+                    if (attribute?.PropertyName == value && field.GetValue(null) is T enumVal)
+                        return enumVal;
                 }
 
-                // Fallback to direct enum parsing
+                // Legacy: map Persian strings to enum for backward compatibility
+                var legacy = GetLegacyEnumValue<T>(value);
+                if (legacy.HasValue)
+                    return legacy.GetValueOrDefault();
+
                 if (Enum.TryParse<T>(value, out T result))
                     return result;
 
                 return default(T);
+            }
+
+            private static TEnum? GetLegacyEnumValue<TEnum>(string value) where TEnum : struct, Enum
+            {
+                if (typeof(TEnum) == typeof(TaskStatus))
+                {
+                    var s = value?.Trim();
+                    if (s == "در انتظار") return (TEnum)(object)TaskStatus.Pending;
+                    if (s == "در حال انجام") return (TEnum)(object)TaskStatus.InProgress;
+                    if (s == "تکمیل شده") return (TEnum)(object)TaskStatus.Completed;
+                    if (s == "لغو شده") return (TEnum)(object)TaskStatus.Cancelled;
+                }
+                if (typeof(TEnum) == typeof(TaskPriority))
+                {
+                    var s = value?.Trim();
+                    if (s == "کم") return (TEnum)(object)TaskPriority.Low;
+                    if (s == "متوسط") return (TEnum)(object)TaskPriority.Medium;
+                    if (s == "زیاد") return (TEnum)(object)TaskPriority.High;
+                    if (s == "فوری") return (TEnum)(object)TaskPriority.Urgent;
+                }
+                return null;
             }
         }
     }

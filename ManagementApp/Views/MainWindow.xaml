@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:ManagementApp.Converters"
         xmlns:controls="clr-namespace:ManagementApp.Controls"
         mc:Ignorable="d"
-        Title="سیستم مدیریت شیفت کارمندان" 
+        Title="{converters:Res app_title}" 
         WindowState="Maximized"
         FlowDirection="LeftToRight"
         WindowStartupLocation="CenterScreen">
@@ -26,7 +26,7 @@
         <!-- Header -->
         <Border Grid.Row="0" Background="#2E3440" Padding="10">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="سیستم مدیریت شیفت کارمندان" 
+                <TextBlock Text="{converters:Res app_title}" 
                           FontFamily="Tahoma" 
                           FontSize="18" 
                           FontWeight="Bold" 
@@ -43,7 +43,7 @@
 
         <!-- Main Content -->
         <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" SelectionChanged="MainTabControl_SelectionChanged">
-            <TabItem Header="مدیریت کارمندان">
+            <TabItem Header="{converters:Res tab_employee_management}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -54,7 +54,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Employee List -->
-                    <GroupBox Grid.Column="0" Header="لیست کارمندان" Margin="5">
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_employee_list}" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -65,7 +65,7 @@
                             <!-- Search Box -->
                             <TextBox Grid.Row="0" 
                                     x:Name="EmployeeSearchBox"
-                                    Text="جستجو..." 
+                                    Text="{converters:Res label_search}" 
                                     Foreground="Gray"
                                     Margin="5"/>
                             
@@ -81,12 +81,13 @@
 
                             <!-- Employee Actions -->
                             <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
-                                <Button Content="افزودن کارمند" Click="AddEmployee_Click" Margin="2"/>
-                                <Button Content="ویرایش کارمند" Click="EditEmployee_Click" Margin="2"/>
-                                <Button Content="حذف کارمند" Click="DeleteEmployee_Click" Margin="2"/>
-                                <Button Content="مدیریت نقش‌ها" Click="ManageRoles_Click" Margin="2" Background="#9C27B0" Foreground="White"/>
-                                <Button Content="مدیریت گروه‌های شیفت" Click="ManageShiftGroups_Click" Margin="2" Background="#FF5722" Foreground="White"/>
-                                <Button Content="وارد کردن از CSV" Click="ImportCSV_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_add_employee}" Click="AddEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_edit_employee}" Click="EditEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_delete_employee}" Click="DeleteEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_manage_roles}" Click="ManageRoles_Click" Margin="2" Background="#9C27B0" Foreground="White"/>
+                                <Button Content="{converters:Res btn_manage_shift_groups}" Click="ManageShiftGroups_Click" Margin="2" Background="#FF5722" Foreground="White"/>
+                                <Button Content="{converters:Res btn_manage_status_cards}" Click="ManageStatusCards_Click" Margin="2" Background="#2196F3" Foreground="White"/>
+                                <Button Content="{converters:Res btn_import_csv}" Click="ImportCSV_Click" Margin="2"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
@@ -102,7 +103,7 @@
                                  Margin="0"/>
 
                     <!-- Employee Details -->
-                    <GroupBox Grid.Column="2" Header="جزئیات کارمند" Margin="5">
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_employee_details}" Margin="5">
                         <Grid x:Name="EmployeeDetailsGrid" Margin="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -117,22 +118,22 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="نام:"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_name}"/>
                             <TextBox Grid.Row="0" Grid.Column="1" x:Name="FirstNameTextBox" Margin="5"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="نام خانوادگی:"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_last_name}"/>
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="LastNameTextBox" Margin="5"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="سمت:"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_position}"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" x:Name="RoleComboBox" Margin="5"/>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="نقش مدیر:"/>
-                            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="IsManagerCheckBox" Content="این کارمند مدیر است" Margin="5"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_manager_role}"/>
+                            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="IsManagerCheckBox" Content="{converters:Res checkbox_is_manager}" Margin="5"/>
 
-                            <Label Grid.Row="4" Grid.Column="0" Content="عکس:"/>
+                            <Label Grid.Row="4" Grid.Column="0" Content="{converters:Res label_photo}"/>
                             <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="5">
-                                <Button Content="انتخاب عکس" Click="SelectPhoto_Click" Margin="0,0,5,0"/>
-                                <Button Content="ذخیره تغییرات" Click="SaveEmployeeChanges_Click"/>
+                                <Button Content="{converters:Res btn_select_photo}" Click="SelectPhoto_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_save_changes}" Click="SaveEmployeeChanges_Click"/>
                             </StackPanel>
 
                             <!-- Employee Photo -->
@@ -155,30 +156,30 @@
                                  Margin="0"/>
 
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="مدیریت غیبت" Margin="5">
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="نوع غیبت:"/>
+                            <Label Content="{converters:Res label_absence_type}"/>
                             <ComboBox x:Name="AbsenceTypeComboBox" Margin="0,5">
-                                <ComboBoxItem Content="مرخصی"/>
-                                <ComboBoxItem Content="بیمار"/>
-                                <ComboBoxItem Content="غایب"/>
+                                <ComboBoxItem Content="{converters:Res absence_leave}"/>
+                                <ComboBoxItem Content="{converters:Res absence_sick}"/>
+                                <ComboBoxItem Content="{converters:Res absence_absent}"/>
                             </ComboBox>
 
-                            <Label Content="تاریخ غیبت:" Margin="0,10,0,5"/>
+                            <Label Content="{converters:Res label_absence_date}" Margin="0,10,0,5"/>
                             <controls:GeorgianDatePicker x:Name="AbsenceDatePicker" Margin="0,0,0,10"/>
 
-                            <Label Content="توضیحات:" Margin="0,10,0,5"/>
+                            <Label Content="{converters:Res label_notes}" Margin="0,10,0,5"/>
                             <TextBox x:Name="AbsenceNotesTextBox" 
                                     Height="60" 
                                     TextWrapping="Wrap" 
                                     AcceptsReturn="True"
                                     Margin="0,0,0,10"/>
 
-                            <Button Content="ثبت غیبت" Click="MarkAbsent_Click" Margin="0,5"/>
-                            <Button Content="حذف غیبت" Click="RemoveAbsence_Click" Margin="0,5"/>
+                            <Button Content="{converters:Res btn_mark_absent}" Click="MarkAbsent_Click" Margin="0,5"/>
+                            <Button Content="{converters:Res btn_remove_absence}" Click="RemoveAbsence_Click" Margin="0,5"/>
 
                             <!-- Absence List -->
-                            <Label Content="لیست غیبت‌ها:" Margin="0,20,0,5"/>
+                            <Label Content="{converters:Res label_absence_list}" Margin="0,20,0,5"/>
                             <ListBox x:Name="AbsenceListBox" 
                                     Height="100" 
                                     Margin="0,5">
@@ -194,12 +195,12 @@
                             </ListBox>
 
                             <!-- Categorized Absence Lists -->
-                            <Label Content="کارمندان غایب امروز:" FontWeight="Bold" Margin="0,20,0,5"/>
+                            <Label Content="{converters:Res label_absent_employees_today}" FontWeight="Bold" Margin="0,20,0,5"/>
                             <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
                                 <StackPanel>
-                                    <!-- Absent Employees (غایب) -->
+                                    <!-- Absent Employees -->
                                     <Expander x:Name="EmployeeManagementAbsentExpander" 
-                                             Header="کارمندان غایب (0)" 
+                                             Header="Absent Employees (0)" 
                                              IsExpanded="True"
                                              Margin="0,0,0,5">
                                         <ListBox x:Name="EmployeeManagementAbsentListBox" 
@@ -239,9 +240,9 @@
                                         </ListBox>
                                     </Expander>
 
-                                    <!-- Sick Employees (بیمار) -->
+                                    <!-- Sick Employees -->
                                     <Expander x:Name="EmployeeManagementSickExpander" 
-                                             Header="کارمندان بیمار (0)" 
+                                             Header="Sick Employees (0)" 
                                              IsExpanded="True"
                                              Margin="0,0,0,5">
                                         <ListBox x:Name="EmployeeManagementSickListBox" 
@@ -281,9 +282,9 @@
                                         </ListBox>
                                     </Expander>
 
-                                    <!-- Employees on Leave (مرخصی) -->
+                                    <!-- Employees on Leave -->
                                     <Expander x:Name="EmployeeManagementLeaveExpander" 
-                                             Header="کارمندان مرخصی (0)" 
+                                             Header="Leave Employees (0)" 
                                              IsExpanded="True"
                                              Margin="0,0,0,5">
                                         <ListBox x:Name="EmployeeManagementLeaveListBox" 
@@ -329,7 +330,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="مدیریت شیفت">
+            <TabItem Header="{converters:Res tab_shift_management}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -340,62 +341,134 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Employee List for Shift Assignment -->
-                    <GroupBox Grid.Column="0" Header="کارمندان" Margin="5">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Search Box -->
-                            <TextBox Grid.Row="0"
-                                    x:Name="ShiftEmployeeSearchBox"
-                                    Text="جستجو..." 
-                                    Foreground="Gray"
-                                    Margin="5"/>
-                            
-                            <ListBox Grid.Row="1"
-                                    x:Name="ShiftEmployeeListBox" 
-                                    AllowDrop="True"
-                                    DragOver="Employee_DragOver"
-                                    DragEnter="ShiftEmployeeListBox_DragEnter"
-                                    DragLeave="ShiftEmployeeListBox_DragLeave"
-                                    Drop="ShiftEmployeeListBox_Drop"
-                                    PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
-                                    MouseMove="ShiftEmployeeListBox_MouseMove"
-                                    Margin="5">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Name="EmployeeCardBorder"
-                                            Background="White"
-                                            BorderBrush="#CCCCCC"
-                                            BorderThickness="1"
-                                            CornerRadius="4"
-                                            Padding="8"
-                                            Margin="2"
-                                            Cursor="Hand">
-                                        <StackPanel Orientation="Vertical"
-                                                   HorizontalAlignment="Center">
-                                            <Image x:Name="EmployeePhotoImage"
-                                                   Width="50"
-                                                   Height="50"
-                                                   Stretch="UniformToFill"
-                                                   Margin="0,0,0,5"/>
-                                            <TextBlock Text="{Binding FullName}"
-                                                      FontFamily="Tahoma"
-                                                      FontSize="10"
-                                                      TextAlignment="Center"
-                                                      TextWrapping="Wrap"
-                                                      MaxWidth="100"
-                                                      Foreground="DarkBlue"
-                                                      HorizontalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Grid>
-                    </GroupBox>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="2*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <GroupBox Grid.Row="0" Header="{converters:Res header_employees}" Margin="5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Search Box -->
+                                <TextBox Grid.Row="0"
+                                        x:Name="ShiftEmployeeSearchBox"
+                                        Text="{converters:Res label_search}" 
+                                        Foreground="Gray"
+                                        Margin="5"/>
+                                
+                                <ListBox Grid.Row="1"
+                                        x:Name="ShiftEmployeeListBox" 
+                                        AllowDrop="True"
+                                        DragOver="Employee_DragOver"
+                                        DragEnter="ShiftEmployeeListBox_DragEnter"
+                                        DragLeave="ShiftEmployeeListBox_DragLeave"
+                                        Drop="ShiftEmployeeListBox_Drop"
+                                        PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
+                                        MouseMove="ShiftEmployeeListBox_MouseMove"
+                                        Margin="5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Name="EmployeeCardBorder"
+                                                Background="White"
+                                                BorderBrush="#CCCCCC"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Padding="8"
+                                                Margin="2"
+                                                Cursor="Hand">
+                                            <StackPanel Orientation="Vertical"
+                                                       HorizontalAlignment="Center">
+                                                <Image x:Name="EmployeePhotoImage"
+                                                       Width="50"
+                                                       Height="50"
+                                                       Stretch="UniformToFill"
+                                                       Margin="0,0,0,5"/>
+                                                <TextBlock Text="{Binding FullName}"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="10"
+                                                          TextAlignment="Center"
+                                                          TextWrapping="Wrap"
+                                                          MaxWidth="100"
+                                                          Foreground="DarkBlue"
+                                                          HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </GroupBox>
+                        
+                        <!-- Splitter between employees and labels -->
+                        <GridSplitter Grid.Row="1" 
+                                      Height="5"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center"
+                                      Background="#CCCCCC"
+                                      ShowsPreview="False"/>
+                        
+                        <!-- Label Creation Panel -->
+                        <!-- Tools TabControl -->
+                        <TabControl Grid.Row="2" Margin="5">
+                            <TabItem Header="{converters:Res tab_labels}">
+                                <controls:LabelCreationPanel x:Name="LabelPanel" Margin="0"/>
+                            </TabItem>
+                            <TabItem Header="{converters:Res tab_status_cards}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <ListBox x:Name="StatusCardsListBox" 
+                                             PreviewMouseLeftButtonDown="StatusCardsListBox_PreviewMouseLeftButtonDown"
+                                             MouseMove="StatusCardsListBox_MouseMove"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             BorderThickness="0">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White" 
+                                                        BorderBrush="Gray" 
+                                                        BorderThickness="1" 
+                                                        CornerRadius="3" 
+                                                        Margin="2" 
+                                                        Width="70" 
+                                                        Height="50"
+                                                        Cursor="Hand"
+                                                        ToolTip="{Binding Description}">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        
+                                                        <Border Grid.Row="0" Background="{Binding Color}" Opacity="0.7" CornerRadius="3,3,0,0"/>
+                                                        <TextBlock Grid.Row="0" Text="{Binding Name}" 
+                                                                   FontFamily="Tahoma" FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                                                                   
+                                                        <TextBlock Grid.Row="1" Text="{Binding Abbreviation}" 
+                                                                   FontFamily="Tahoma" FontSize="8" 
+                                                                   HorizontalAlignment="Center" Margin="0,2"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
 
                     <!-- Splitter 1 -->
                     <GridSplitter Grid.Column="1" 
@@ -408,55 +481,56 @@
                                  Margin="0"/>
 
                     <!-- Shift Assignment -->
-                    <GroupBox Grid.Column="2" Header="تخصیص شیفت" Margin="5">
+                    <GroupBox x:Name="ShiftAssignmentGroupBox" Grid.Column="2" Header="{converters:Res header_shift_table}" Margin="5" SizeChanged="ShiftAssignmentGroupBox_SizeChanged">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/> <!-- Toolbar -->
+                                <RowDefinition Height="*"/>    <!-- Content -->
                             </Grid.RowDefinitions>
 
-                            <!-- Shift Group Selection -->
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
-                                <Label Content="گروه شیفت:"/>
-                                <ComboBox x:Name="ShiftGroupComboBox" Width="150" Margin="5,0" 
-                                         SelectionChanged="ShiftGroupComboBox_SelectionChanged"/>
-                            </StackPanel>
-
-                            <!-- Shift Controls -->
-                            <StackPanel Grid.Row="1" Orientation="Vertical" Margin="5">
+                            <!-- Toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Vertical" Margin="5">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                    <Label Content="ظرفیت شیفت:" VerticalAlignment="Center"/>
-                                    <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="15" Margin="5,0" VerticalAlignment="Center"/>
-                                    <Button Content="تغییر ظرفیت" Click="ChangeCapacity_Click" Margin="5,0"/>
-                                    <Button Content="پاک کردن شیفت صبح" Click="ClearMorningShift_Click" Margin="5,0"/>
-                                    <Button Content="پاک کردن شیفت عصر" Click="ClearAfternoonShift_Click" Margin="5,0"/>
-                                    <Button Content="پاک کردن شیفت شب" Click="ClearNightShift_Click" Margin="5,0"/>
-                                    <Button Content="جابجایی شیفت‌ها" Click="SwapShifts_Click" Margin="5,0"/>
+                                    <Label Content="{converters:Res label_shift_group}" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="ShiftGroupComboBox" Width="150" Margin="5,0" VerticalAlignment="Center" SelectionChanged="ShiftGroupComboBox_SelectionChanged"/>
+                                    <Label Content="{converters:Res label_shift_capacity}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                    <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="1" IsReadOnly="True" Margin="5,0" VerticalAlignment="Center" ToolTip="{converters:Res tooltip_capacity_per_slot}"/>
+                                    <!-- Capacity button removed as it's fixed 1 for now, or we keep it for model updates -->
+                                    <StackPanel x:Name="ShiftToolbarButtonsPanel" Orientation="Horizontal">
+                                        <Button Content="{converters:Res btn_swap_shifts}" Click="SwapShifts_Click" Margin="5,0"/>
+                                        <Button x:Name="ClearShiftButton" Content="{converters:Res btn_clear_shift}" Click="ClearShiftButton_Click" Margin="5,0">
+                                            <Button.ContextMenu>
+                                                <ContextMenu x:Name="ClearShiftContextMenu" Placement="Bottom">
+                                                    <MenuItem Header="{converters:Res btn_clear_morning_shift}" Click="ClearShiftOption_Click" Tag="morning"/>
+                                                    <MenuItem Header="{converters:Res btn_clear_afternoon_shift}" Click="ClearShiftOption_Click" Tag="afternoon"/>
+                                                    <MenuItem Header="{converters:Res btn_clear_night_shift}" Click="ClearShiftOption_Click" Tag="night"/>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
                                 <StackPanel Orientation="Vertical">
                                     <StackPanel Orientation="Horizontal">
                                         <CheckBox x:Name="AutoRotateCheckBox" 
-                                                  Content="جابجایی خودکار شیفت‌ها" 
+                                                  Content="{converters:Res checkbox_auto_rotate}" 
                                                   Checked="AutoRotateCheckBox_Checked" 
                                                   Unchecked="AutoRotateCheckBox_Unchecked"
                                                   Margin="0,0,5,0" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <Expander x:Name="RotationConfigExpander" 
-                                             Header="تنظیمات چرخش خودکار"
+                                             Header="{converters:Res header_auto_rotation_settings}"
                                              IsExpanded="False"
                                              Visibility="Collapsed"
                                              Margin="20,5,0,0">
                                         <StackPanel Orientation="Vertical" Margin="10">
-                                            <Label Content="نوع چرخش:" FontWeight="Bold" Margin="0,0,0,5"/>
+                                            <Label Content="{converters:Res label_rotation_type}" FontWeight="Bold" Margin="0,0,0,5"/>
                                             <RadioButton x:Name="WeeklyRotationRadio" 
-                                                        Content="چرخش هفتگی"
+                                                        Content="{converters:Res radio_weekly_rotation}"
                                                         IsChecked="True"
                                                         Checked="RotationTypeRadio_Checked"
                                                         Margin="0,0,0,10"/>
                                             <StackPanel Orientation="Horizontal" Margin="20,0,0,10">
-                                                <Label Content="روز هفته:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <Label Content="{converters:Res label_day_of_week}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                                 <ComboBox x:Name="RotationDayComboBox" 
                                                          Width="150"
                                                          SelectionChanged="RotationDayComboBox_SelectionChanged"
@@ -488,143 +562,21 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <!-- Shift Slots -->
-                            <Grid Grid.Row="2" Margin="5">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Morning Shift -->
-                                <GroupBox Grid.Column="0" Header="شیفت صبح" Margin="5">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <!-- Supervisor Drop Area -->
-                                        <Border x:Name="MorningSupervisorArea" 
-                                                Grid.Row="0"
-                                                AllowDrop="True"
-                                                DragOver="SupervisorArea_DragOver"
-                                                DragEnter="SupervisorArea_DragEnter"
-                                                DragLeave="SupervisorArea_DragLeave"
-                                                Drop="SupervisorArea_Drop"
-                                                Background="#E3F2FD"
-                                                BorderBrush="#1976D2"
-                                                BorderThickness="2"
-                                                CornerRadius="5"
-                                                Padding="10"
-                                                Margin="5"
-                                                Tag="morning">
-                                            <StackPanel>
-                                                <Label Content="سرپرست شیفت صبح" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
-                                                <StackPanel x:Name="MorningSupervisorContent" 
-                                                           Orientation="Horizontal" 
-                                                           HorizontalAlignment="Center"
-                                                           MinHeight="80">
-                                                    <!-- Supervisor display will be updated in code-behind -->
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- Shift Slots -->
-                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                            <StackPanel x:Name="MorningShiftPanel" Margin="5"/>
-                                        </ScrollViewer>
-                                    </Grid>
-                                </GroupBox>
-
-
-
-                                <!-- Afternoon Shift -->
-                                <GroupBox Grid.Column="1" Header="شیفت عصر" Margin="5">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <!-- Supervisor Drop Area -->
-                                        <Border x:Name="AfternoonSupervisorArea" 
-                                                Grid.Row="0"
-                                                AllowDrop="True"
-                                                DragOver="SupervisorArea_DragOver"
-                                                DragEnter="SupervisorArea_DragEnter"
-                                                DragLeave="SupervisorArea_DragLeave"
-                                                Drop="SupervisorArea_Drop"
-                                                Background="#E3F2FD"
-                                                BorderBrush="#1976D2"
-                                                BorderThickness="2"
-                                                CornerRadius="5"
-                                                Padding="10"
-                                                Margin="5"
-                                                Tag="afternoon">
-                                            <StackPanel>
-                                                <Label Content="سرپرست شیفت عصر" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
-                                                <StackPanel x:Name="AfternoonSupervisorContent" 
-                                                           Orientation="Horizontal" 
-                                                           HorizontalAlignment="Center"
-                                                           MinHeight="80">
-                                                    <!-- Supervisor display will be updated in code-behind -->
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- Shift Slots -->
-                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                            <StackPanel x:Name="AfternoonShiftPanel" Margin="5"/>
-                                        </ScrollViewer>
-                                    </Grid>
-                                </GroupBox>
-
-                                <!-- Night Shift -->
-                                <GroupBox Grid.Column="2" Header="شیفت شب" Margin="5">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <!-- Supervisor Drop Area -->
-                                        <Border x:Name="NightSupervisorArea" 
-                                                Grid.Row="0"
-                                                AllowDrop="True"
-                                                DragOver="SupervisorArea_DragOver"
-                                                DragEnter="SupervisorArea_DragEnter"
-                                                DragLeave="SupervisorArea_DragLeave"
-                                                Drop="SupervisorArea_Drop"
-                                                Background="#E3F2FD"
-                                                BorderBrush="#3F51B5"
-                                                BorderThickness="2"
-                                                CornerRadius="5"
-                                                Padding="10"
-                                                Margin="5"
-                                                Tag="night">
-                                            <StackPanel>
-                                                <Label Content="سرپرست شیفت شب" FontWeight="Bold" FontSize="12" Margin="0,0,0,5"/>
-                                                <StackPanel x:Name="NightSupervisorContent" 
-                                                           Orientation="Horizontal" 
-                                                           HorizontalAlignment="Center"
-                                                           MinHeight="80">
-                                                    <!-- Supervisor display will be updated in code-behind -->
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                        <!-- Shift Slots -->
-                                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                            <StackPanel x:Name="NightShiftPanel" Margin="5"/>
-                                        </ScrollViewer>
-                                    </Grid>
-                                </GroupBox>
-                            </Grid>
-
-                            <!-- Shift Statistics -->
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="5">
-                                <Label Content="شیفت صبح:"/>
-                                <TextBlock x:Name="MorningShiftStats" Text="0/15" Margin="5,0"/>
-                                <Label Content="شیفت عصر:"/>
-                                <TextBlock x:Name="AfternoonShiftStats" Text="0/15" Margin="5,0"/>
-                                <Label Content="شیفت شب:"/>
-                                <TextBlock x:Name="NightShiftStats" Text="0/15" Margin="5,0"/>
-                            </StackPanel>
+                            <!-- Table Layout -->
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="ShiftGroupsItemsControl">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <controls:ShiftGroupControl Width="300" Margin="5"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </Grid>
                     </GroupBox>
 
@@ -639,12 +591,12 @@
                                  Margin="0"/>
 
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="مدیریت غیبت‌ها" Margin="5">
+                    <GroupBox Grid.Column="4" Header="Absence Management" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="5">
-                                <!-- Absent Employees (غایب) -->
+                                <!-- Absent Employees -->
                                 <Expander x:Name="AbsentEmployeesExpander" 
-                                         Header="کارمندان غایب (0)" 
+                                         Header="Absent Employees (0)" 
                                          IsExpanded="True"
                                          Margin="0,0,0,5">
                                     <ListBox x:Name="AbsentEmployeesListBox" 
@@ -688,9 +640,9 @@
                                     </ListBox>
                                 </Expander>
 
-                                <!-- Sick Employees (بیمار) -->
+                                <!-- Sick Employees -->
                                 <Expander x:Name="SickEmployeesExpander" 
-                                         Header="کارمندان بیمار (0)" 
+                                         Header="Sick Employees (0)" 
                                          IsExpanded="True"
                                          Margin="0,0,0,5">
                                     <ListBox x:Name="SickEmployeesListBox" 
@@ -734,9 +686,9 @@
                                     </ListBox>
                                 </Expander>
 
-                                <!-- Employees on Leave (مرخصی) -->
+                                <!-- Employees on Leave -->
                                 <Expander x:Name="LeaveEmployeesExpander" 
-                                         Header="کارمندان مرخصی (0)" 
+                                         Header="Leave Employees (0)" 
                                          IsExpanded="True"
                                          Margin="0,0,0,5">
                                     <ListBox x:Name="LeaveEmployeesListBox" 
@@ -785,7 +737,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="مدیریت وظایف">
+            <TabItem Header="Task Management">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -794,7 +746,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Task List -->
-                    <GroupBox Grid.Column="0" Header="لیست وظایف" Margin="5">
+                    <GroupBox Grid.Column="0" Header="Task List" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -804,10 +756,10 @@
 
                             <!-- Task Filter -->
                             <ComboBox Grid.Row="0" x:Name="TaskFilterComboBox" Margin="5">
-                                <ComboBoxItem Content="همه وظایف"/>
-                                <ComboBoxItem Content="در انتظار"/>
-                                <ComboBoxItem Content="در حال انجام"/>
-                                <ComboBoxItem Content="تکمیل شده"/>
+                                <ComboBoxItem Content="All Tasks"/>
+                                <ComboBoxItem Content="Pending"/>
+                                <ComboBoxItem Content="In Progress"/>
+                                <ComboBoxItem Content="Completed"/>
                             </ComboBox>
 
                             <!-- Task List -->
@@ -819,9 +771,9 @@
 
                             <!-- Task Actions -->
                             <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
-                                <Button Content="افزودن وظیفه" Click="AddTask_Click" Margin="2"/>
-                                <Button Content="ویرایش وظیفه" Click="EditTask_Click" Margin="2"/>
-                                <Button Content="حذف وظیفه" Click="DeleteTask_Click" Margin="2"/>
+                                <Button Content="Add Task" Click="AddTask_Click" Margin="2"/>
+                                <Button Content="Edit Task" Click="EditTask_Click" Margin="2"/>
+                                <Button Content="Delete Task" Click="DeleteTask_Click" Margin="2"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
@@ -837,7 +789,7 @@
                                  Margin="0"/>
 
                     <!-- Task Details -->
-                    <GroupBox Grid.Column="2" Header="جزئیات وظیفه" Margin="5">
+                    <GroupBox Grid.Column="2" Header="Task Details" Margin="5">
                         <Grid x:Name="TaskDetailsGrid" Margin="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -857,43 +809,43 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="عنوان:"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="Title:"/>
                             <TextBox Grid.Row="0" Grid.Column="1" x:Name="TaskTitleTextBox" Margin="5"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="توضیحات:"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="Description:"/>
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="TaskDescriptionTextBox" 
                                     Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="5"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="اولویت:"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Priority:"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" x:Name="TaskPriorityComboBox" Margin="5">
-                                <ComboBoxItem Content="کم"/>
-                                <ComboBoxItem Content="متوسط" IsSelected="True"/>
-                                <ComboBoxItem Content="زیاد"/>
-                                <ComboBoxItem Content="فوری"/>
+                                <ComboBoxItem Content="Low"/>
+                                <ComboBoxItem Content="Medium" IsSelected="True"/>
+                                <ComboBoxItem Content="High"/>
+                                <ComboBoxItem Content="Urgent"/>
                             </ComboBox>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="ساعت تخمینی:"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Estimated Hours:"/>
                             <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="8.0" Margin="5"/>
 
-                            <Label Grid.Row="4" Grid.Column="0" Content="تاریخ هدف:"/>
+                            <Label Grid.Row="4" Grid.Column="0" Content="Target Date:"/>
                             <controls:GeorgianDatePicker Grid.Row="4" Grid.Column="1" x:Name="TaskTargetDatePicker" Margin="5"/>
 
-                            <Label Grid.Row="5" Grid.Column="0" Content="وضعیت:"/>
+                            <Label Grid.Row="5" Grid.Column="0" Content="Status:"/>
                             <ComboBox Grid.Row="5" Grid.Column="1" x:Name="TaskStatusComboBox" Margin="5">
-                                <ComboBoxItem Content="در انتظار"/>
-                                <ComboBoxItem Content="در حال انجام"/>
-                                <ComboBoxItem Content="تکمیل شده"/>
+                                <ComboBoxItem Content="Pending"/>
+                                <ComboBoxItem Content="In Progress"/>
+                                <ComboBoxItem Content="Completed"/>
                             </ComboBox>
 
                             <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" 
                                        Orientation="Horizontal" Margin="5">
-                                <Button Content="ذخیره تغییرات" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
-                                <Button Content="شروع وظیفه" Click="StartTask_Click" Margin="0,0,5,0"/>
-                                <Button Content="تکمیل وظیفه" Click="CompleteTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="Save Changes" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
+                                <Button Content="Start Task" Click="StartTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="Complete Task" Click="CompleteTask_Click" Margin="0,0,5,0"/>
                             </StackPanel>
 
                             <!-- Task Assignment -->
-                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="تخصیص کارمند" Margin="5">
+                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="Employee Assignment" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -905,14 +857,14 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="کارمندان تخصیص داده شده:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Assigned employees:"/>
                                     <ListBox Grid.Row="1" Grid.Column="0" x:Name="AssignedEmployeesListBox" 
                                             Height="80" Margin="0,5,5,0">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding DisplayText}" Width="200" Margin="5,0"/>
-                                                    <Button Content="حذف" Width="50" Height="20" FontSize="10"
+                                                    <Button Content="Remove" Width="50" Height="20" FontSize="10"
                                                             Click="RemoveEmployeeFromTask_Click" Tag="{Binding EmployeeId}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -920,20 +872,20 @@
                                     </ListBox>
                                     
                                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="5,5,0,0">
-                                        <Button Content="تخصیص کارمند جدید" Click="AddEmployeeToTask_Click" 
+                                        <Button Content="Assign New Employee" Click="AddEmployeeToTask_Click" 
                                                 Width="140" Height="30" Margin="0,0,0,5"/>
-                                        <Button Content="مشاهده وظایف کارمند" Click="ViewEmployeeTasks_Click" 
+                                        <Button Content="View Employee Tasks" Click="ViewEmployeeTasks_Click" 
                                                 Width="140" Height="30"/>
                                     </StackPanel>
                                 </Grid>
                             </GroupBox>
 
                             <!-- Task Progress -->
-                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="پیشرفت وظیفه" Margin="5">
+                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="Task Progress" Margin="5">
                                 <StackPanel Margin="10">
-                                    <Label Content="ساعات واقعی:"/>
+                                    <Label Content="Actual Hours:"/>
                                     <TextBox x:Name="TaskActualHoursTextBox" Margin="0,5"/>
-                                    <Label Content="یادداشت‌ها:"/>
+                                    <Label Content="Notes:"/>
                                     <TextBox x:Name="TaskNotesTextBox" 
                                             Height="60" 
                                             TextWrapping="Wrap" 
@@ -943,7 +895,7 @@
                             </GroupBox>
 
                             <!-- Daily Progress Entry -->
-                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="ثبت پیشرفت روزانه" Margin="5">
+                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="Daily Progress" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -958,60 +910,60 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="گروه شیفت:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Shift group:"/>
                                     <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DailyProgressGroupComboBox" 
                                              Margin="5"
                                              SelectionChanged="DailyProgressGroupComboBox_SelectionChanged"/>
 
-                                    <Label Grid.Row="1" Grid.Column="0" Content="نوع شیفت:"/>
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Shift Type:"/>
                                     <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DailyProgressShiftTypeComboBox" Margin="5"
                                              SelectionChanged="DailyProgressShiftTypeComboBox_SelectionChanged">
-                                        <ComboBoxItem Content="صبح" Tag="morning"/>
-                                        <ComboBoxItem Content="عصر" Tag="evening"/>
+                                        <ComboBoxItem Content="Morning" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
                                     </ComboBox>
 
-                                    <Label Grid.Row="2" Grid.Column="0" Content="تاریخ:"/>
+                                    <Label Grid.Row="2" Grid.Column="0" Content="Date:"/>
                                     <controls:GeorgianDatePicker Grid.Row="2" Grid.Column="1" 
                                                                  x:Name="DailyProgressDatePicker" Margin="5"/>
 
-                                    <Label Grid.Row="3" Grid.Column="0" Content="تعداد جعبه‌ها:"/>
+                                    <Label Grid.Row="3" Grid.Column="0" Content="Number of boxes:"/>
                                     <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
                                         <TextBox x:Name="DailyProgressBoxesTextBox" Width="100" 
                                                 PreviewTextInput="DailyProgressBoxesTextBox_PreviewTextInput"/>
-                                        <Label Content="(هدف روزانه: 100)" Margin="10,0,0,0" Foreground="Gray"/>
+                                        <Label Content="(Daily target: 100)" Margin="10,0,0,0" Foreground="Gray"/>
                                     </StackPanel>
 
                                     <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
-                                           Content="ثبت" x:Name="RecordDailyProgressButton" 
+                                           Content="Record" x:Name="RecordDailyProgressButton" 
                                            Click="RecordDailyProgress_Click" 
                                            Width="100" Height="30" Margin="5" HorizontalAlignment="Left"/>
 
                                     <!-- Status Display -->
                                     <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
-                                        <Label Content="وضعیت:" FontWeight="Bold"/>
+                                        <Label Content="Status:" FontWeight="Bold"/>
                                         <TextBlock x:Name="DailyProgressStatusTextBlock" Margin="5,5,5,0" 
                                                   TextWrapping="Wrap" FontSize="12"/>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="تکمیل شده:"/>
+                                            <Label Content="Completed:"/>
                                             <TextBlock x:Name="DailyProgressCompletedTextBlock" Margin="5,0"/>
-                                            <Label Content="از" Margin="10,0,0,0"/>
+                                            <Label Content="of" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="DailyProgressTargetTextBlock" Margin="5,0"/>
-                                            <Label Content="جعبه" Margin="5,0"/>
+                                            <Label Content="boxes" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="درصد:"/>
+                                            <Label Content="Percentage:"/>
                                             <TextBlock x:Name="DailyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
                                             <Label Content="%" Margin="5,0,10,0"/>
-                                            <Label Content="تفاوت:" Margin="10,0,0,0"/>
+                                            <Label Content="Difference:" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="DailyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="جعبه" Margin="5,0"/>
+                                            <Label Content="boxes" Margin="5,0"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </GroupBox>
 
                             <!-- Weekly Progress View -->
-                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="پیشرفت هفتگی" Margin="5">
+                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="Weekly Progress" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -1024,43 +976,43 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="گروه شیفت:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Shift group:"/>
                                     <ComboBox Grid.Row="0" Grid.Column="1" x:Name="WeeklyProgressGroupComboBox" 
                                              Margin="5"
                                              SelectionChanged="WeeklyProgressGroupComboBox_SelectionChanged"/>
 
-                                    <Label Grid.Row="1" Grid.Column="0" Content="نوع شیفت:"/>
+                                    <Label Grid.Row="1" Grid.Column="0" Content="Shift Type:"/>
                                     <ComboBox Grid.Row="1" Grid.Column="1" x:Name="WeeklyProgressShiftTypeComboBox" Margin="5"
                                              SelectionChanged="WeeklyProgressShiftTypeComboBox_SelectionChanged">
-                                        <ComboBoxItem Content="صبح" Tag="morning"/>
-                                        <ComboBoxItem Content="عصر" Tag="evening"/>
+                                        <ComboBoxItem Content="Morning" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
                                     </ComboBox>
 
                                     <!-- Weekly Summary -->
                                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
-                                        <Label Content="خلاصه هفتگی:" FontWeight="Bold"/>
+                                        <Label Content="Weekly summary:" FontWeight="Bold"/>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="تاریخ شروع هفته:"/>
+                                            <Label Content="Week start date:"/>
                                             <TextBlock x:Name="WeeklyProgressWeekStartTextBlock" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="تکمیل شده:"/>
+                                            <Label Content="Completed:"/>
                                             <TextBlock x:Name="WeeklyProgressTotalCompletedTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="از" Margin="10,0,0,0"/>
+                                            <Label Content="of" Margin="10,0,0,0"/>
                                             <TextBlock Text="1000" Margin="5,0"/>
-                                            <Label Content="جعبه (هدف هفتگی)" Margin="5,0"/>
+                                            <Label Content="Box (weekly target)" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="وضعیت:"/>
+                                            <Label Content="Status:"/>
                                             <TextBlock x:Name="WeeklyProgressStatusTextBlock" Margin="5,0" FontWeight="Bold"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="درصد:"/>
+                                            <Label Content="Percentage:"/>
                                             <TextBlock x:Name="WeeklyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
                                             <Label Content="%" Margin="5,0,10,0"/>
-                                            <Label Content="تفاوت:" Margin="10,0,0,0"/>
+                                            <Label Content="Difference:" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="WeeklyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="جعبه" Margin="5,0"/>
+                                            <Label Content="boxes" Margin="5,0"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -1073,11 +1025,11 @@
                                              Margin="5,10,5,5"
                                              MaxHeight="200">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="تاریخ" Binding="{Binding DateDisplay}" Width="*"/>
-                                            <DataGridTextColumn Header="جعبه‌های تکمیل شده" Binding="{Binding CompletedBoxes}" Width="*"/>
-                                            <DataGridTextColumn Header="هدف" Binding="{Binding DailyTarget}" Width="*"/>
-                                            <DataGridTextColumn Header="درصد" Binding="{Binding Percentage}" Width="*"/>
-                                            <DataGridTextColumn Header="وضعیت" Binding="{Binding StatusText}" Width="*"/>
+                                            <DataGridTextColumn Header="Date" Binding="{Binding DateDisplay}" Width="*"/>
+                                            <DataGridTextColumn Header="Completed boxes" Binding="{Binding CompletedBoxes}" Width="*"/>
+                                            <DataGridTextColumn Header="Target" Binding="{Binding DailyTarget}" Width="*"/>
+                                            <DataGridTextColumn Header="Percentage" Binding="{Binding Percentage}" Width="*"/>
+                                            <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Grid>
@@ -1087,7 +1039,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="گزارش‌گیری">
+            <TabItem Header="Reports">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -1096,26 +1048,26 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Report Options -->
-                    <GroupBox Grid.Column="0" Header="گزینه‌های گزارش" Margin="5">
+                    <GroupBox Grid.Column="0" Header="Report Options" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="نوع گزارش:"/>
+                            <Label Content="Report Type:"/>
                             <ComboBox x:Name="ReportTypeComboBox" Margin="0,5">
-                                <ComboBoxItem Content="گزارش روزانه"/>
-                                <ComboBoxItem Content="گزارش هفتگی"/>
-                                <ComboBoxItem Content="گزارش ماهانه"/>
+                                <ComboBoxItem Content="Daily Report"/>
+                                <ComboBoxItem Content="Weekly Report"/>
+                                <ComboBoxItem Content="Monthly Report"/>
                             </ComboBox>
 
-                            <Label Content="تاریخ شروع:" Margin="0,10,0,5"/>
+                            <Label Content="Start Date:" Margin="0,10,0,5"/>
                             <controls:GeorgianDatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
 
-                            <Label Content="تاریخ پایان:" Margin="0,0,0,5"/>
+                            <Label Content="End Date:" Margin="0,0,0,5"/>
                             <controls:GeorgianDatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
 
-                            <Label Content="مسئول گزارش:" Margin="0,10,0,5"/>
+                            <Label Content="Report Author:" Margin="0,10,0,5"/>
                             <ComboBox x:Name="ReportAssignedToComboBox" Margin="0,0,0,10"/>
 
-                            <Button Content="تولید گزارش" Click="GenerateReport_Click" Margin="0,10"/>
-                            <Button Content="چاپ" 
+                            <Button Content="Generate Report" Click="GenerateReport_Click" Margin="0,10"/>
+                            <Button Content="Print" 
                                    Click="PrintReport_Click" 
                                    Width="100" 
                                    Height="35" 
@@ -1129,10 +1081,10 @@
                             <Border Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" 
                                     CornerRadius="5" Margin="0,15,0,0" Padding="8">
                                 <StackPanel>
-                                    <TextBlock Text="ℹ️ فرمول محاسبه عملکرد:" 
+                                    <TextBlock Text="ℹ️ Performance formula:" 
                                                FontWeight="Bold" FontSize="11" 
                                                Foreground="#333" Margin="0,0,0,5"/>
-                                    <TextBlock Text="عملکرد پایه (70) + کارمندان (×2) + شیفت (×3) - غیبت (×2) + تغییرات روزانه (±12)" 
+                                    <TextBlock Text="Base (70) + Employees (×2) + Shift (×3) - Absence (×2) + Daily changes (±12)" 
                                                FontSize="10" Foreground="#666" 
                                                TextWrapping="Wrap" LineHeight="16"/>
                                 </StackPanel>
@@ -1151,7 +1103,7 @@
                                  Margin="0"/>
 
                     <!-- Report Preview -->
-                    <GroupBox Grid.Column="2" Header="پیش‌نمایش گزارش" Margin="5">
+                    <GroupBox Grid.Column="2" Header="Report Preview" Margin="5">
                         <ScrollViewer>
                             <TextBlock x:Name="ReportPreviewTextBlock" 
                                       FontFamily="Tahoma" 
@@ -1163,7 +1115,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="تنظیمات">
+            <TabItem Header="Settings">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -1172,45 +1124,45 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Settings Options -->
-                    <GroupBox Grid.Column="0" Header="تنظیمات سیستم" Margin="5">
+                    <GroupBox Grid.Column="0" Header="System Settings" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="مسیر پوشه داده‌ها:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Data folder path:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <TextBox x:Name="DataDirectoryTextBox" 
                                         Width="300" 
                                         IsReadOnly="True"
                                         Margin="0,0,5,0"/>
-                                <Button Content="انتخاب پوشه" 
+                                <Button Content="Select Folder" 
                                         Click="SelectDataDirectory_Click" 
                                         Width="100"/>
                             </StackPanel>
 
-                            <Label Content="مسیر فعلی:" Margin="0,0,0,5"/>
+                            <Label Content="Current path:" Margin="0,0,0,5"/>
                             <TextBlock x:Name="CurrentDataDirectoryTextBlock" 
                                       TextWrapping="Wrap" 
                                       Foreground="Gray" 
                                       Margin="0,0,0,10"/>
 
                             <CheckBox x:Name="CopyExistingDataCheckBox" 
-                                     Content="انتقال داده‌های موجود به مکان جدید" 
+                                     Content="Move existing data to new location" 
                                      IsChecked="True"
                                      Margin="0,0,0,10"/>
 
                             <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,0,0,10">
-                                <Label Content="در حال انتقال داده‌ها..." FontWeight="Bold"/>
+                                <Label Content="Transferring data..." FontWeight="Bold"/>
                                 <ProgressBar x:Name="DataCopyProgressBar" 
                                             Height="20" 
                                             IsIndeterminate="True"/>
                             </StackPanel>
 
-                            <Button Content="ذخیره تنظیمات" 
+                            <Button Content="Save Settings" 
                                     Click="SaveSettings_Click" 
                                     Background="#4CAF50" 
                                     Foreground="White" 
                                     FontWeight="Bold"
                                     Margin="0,10"/>
                             
-                            <Button Content="بازنشانی به پیش‌فرض" 
+                            <Button Content="Reset to Default" 
                                     Click="ResetSettings_Click" 
                                     Background="#FF9800" 
                                     Foreground="White" 
@@ -1218,30 +1170,41 @@
 
                             <Separator Margin="0,20,0,10"/>
 
-                            <Label Content="رنگ محیط نمایش:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Display background color:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                 <Border x:Name="DisplayColorPreview" 
                                         Width="50" Height="30" 
                                         BorderBrush="Black" BorderThickness="2" 
                                         Background="#1a1a1a" Margin="0,0,10,0"/>
                                 <Button x:Name="SelectDisplayColorButton" 
-                                        Content="انتخاب رنگ" 
+                                        Content="Select color" 
                                         Click="SelectDisplayColorButton_Click" 
                                         Width="120"/>
                             </StackPanel>
 
+                            <Label Content="Display content:" FontWeight="Bold" Margin="0,10,0,5"/>
+                            <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+                                <CheckBox x:Name="ShowPerformanceChartCheckBox"
+                                          Content="Show performance chart on display"
+                                          IsChecked="True"
+                                          Margin="0,0,0,5"/>
+                                <CheckBox x:Name="ShowAiRecommendationCheckBox"
+                                          Content="Show AI recommendation text on display"
+                                          IsChecked="True"/>
+                            </StackPanel>
+
                             <Separator Margin="0,20,0,10"/>
 
-                            <Label Content="تنظیمات شیفت:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Shift settings:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <Label Content="ظرفیت پیش‌فرض:" Width="120"/>
+                                <Label Content="Default capacity:" Width="120"/>
                                 <TextBox x:Name="DefaultShiftCapacityTextBox" 
                                         Width="60" 
                                         Text="15"/>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="فاصله همگام‌سازی (ثانیه):" Width="120"/>
+                                <Label Content="Sync interval (seconds):" Width="120"/>
                                 <TextBox x:Name="SyncIntervalTextBox" 
                                         Width="60" 
                                         Text="30"/>
@@ -1260,25 +1223,25 @@
                                  Margin="0"/>
 
                     <!-- Settings Information -->
-                    <GroupBox Grid.Column="2" Header="اطلاعات سیستم" Margin="5">
+                    <GroupBox Grid.Column="2" Header="System information" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="وضعیت همگام‌سازی:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Sync status:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <TextBlock x:Name="SyncStatusTextBlock" 
-                                      Text="فعال" 
+                                      Text="Active" 
                                       Foreground="Green" 
                                       Margin="0,0,0,20"/>
 
-                            <Label Content="آخرین به‌روزرسانی:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Last update:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <TextBlock x:Name="LastUpdateTextBlock" 
                                       Text="--" 
                                       Margin="0,0,0,20"/>
 
-                            <Label Content="فایل‌های گزارش موجود:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="Available report files:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <ListBox x:Name="ReportFilesListBox" 
                                     Height="150" 
                                     Margin="0,0,0,20"/>
 
-                            <Label Content="لاگ‌های سیستم:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="System logs:" FontWeight="Bold" Margin="0,0,0,5"/>
                             <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
                                 <TextBlock x:Name="SystemLogsTextBlock" 
                                           FontFamily="Consolas" 
@@ -1290,7 +1253,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="پیش‌نمایش روزانه">
+            <TabItem Header="Daily Preview">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -1301,7 +1264,7 @@
                     <!-- Header with Date -->
                     <Border Grid.Row="0" Background="#2E3440" Padding="15" Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="خلاصه روزانه" 
+                            <TextBlock Text="Daily summary" 
                                       FontFamily="Tahoma" 
                                       FontSize="18" 
                                       FontWeight="Bold" 
@@ -1319,7 +1282,7 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="10">
                             <!-- Absence Statistics -->
-                            <GroupBox Header="آمار غیبت‌ها" Margin="0,0,0,15">
+                            <GroupBox Header="Absence statistics" Margin="0,0,0,15">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -1339,7 +1302,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="کارمندان بیمار" 
+                                            <TextBlock Text="Sick Employees" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1363,7 +1326,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="کارمندان مرخصی" 
+                                            <TextBlock Text="Leave Employees" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1387,7 +1350,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="کارمندان غایب" 
+                                            <TextBlock Text="Absent Employees" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1405,7 +1368,7 @@
                             </GroupBox>
                             
                             <!-- Group Statistics -->
-                            <GroupBox Header="آمار گروه‌های شیفت" Margin="0,0,0,15">
+                            <GroupBox Header="Shift Group Statistics" Margin="0,0,0,15">
                                 <ItemsControl x:Name="GroupStatsItemsControl" Margin="15">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
@@ -1450,7 +1413,7 @@
                     
                     <!-- Print Button -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                        <Button Content="چاپ" 
+                        <Button Content="Print" 
                                Click="PrintDailyPreview_Click" 
                                Width="100" 
                                Height="35" 
@@ -1467,7 +1430,7 @@
         <!-- Status Bar -->
         <StatusBar Grid.Row="2" Background="#ECEFF4">
             <StatusBarItem>
-                <TextBlock x:Name="StatusTextBlock" Text="آماده" FontFamily="Tahoma"/>
+                <TextBlock x:Name="StatusTextBlock" Text="Ready" FontFamily="Tahoma"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock Text="{Binding CurrentTime}" FontFamily="Tahoma"/>
