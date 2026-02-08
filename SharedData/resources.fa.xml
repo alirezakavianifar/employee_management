@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Application Title -->
+    <string key="app_title">سامانه مدیریت شیفت کارکنان</string>
+    
+    <!-- Shift Names -->
+    <string key="shift_morning">صبح</string>
+    <string key="shift_afternoon">عصر</string>
+    <string key="shift_night">شب</string>
+    
+    <!-- Tab Headers -->
+    <string key="tab_employee_management">مدیریت کارکنان</string>
+    <string key="tab_shift_management">مدیریت شیفت</string>
+    <string key="tab_task_management">مدیریت وظایف</string>
+    <string key="tab_reports">گزارش‌ها</string>
+    <string key="tab_settings">تنظیمات</string>
+    <string key="tab_daily_preview">پیش‌نمایش روزانه</string>
+    <string key="tab_labels">برچسب‌ها</string>
+    <string key="tab_status_cards">کارت‌های وضعیت</string>
+    
+    <!-- Group Headers -->
+    <string key="header_employee_list">لیست کارکنان</string>
+    <string key="header_employee_details">جزئیات کارمند</string>
+    <string key="header_absence_management">مدیریت غیبت</string>
+    <string key="header_employees">کارکنان</string>
+    <string key="header_shift_table">جدول شیفت</string>
+    <string key="header_absences">مدیریت غیبت</string>
+    <string key="header_task_list">لیست وظایف</string>
+    <string key="header_task_details">جزئیات وظیفه</string>
+    <string key="header_report_options">گزینه‌های گزارش</string>
+    <string key="header_report_preview">پیش‌نمایش گزارش</string>
+    <string key="header_system_settings">تنظیمات سیستم</string>
+    <string key="header_system_info">اطلاعات سیستم</string>
+    <string key="header_absence_stats">آمار غیبت</string>
+    <string key="header_shift_group_stats">آمار گروه شیفت</string>
+    <string key="header_status_card_list">لیست کارت‌های وضعیت</string>
+    <string key="header_shift_group_list">لیست گروه‌های شیفت</string>
+    <string key="header_role_list">لیست نقش‌ها</string>
+    <string key="header_auto_rotation_settings">تنظیمات چرخش خودکار</string>
+    <string key="header_employee_assignment">تخصیص کارمند</string>
+    <string key="header_task_progress">پیشرفت وظیفه</string>
+    <string key="header_daily_progress">پیشرفت روزانه</string>
+    <string key="header_weekly_progress">پیشرفت هفتگی</string>
+    
+    <!-- Labels -->
+    <string key="label_name">نام:</string>
+    <string key="label_last_name">نام خانوادگی:</string>
+    <string key="label_position">سمت:</string>
+    <string key="label_manager_role">نقش مدیر:</string>
+    <string key="label_photo">عکس:</string>
+    <string key="label_absence_type">نوع غیبت:</string>
+    <string key="label_absence_date">تاریخ غیبت:</string>
+    <string key="label_notes">یادداشت:</string>
+    <string key="label_absence_list">لیست غیبت‌ها:</string>
+    <string key="label_absent_employees_today">کارکنان غایب امروز:</string>
+    <string key="label_search">جستجو...</string>
+    <string key="label_shift_group">گروه شیفت:</string>
+    <string key="label_shift_capacity">ظرفیت شیفت:</string>
+    <string key="label_rotation_type">نوع چرخش:</string>
+    <string key="label_day_of_week">روز هفته:</string>
+    <string key="label_group_name">نام گروه:</string>
+    <string key="label_description">توضیحات:</string>
+    <string key="label_group_color">رنگ گروه:</string>
+    <string key="label_shift_supervisors">نظارت‌کنندگان شیفت (الزامی):</string>
+    <string key="label_morning_supervisor">نظارت‌کننده شیفت صبح (الزامی):</string>
+    <string key="label_afternoon_supervisor">نظارت‌کننده شیفت عصر (الزامی):</string>
+    <string key="label_night_supervisor">نظارت‌کننده شیفت شب (الزامی):</string>
+    <string key="label_card_id">شناسه کارت:</string>
+    <string key="label_card_name">نام کارت:</string>
+    <string key="label_background_color">رنگ پس‌زمینه:</string>
+    <string key="label_text_color">رنگ متن:</string>
+    <string key="label_preview">پیش‌نمایش:</string>
+    <string key="label_role_id">شناسه نقش:</string>
+    <string key="label_role_name">نام نقش:</string>
+    <string key="label_color">رنگ:</string>
+    <string key="label_title">عنوان:</string>
+    <string key="label_priority">اولویت:</string>
+    <string key="label_estimated_hours">ساعات تخمینی:</string>
+    <string key="label_target_date">تاریخ هدف:</string>
+    
+    <!-- Buttons -->
+    <string key="btn_add_employee">افزودن کارمند</string>
+    <string key="btn_edit_employee">ویرایش کارمند</string>
+    <string key="btn_delete_employee">حذف کارمند</string>
+    <string key="btn_manage_roles">مدیریت نقش‌ها</string>
+    <string key="btn_manage_shift_groups">مدیریت گروه‌های شیفت</string>
+    <string key="btn_manage_status_cards">مدیریت کارت‌های وضعیت</string>
+    <string key="btn_import_csv">ورود از CSV</string>
+    <string key="btn_select_photo">انتخاب عکس</string>
+    <string key="btn_save_changes">ذخیره تغییرات</string>
+    <string key="btn_mark_absent">ثبت غیبت</string>
+    <string key="btn_remove_absence">حذف غیبت</string>
+    <string key="btn_clear_morning_shift">پاک کردن شیفت صبح</string>
+    <string key="btn_clear_afternoon_shift">پاک کردن شیفت عصر</string>
+    <string key="btn_clear_night_shift">پاک کردن شیفت شب</string>
+    <string key="btn_clear_shift">پاک کردن شیفت</string>
+    <string key="btn_swap_shifts">جابجایی شیفت‌ها</string>
+    <string key="btn_add_task">افزودن وظیفه</string>
+    <string key="btn_edit_task">ویرایش وظیفه</string>
+    <string key="btn_delete_task">حذف وظیفه</string>
+    <string key="btn_add_new_card">افزودن کارت جدید</string>
+    <string key="btn_edit_card">ویرایش کارت</string>
+    <string key="btn_delete_card">حذف کارت</string>
+    <string key="btn_add_new_group">افزودن گروه جدید</string>
+    <string key="btn_edit_group">ویرایش گروه</string>
+    <string key="btn_delete_group">حذف گروه</string>
+    <string key="btn_add_new_role">افزودن نقش جدید</string>
+    <string key="btn_edit_role">ویرایش نقش</string>
+    <string key="btn_delete_role">حذف نقش</string>
+    <string key="btn_ok">تأیید</string>
+    <string key="btn_cancel">انصراف</string>
+    <string key="btn_close">بستن</string>
+    <string key="btn_refresh">بروزرسانی</string>
+    
+    <!-- Absence Types -->
+    <string key="absence_leave">مرخصی</string>
+    <string key="absence_sick">مریضی</string>
+    <string key="absence_absent">غایب</string>
+    
+    <!-- Expander Headers -->
+    <string key="expander_absent_employees">کارکنان غایب ({0})</string>
+    <string key="expander_sick_employees">کارکنان مریض ({0})</string>
+    <string key="expander_leave_employees">کارکنان مرخص ({0})</string>
+    
+    <!-- Checkbox Labels -->
+    <string key="checkbox_is_manager">این کارمند مدیر است</string>
+    <string key="checkbox_auto_rotate">چرخش خودکار شیفت‌ها</string>
+    <string key="radio_weekly_rotation">چرخش هفتگی</string>
+    
+    <!-- Task Filter Options -->
+    <string key="filter_all_tasks">همه وظایف</string>
+    <string key="filter_pending">در انتظار</string>
+    <string key="filter_in_progress">در حال انجام</string>
+    <string key="filter_completed">انجام شده</string>
+    
+    <!-- Priority Levels -->
+    <string key="priority_low">کم</string>
+    <string key="priority_medium">متوسط</string>
+    <string key="priority_high">زیاد</string>
+    <string key="priority_urgent">فوری</string>
+    
+    <!-- Color Names -->
+    <string key="color_orange">نارنجی</string>
+    <string key="color_red">قرمز</string>
+    <string key="color_blue">آبی</string>
+    <string key="color_green">سبز</string>
+    <string key="color_purple">بنفش</string>
+    <string key="color_gray">خاکستری</string>
+    <string key="color_black">مشکی</string>
+    <string key="color_yellow">زرد</string>
+    <string key="color_white">سفید</string>
+    
+    <!-- DataGrid Column Headers -->
+    <string key="column_date">تاریخ</string>
+    <string key="column_completed_boxes">جعبه‌های تکمیل شده</string>
+    <string key="column_target">هدف</string>
+    <string key="column_percentage">درصد</string>
+    <string key="column_status">وضعیت</string>
+    
+    <!-- Dialog Titles -->
+    <string key="dialog_add_employee">افزودن کارمند</string>
+    <string key="dialog_edit_employee">ویرایش کارمند</string>
+    <string key="dialog_manage_roles">مدیریت نقش‌ها</string>
+    <string key="dialog_manage_groups">مدیریت گروه‌های شیفت</string>
+    <string key="dialog_manage_status_cards">مدیریت کارت‌های وضعیت</string>
+    <string key="dialog_add_task">افزودن وظیفه</string>
+    <string key="dialog_edit_task">ویرایش وظیفه</string>
+    
+    <!-- DisplayApp Specific -->
+    <string key="display_last_update">آخرین بروزرسانی: {0}</string>
+    <string key="display_next_update">بروزرسانی بعدی: {0}</string>
+    <string key="display_chart_formula">فرمول: عملکرد پایه (۷۰) + کارکنان (x2) + شیفت (x3) - غیبت (x2) + تغییرات روزانه (±12)</string>
+    <string key="display_supervisor">نظارت‌کننده: {0}</string>
+    <string key="display_no_supervisor">بدون نظارت‌کننده</string>
+    <string key="display_foreman">سرکارگر: {0}</string>
+    
+    <!-- Messages -->
+    <string key="msg_confirm_delete">مطمئن هستید؟</string>
+    <string key="msg_confirm_delete_employee">آیا از حذف کارمند {0} اطمینان دارید؟</string>
+    <string key="msg_save_success">اطلاعات با موفقیت ذخیره شد</string>
+    <string key="msg_error">خطا</string>
+    <string key="msg_warning">هشدار</string>
+    <string key="msg_info">اطلاعات</string>
+    <string key="msg_select_employee">لطفاً یک کارمند انتخاب کنید</string>
+    <string key="msg_select_task">لطفاً یک وظیفه انتخاب کنید</string>
+    <string key="msg_fill_required_fields">لطفاً فیلدهای الزامی را پر کنید</string>
+    <string key="msg_data_loaded">داده بارگذاری شد</string>
+    <string key="msg_error_loading_data">خطا در بارگذاری داده</string>
+    <string key="msg_employee_added">کارمند {0} {1} اضافه شد</string>
+    <string key="msg_employee_updated">کارمند {0} {1} بروزرسانی شد</string>
+    <string key="msg_employee_deleted">کارمند {0} حذف شد</string>
+    <string key="msg_role_mgmt_completed">مدیریت نقش‌ها انجام شد</string>
+    <string key="msg_shift_group_mgmt_completed">مدیریت گروه‌های شیفت انجام شد</string>
+    <string key="msg_status_card_mgmt_completed">مدیریت کارت‌های وضعیت انجام شد</string>
+    <string key="msg_select_csv">انتخاب فایل CSV</string>
+    <string key="msg_import_result">{0} کارمند وارد شد، {1} رد شد</string>
+    <string key="msg_controller_error">خطای کنترلر</string>
+    <string key="header_confirm_delete">تأیید حذف</string>
+    <string key="err_group_id_empty">شناسه گروه نمی‌تواند خالی باشد</string>
+    <string key="err_group_name_empty">نام گروه نمی‌تواند خالی باشد</string>
+    <string key="err_morning_capacity_min">ظرفیت شیفت صبح حداقل باید ۱ باشد</string>
+    <string key="err_afternoon_capacity_min">ظرفیت شیفت عصر حداقل باید ۱ باشد</string>
+    <string key="err_night_capacity_min">ظرفیت شیفت شب حداقل باید ۱ باشد</string>
+    <string key="err_default_id_reserved">شناسه «پیش‌فرض» برای گروه پیش‌فرض رزرو است</string>
+    <string key="suggest_capacity_reason">پیشنهاد بر اساس {0} کارمند: ۴۰٪ صبح، ۳۵٪ عصر، ۲۵٪ شب</string>
+    <string key="err_calculate_suggestion">خطا در محاسبه پیشنهاد</string>
+    <string key="err_access_controller">خطا در دسترسی به کنترلر.</string>
+    <string key="err_load_roles">خطا در بارگذاری نقش‌ها: {0}</string>
+    <string key="err_load_shift_groups">خطا در بارگذاری گروه‌های شیفت: {0}</string>
+    <string key="err_add_sticker">خطا در افزودن برچسب: {0}</string>
+    <string key="err_select_badge">خطا در انتخاب نشان: {0}</string>
+    <string key="msg_name_detected">نام از پوشه تشخیص داده شد: {0} {1}\nآیا می‌خواهید نام را بروزرسانی کنید؟</string>
+    <string key="header_name_detected">نام تشخیص داده شده از پوشه</string>
+    <string key="msg_personnel_id_detected">شناسه پرسنلی از نام فایل تشخیص داده شد: {0}\nآیا می‌خواهید شناسه پرسنلی را بروزرسانی کنید؟</string>
+    <string key="header_personnel_id_detected">شناسه پرسنلی تشخیص داده شده</string>
+    <string key="err_select_photo">خطا در انتخاب عکس: {0}</string>
+    <string key="err_load_photo_preview">خطا در بارگذاری پیش‌نمایش عکس: {0}</string>
+    <string key="err_name_required">لطفاً نام و نام خانوادگی را وارد کنید یا عکسی با فرمت نام فایل نام_نام‌خانوادگی_شناسه‌پرسنلی.پسوند انتخاب کنید</string>
+    <string key="msg_select_role">لطفاً یک نقش انتخاب کنید</string>
+    <string key="msg_select_shift_group">لطفاً یک گروه شیفت انتخاب کنید</string>
+    <string key="search_groups">جستجوی گروه‌ها...</string>
+    <string key="unspecified_name">نام مشخص نشده</string>
+    <string key="no_description">بدون توضیحات</string>
+    <string key="unknown_group">گروه نامشخص</string>
+    <string key="error_displaying_group">خطا در نمایش گروه</string>
+    <string key="shift_capacities_format">صبح: {0} | عصر: {1} | شب: {2}</string>
+    <string key="msg_group_added">گروه شیفت «{0}» با موفقیت اضافه شد.</string>
+    <string key="err_add_group">خطا در افزودن گروه شیفت: {0}</string>
+    <string key="err_edit_group">خطا در ویرایش گروه شیفت: {0}</string>
+    <string key="err_delete_group">خطا در حذف گروه شیفت: {0}</string>
+    <string key="msg_group_updated">گروه شیفت «{0}» با موفقیت بروزرسانی شد.</string>
+    <string key="msg_group_deleted">گروه شیفت «{0}» با موفقیت حذف شد.</string>
+    <string key="err_cannot_delete_default_group">امکان حذف گروه پیش‌فرض وجود ندارد</string>
+    <string key="msg_confirm_delete_group">آیا از حذف گروه «{0}» اطمینان دارید؟\n\nاین عمل قابل بازگشت نیست.</string>
+    <string key="new_group">گروه جدید</string>
+    
+    <!-- Status Card Defaults -->
+    <string key="status_out_of_order">خراب</string>
+    <string key="status_empty">خالی</string>
+    <string key="status_available">موجود</string>
+
+    <!-- Label Panel -->
+    <string key="header_employee_labels">برچسب‌های کارکنان</string>
+    <string key="header_create_new_label">ایجاد برچسب جدید</string>
+    <string key="btn_create_label">ایجاد برچسب</string>
+    <string key="header_label_archive">بایگانی برچسب‌ها</string>
+    <string key="label_archive_empty">هنوز برچسبی نیست. بالا یکی بسازید!</string>
+    <string key="menu_delete_from_archive">حذف از بایگانی</string>
+    <string key="tooltip_drag_to_employee">برای کارمند بکشید</string>
+
+    <!-- Shift Slot -->
+    <string key="cell_empty">خالی</string>
+    <string key="menu_remove">حذف</string>
+    <string key="status_card_fallback">کارت وضعیت</string>
+
+    <!-- Shift Group -->
+    <string key="hint_drag_drop_supervisor">کشیدن و رها کردن برای تخصیص نظارت‌کننده</string>
+    <string key="supervisor_not_assigned">نظارت‌کننده: تخصیص داده نشده</string>
+
+    <!-- DisplayApp -->
+    <string key="display_app_title">سامانه مدیریت کارکنان</string>
+    <string key="display_window_title">برنامه نمایش</string>
+    <string key="btn_exit_fullscreen">خروج از تمام‌صفحه</string>
+    <string key="display_last_update_label">آخرین بروزرسانی: --:--:--</string>
+    <string key="display_next_update_label">بروزرسانی بعدی: ۳۰</string>
+    <string key="header_work_groups">گروه‌های کاری</string>
+    <string key="header_performance_chart">نمودار عملکرد</string>
+    <string key="header_ai_recommendation">پیشنهاد هوش مصنوعی</string>
+    <string key="display_loading">در حال بارگذاری...</string>
+    <string key="display_chart_formula_short">فرمول: پایه (۷۰) + کارکنان (x2) + شیفت (x3) - غیبت (x2) + تغییرات روزانه (±12)</string>
+    <string key="category_on_leave">مرخصی</string>
+    <string key="category_sick">مریضی</string>
+    <string key="category_absent">غایب</string>
+    <string key="tooltip_capacity_per_slot">ظرفیت در این حالت برای هر اسلات ۱ است</string>
+
+    <!-- Language selector -->
+    <string key="label_language">زبان:</string>
+    <string key="language_english">English</string>
+    <string key="language_persian">فارسی</string>
+
+    <!-- Settings Panel -->
+    <string key="label_data_folder_path">مسیر پوشه داده:</string>
+    <string key="btn_select_folder">انتخاب پوشه</string>
+    <string key="label_current_path">مسیر فعلی:</string>
+    <string key="checkbox_move_existing_data">انتقال داده‌های موجود به مکان جدید</string>
+    <string key="label_transferring_data">در حال انتقال داده...</string>
+    <string key="btn_save_settings">ذخیره تنظیمات</string>
+    <string key="btn_reset_to_default">بازگشت به پیش‌فرض</string>
+    <string key="label_display_bg_color">رنگ پس‌زمینه نمایشگر:</string>
+    <string key="btn_select_color">انتخاب رنگ</string>
+    <string key="label_display_content">محتوای نمایش:</string>
+    <string key="checkbox_show_performance_chart">نمایش نمودار عملکرد در نمایشگر</string>
+    <string key="checkbox_show_ai_recommendation">نمایش متن پیشنهاد هوش مصنوعی در نمایشگر</string>
+    <string key="label_shift_settings">تنظیمات شیفت:</string>
+    <string key="label_default_capacity">ظرفیت پیش‌فرض:</string>
+    <string key="label_sync_interval">فاصله همگام‌سازی (ثانیه):</string>
+    <string key="label_sync_status">وضعیت همگام‌سازی:</string>
+    <string key="label_status_active">فعال</string>
+    <string key="label_last_update">آخرین بروزرسانی:</string>
+    <string key="label_available_report_files">فایل‌های گزارش موجود:</string>
+    <string key="label_system_logs">لاگ‌های سیستم:</string>
+
+    <!-- Task Management Panel -->
+    <string key="label_status">وضعیت:</string>
+    <string key="btn_start_task">شروع وظیفه</string>
+    <string key="btn_complete_task">تکمیل وظیفه</string>
+    <string key="label_assigned_employees">کارمندان تخصیص داده شده:</string>
+    <string key="btn_remove">حذف</string>
+    <string key="btn_assign_new_employee">تخصیص کارمند جدید</string>
+    <string key="btn_view_employee_tasks">مشاهده وظایف کارمند</string>
+    <string key="label_actual_hours">ساعات واقعی:</string>
+    <string key="label_shift_type">نوع شیفت:</string>
+    <string key="label_date">تاریخ:</string>
+    <string key="label_number_of_boxes">تعداد جعبه:</string>
+    <string key="label_daily_target">هدف روزانه:</string>
+    <string key="btn_record">ثبت</string>
+    <string key="label_completed">تکمیل شده:</string>
+    <string key="label_of">از</string>
+    <string key="label_boxes">جعبه</string>
+    <string key="label_percentage">درصد:</string>
+    <string key="label_difference">اختلاف:</string>
+    <string key="label_weekly_summary">خلاصه هفتگی:</string>
+    <string key="label_week_start_date">تاریخ شروع هفته:</string>
+    <string key="label_weekly_target">جعبه (هدف هفتگی)</string>
+
+    <!-- Reports Panel -->
+    <string key="label_report_type">نوع گزارش:</string>
+    <string key="report_daily">گزارش روزانه</string>
+    <string key="report_weekly">گزارش هفتگی</string>
+    <string key="report_monthly">گزارش ماهانه</string>
+    <string key="label_start_date">تاریخ شروع:</string>
+    <string key="label_end_date">تاریخ پایان:</string>
+    <string key="label_report_author">نویسنده گزارش:</string>
+    <string key="btn_generate_report">تولید گزارش</string>
+    <string key="btn_print">چاپ</string>
+    <string key="label_performance_formula">فرمول عملکرد:</string>
+    <string key="label_formula_description">پایه (۷۰) + کارکنان (×۲) + شیفت (×۳) - غیبت (×۲) + تغییرات روزانه (±۱۲)</string>
+
+    <!-- Daily Preview Panel -->
+    <string key="label_daily_summary">خلاصه روزانه</string>
+    <string key="label_sick_employees">کارکنان مریض</string>
+    <string key="label_leave_employees">کارکنان مرخص</string>
+    <string key="label_absent_employees">کارکنان غایب</string>
+
+    <!-- Text Customization -->
+    <string key="header_text_customization">سفارشی‌سازی متن</string>
+    <string key="label_search_keys">جستجوی کلیدهای منابع:</string>
+    <string key="column_key">کلید</string>
+    <string key="column_default_value">مقدار پیش‌فرض</string>
+    <string key="column_custom_value">مقدار سفارشی</string>
+    <string key="btn_apply_override">اعمال</string>
+    <string key="btn_clear_override">پاک کردن</string>
+    <string key="btn_reset_all_overrides">بازنشانی همه سفارشی‌سازی‌ها</string>
+    <string key="msg_override_applied">متن سفارشی اعمال شد. تغییرات فوراً اعمال می‌شوند.</string>
+    <string key="msg_overrides_reset">همه سفارشی‌سازی‌ها به پیش‌فرض بازگردانده شدند.</string>
+    <string key="hint_supervisor_preset">پیش‌تنظیم سریع: تغییر "سرپرست" به "سرکارگر"</string>
+    <string key="btn_apply_preset">اعمال پیش‌تنظیم</string>
+    <string key="msg_preset_applied">پیش‌تنظیم با موفقیت اعمال شد. همه ارجاعات به سرپرست به سرکارگر تغییر یافت.</string>
+</resources>

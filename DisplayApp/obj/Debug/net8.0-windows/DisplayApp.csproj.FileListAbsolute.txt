@@ -123,3 +123,4 @@ E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\Displ
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\ref\DisplayApp.dll
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
 E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp_MarkupCompile.lref
+E:\projects\employee_management_csharp\DisplayApp\obj\Debug\net8.0-windows\DisplayApp.sourcelink.json

@@ -293,4 +293,89 @@
     <string key="category_sick">Sick</string>
     <string key="category_absent">Absent</string>
     <string key="tooltip_capacity_per_slot">Capacity is 1 per slot in this mode</string>
+
+    <!-- Language selector -->
+    <string key="label_language">Language:</string>
+    <string key="language_english">English</string>
+    <string key="language_persian">Persian</string>
+
+    <!-- Settings Panel -->
+    <string key="label_data_folder_path">Data folder path:</string>
+    <string key="btn_select_folder">Select Folder</string>
+    <string key="label_current_path">Current path:</string>
+    <string key="checkbox_move_existing_data">Move existing data to new location</string>
+    <string key="label_transferring_data">Transferring data...</string>
+    <string key="btn_save_settings">Save Settings</string>
+    <string key="btn_reset_to_default">Reset to Default</string>
+    <string key="label_display_bg_color">Display background color:</string>
+    <string key="btn_select_color">Select color</string>
+    <string key="label_display_content">Display content:</string>
+    <string key="checkbox_show_performance_chart">Show performance chart on display</string>
+    <string key="checkbox_show_ai_recommendation">Show AI recommendation text on display</string>
+    <string key="label_shift_settings">Shift settings:</string>
+    <string key="label_default_capacity">Default capacity:</string>
+    <string key="label_sync_interval">Sync interval (seconds):</string>
+    <string key="label_sync_status">Sync status:</string>
+    <string key="label_status_active">On</string>
+    <string key="label_last_update">Last update:</string>
+    <string key="label_available_report_files">Available report files:</string>
+    <string key="label_system_logs">System logs:</string>
+
+    <!-- Task Management Panel -->
+    <string key="label_status">Status:</string>
+    <string key="btn_start_task">Start Task</string>
+    <string key="btn_complete_task">Complete Task</string>
+    <string key="label_assigned_employees">Assigned employees:</string>
+    <string key="btn_remove">Remove</string>
+    <string key="btn_assign_new_employee">Assign New Employee</string>
+    <string key="btn_view_employee_tasks">View Employee Tasks</string>
+    <string key="label_actual_hours">Actual Hours:</string>
+    <string key="label_shift_type">Shift Type:</string>
+    <string key="label_date">Date:</string>
+    <string key="label_number_of_boxes">Number of boxes:</string>
+    <string key="label_daily_target">Daily target:</string>
+    <string key="btn_record">Record</string>
+    <string key="label_completed">Completed:</string>
+    <string key="label_of">of</string>
+    <string key="label_boxes">boxes</string>
+    <string key="label_percentage">Percentage:</string>
+    <string key="label_difference">Difference:</string>
+    <string key="label_weekly_summary">Weekly summary:</string>
+    <string key="label_week_start_date">Week start date:</string>
+    <string key="label_weekly_target">Box (weekly target)</string>
+
+    <!-- Reports Panel -->
+    <string key="label_report_type">Report Type:</string>
+    <string key="report_daily">Daily Report</string>
+    <string key="report_weekly">Weekly Report</string>
+    <string key="report_monthly">Monthly Report</string>
+    <string key="label_start_date">Start Date:</string>
+    <string key="label_end_date">End Date:</string>
+    <string key="label_report_author">Report Author:</string>
+    <string key="btn_generate_report">Generate Report</string>
+    <string key="btn_print">Print</string>
+    <string key="label_performance_formula">Performance formula:</string>
+    <string key="label_formula_description">Base (70) + Employees (×2) + Shift (×3) - Absence (×2) + Daily changes (±12)</string>
+
+    <!-- Daily Preview Panel -->
+    <string key="label_daily_summary">Daily summary</string>
+    <string key="label_sick_employees">Sick Employees</string>
+    <string key="label_leave_employees">Leave Employees</string>
+    <string key="label_absent_employees">Absent Employees</string>
+
+    <!-- Text Customization -->
+    <string key="header_text_customization">Text Customization</string>
+    <string key="label_search_keys">Search resource keys:</string>
+    <string key="column_key">Key</string>
+    <string key="column_default_value">Default Value</string>
+    <string key="column_custom_value">Custom Value</string>
+    <string key="btn_apply_override">Apply</string>
+    <string key="btn_clear_override">Clear</string>
+    <string key="btn_reset_all_overrides">Reset All Customizations</string>
+    <string key="msg_override_applied">Custom text applied. Changes take effect immediately.</string>
+    <string key="msg_overrides_reset">All customizations have been reset to defaults.</string>
+    <string key="hint_supervisor_preset">Quick preset: Change "Supervisor" to "Foreman"</string>
+    <string key="btn_apply_preset">Apply Preset</string>
+    <string key="msg_preset_applied">Preset applied successfully. All supervisor references changed to foreman.</string>
 </resources>
+

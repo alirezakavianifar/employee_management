@@ -30,6 +30,38 @@ namespace ManagementApp.Views
         public int EmployeeCount { get; set; }
     }
 
+    /// <summary>
+    /// Helper class for binding resource keys in the Text Customization DataGrid.
+    /// </summary>
+    public class ResourceOverrideItem : INotifyPropertyChanged
+    {
+        private string _key = string.Empty;
+        private string _defaultValue = string.Empty;
+        private string _customValue = string.Empty;
+
+        public string Key
+        {
+            get => _key;
+            set { _key = value; OnPropertyChanged(nameof(Key)); }
+        }
+
+        public string DefaultValue
+        {
+            get => _defaultValue;
+            set { _defaultValue = value; OnPropertyChanged(nameof(DefaultValue)); }
+        }
+
+        public string CustomValue
+        {
+            get => _customValue;
+            set { _customValue = value; OnPropertyChanged(nameof(CustomValue)); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     public partial class MainWindow : Window
     {
         private readonly MainController _controller;
@@ -105,6 +137,7 @@ namespace ManagementApp.Views
                 
                 // Initialize settings display
                 UpdateSettingsDisplay();
+                Shared.Utils.ResourceBridge.Instance.PropertyChanged += ResourceBridge_PropertyChanged;
                 _controller.ShiftsUpdated += OnShiftsUpdated;
                 _controller.AbsencesUpdated += OnAbsencesUpdated;
                 _controller.AbsencesUpdated += LoadAbsenceLists; // Refresh absence lists when absences change
@@ -1606,6 +1639,11 @@ namespace ManagementApp.Views
                          selectedTab.Header?.ToString() == "Daily Preview")
                 {
                     UpdateDailyPreview();
+                }
+                // When settings tab is selected, load text customization grid
+                else if (MainTabControl.SelectedItem == SettingsTabItem)
+                {
+                    LoadTextCustomizationGrid();
                 }
             }
             catch (Exception ex)
@@ -5405,6 +5443,17 @@ namespace ManagementApp.Views
             return reportData;
         }
 
+        private void ResourceBridge_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(Shared.Utils.ResourceBridge.CurrentLanguage))
+                return;
+            Dispatcher.Invoke(() =>
+            {
+                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
+                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
+            });
+        }
+
         private void OnSettingsUpdated()
         {
             Dispatcher.Invoke(() =>
@@ -5581,6 +5630,33 @@ namespace ManagementApp.Views
             }
         }
 
+        private void LanguageComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (LanguageComboBox.SelectedItem is not System.Windows.Controls.ComboBoxItem item ||
+                item.Tag is not string tag)
+                return;
+            var sharedData = App.SharedDataDirectory;
+            if (string.IsNullOrEmpty(sharedData))
+                return;
+            var lang = tag.Trim().ToLowerInvariant() == "fa" ? Shared.Utils.LanguageConfigHelper.LanguageFa : Shared.Utils.LanguageConfigHelper.LanguageEn;
+            if (lang == Shared.Utils.ResourceBridge.Instance.CurrentLanguage)
+                return;
+            try
+            {
+                Shared.Utils.LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
+                Shared.Utils.ResourceManager.LoadResourcesForLanguage(sharedData, lang);
+                Shared.Utils.ResourceBridge.Instance.CurrentLanguage = lang;
+                App.ApplyFlowDirection();
+                UpdateStatus(Shared.Utils.ResourceManager.GetString("msg_data_loaded", "Data loaded"));
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error switching language");
+                MessageBox.Show(Shared.Utils.ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
+                    Shared.Utils.ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void ResetSettings_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -5626,6 +5702,215 @@ namespace ManagementApp.Views
                 MessageBox.Show($"Error resetting settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #region Text Customization
+
+        private List<ResourceOverrideItem> _allResourceItems = new List<ResourceOverrideItem>();
+
+        /// <summary>
+        /// Loads all resource keys into the Text Customization DataGrid.
+        /// </summary>
+        private void LoadTextCustomizationGrid()
+        {
+            try
+            {
+                var baseResources = ResourceManager.GetAllResources();
+                var overrides = CustomOverrideManager.GetAllOverrides();
+
+                _allResourceItems = baseResources
+                    .OrderBy(kvp => kvp.Key)
+                    .Select(kvp => new ResourceOverrideItem
+                    {
+                        Key = kvp.Key,
+                        DefaultValue = kvp.Value,
+                        CustomValue = overrides.TryGetValue(kvp.Key, out var customVal) ? customVal : string.Empty
+                    })
+                    .ToList();
+
+                FilterTextCustomizationGrid();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading text customization grid");
+            }
+        }
+
+        private void FilterTextCustomizationGrid()
+        {
+            var searchText = TextCustomizationSearchBox?.Text?.Trim().ToLowerInvariant() ?? string.Empty;
+            
+            var filtered = string.IsNullOrEmpty(searchText)
+                ? _allResourceItems
+                : _allResourceItems.Where(item => 
+                    item.Key.ToLowerInvariant().Contains(searchText) ||
+                    item.DefaultValue.ToLowerInvariant().Contains(searchText) ||
+                    item.CustomValue.ToLowerInvariant().Contains(searchText)).ToList();
+
+            TextCustomizationDataGrid.ItemsSource = filtered;
+        }
+
+        private void TextCustomizationSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            FilterTextCustomizationGrid();
+        }
+
+        private void ApplyOverride_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = TextCustomizationDataGrid.SelectedItem as ResourceOverrideItem;
+                
+                if (selectedItem == null && TextCustomizationDataGrid.SelectedCells.Count > 0)
+                {
+                    selectedItem = TextCustomizationDataGrid.SelectedCells[0].Item as ResourceOverrideItem;
+                }
+
+                if (selectedItem == null && TextCustomizationDataGrid.CurrentCell.IsValid)
+                {
+                    selectedItem = TextCustomizationDataGrid.CurrentCell.Item as ResourceOverrideItem;
+                }
+
+                if (selectedItem == null)
+                {
+                    MessageBox.Show("Please select a resource key to override.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(selectedItem.CustomValue))
+                {
+                    MessageBox.Show("Please enter a custom value for the selected key.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                CustomOverrideManager.SetOverride(selectedItem.Key, selectedItem.CustomValue);
+                SaveOverridesAndRefreshUI();
+
+                MessageBox.Show(
+                    ResourceManager.GetString("msg_override_applied", "Custom text applied. Changes take effect immediately."),
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying override");
+                MessageBox.Show($"Error applying override: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearOverride_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedItem = TextCustomizationDataGrid.SelectedItem as ResourceOverrideItem;
+                
+                if (selectedItem == null && TextCustomizationDataGrid.SelectedCells.Count > 0)
+                {
+                    selectedItem = TextCustomizationDataGrid.SelectedCells[0].Item as ResourceOverrideItem;
+                }
+
+                if (selectedItem == null && TextCustomizationDataGrid.CurrentCell.IsValid)
+                {
+                    selectedItem = TextCustomizationDataGrid.CurrentCell.Item as ResourceOverrideItem;
+                }
+
+                if (selectedItem == null)
+                {
+                    MessageBox.Show("Please select a resource key to clear.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                CustomOverrideManager.RemoveOverride(selectedItem.Key);
+                selectedItem.CustomValue = string.Empty;
+                SaveOverridesAndRefreshUI();
+                LoadTextCustomizationGrid();
+
+                UpdateStatus($"Override for '{selectedItem.Key}' cleared.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clearing override");
+                MessageBox.Show($"Error clearing override: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ResetAllOverrides_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var result = MessageBox.Show(
+                    "Are you sure you want to reset all text customizations to defaults?",
+                    "Confirm Reset",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                    return;
+
+                CustomOverrideManager.ClearAllOverrides();
+                SaveOverridesAndRefreshUI();
+                LoadTextCustomizationGrid();
+
+                MessageBox.Show(
+                    ResourceManager.GetString("msg_overrides_reset", "All customizations have been reset to defaults."),
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resetting all overrides");
+                MessageBox.Show($"Error resetting overrides: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ApplySupervisorPreset_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var result = MessageBox.Show(
+                    "This will change all 'Supervisor' references to 'Foreman'. Continue?",
+                    "Apply Preset",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result != MessageBoxResult.Yes)
+                    return;
+
+                CustomOverrideManager.ApplySupervisorToForemanPreset();
+                SaveOverridesAndRefreshUI();
+                LoadTextCustomizationGrid();
+
+                MessageBox.Show(
+                    ResourceManager.GetString("msg_preset_applied", "Preset applied successfully. All supervisor references changed to foreman."),
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying supervisor preset");
+                MessageBox.Show($"Error applying preset: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveOverridesAndRefreshUI()
+        {
+            try
+            {
+                var overridesPath = Path.Combine(App.SharedDataDirectory, "custom_overrides.xml");
+                CustomOverrideManager.SaveOverrides(overridesPath);
+                
+                // Notify UI to refresh with new values
+                ResourceBridge.Instance.NotifyLanguageChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving overrides");
+            }
+        }
+
+        #endregion
 
         private void SelectDisplayColorButton_Click(object sender, RoutedEventArgs e)
         {
@@ -5691,6 +5976,10 @@ namespace ManagementApp.Views
         {
             try
             {
+                // Sync language combo with current language
+                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
+                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
+
                 var config = AppConfigHelper.Config;
                 DataDirectoryTextBox.Text = config.DataDirectory;
                 CurrentDataDirectoryTextBlock.Text = config.DataDirectory;

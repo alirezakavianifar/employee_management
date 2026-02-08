@@ -27,6 +27,14 @@
                           HorizontalAlignment="Left"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0">
+                    <TextBlock Text="{converters:Res label_language}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" Margin="5,0"/>
+                    <ComboBox x:Name="LanguageComboBox" Width="120" Margin="5,0" 
+                              Style="{StaticResource DarkComboBoxStyle}"
+                              ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"
+                              SelectionChanged="LanguageComboBox_SelectionChanged">
+                        <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
+                        <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
+                    </ComboBox>
                     <Button x:Name="ExitFullscreenButton" Content="{converters:Res btn_exit_fullscreen}" 
                            Style="{StaticResource SecondaryButtonStyle}"
                            Click="ExitFullscreenButton_Click" Margin="5"/>

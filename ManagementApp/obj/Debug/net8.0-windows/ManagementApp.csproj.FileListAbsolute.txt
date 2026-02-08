@@ -259,3 +259,4 @@ E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Co
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftSlotControl.g.cs
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftGroupControl.baml
 E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\Controls\ShiftSlotControl.baml
+E:\projects\employee_management_csharp\ManagementApp\obj\Debug\net8.0-windows\ManagementApp.sourcelink.json
