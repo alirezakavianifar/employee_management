@@ -273,3 +273,16 @@ appsettings.Production.json
 
 # Visual Studio Code
 .vscode/
+
+# Custom Project ignores
+SharedData/Reports/
+SharedData/Backup/
+SharedData/Config/
+SharedData_OLD/
+EmployeeManagementSystem_Deploy/
+EmployeeManagementSystem_Source/bin/
+EmployeeManagementSystem_Source/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
