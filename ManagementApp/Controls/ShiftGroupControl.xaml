@@ -15,6 +15,29 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:ShiftToSlotListConverter x:Key="ShiftToSlotListConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="HeaderButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#33FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#66FFFFFF"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#99FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Border BorderBrush="#DDDDDD" BorderThickness="1" Margin="5" Background="White" CornerRadius="5">
@@ -59,10 +82,11 @@
 
                     <!-- Edit Button -->
                     <Button Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right"
-                            Width="24" Height="24" Background="Transparent" BorderThickness="0"
-                            Click="EditGroup_Click" Cursor="Hand" ToolTip="Edit Group">
+                            Width="30" Height="30" 
+                            Click="EditGroup_Click" Cursor="Hand" ToolTip="Edit Group"
+                            Style="{StaticResource HeaderButtonStyle}">
                         <Path Data="M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04Z" 
-                              Fill="White" Stretch="Uniform" Margin="4"/>
+                              Fill="White" Stretch="Uniform" Margin="6"/>
                     </Button>
                 </Grid>
             </Border>
