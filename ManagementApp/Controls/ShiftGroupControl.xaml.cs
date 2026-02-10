@@ -122,7 +122,7 @@ namespace ManagementApp.Controls
         {
             if (DataContext is not ShiftGroup group) return;
             
-            var dialog = new ShiftGroupEditDialog(group);
+            var dialog = new ShiftGroupEditDialog(group, MainWindow.Instance?.Controller);
             dialog.Owner = Window.GetWindow(this);
             if (dialog.ShowDialog() == true)
             {
