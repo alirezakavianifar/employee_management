@@ -204,7 +204,7 @@ namespace ManagementApp.Views
                 // Setup employee search
                 EmployeeSearchBox.GotFocus += (s, e) =>
                 {
-                    if (EmployeeSearchBox.Text == "Search...")
+                    if (EmployeeSearchBox.Text == ResourceManager.GetString("label_search", "Search..."))
                     {
                         EmployeeSearchBox.Text = "";
                         EmployeeSearchBox.Foreground = Brushes.Black;
@@ -215,14 +215,14 @@ namespace ManagementApp.Views
                 {
                     if (string.IsNullOrEmpty(EmployeeSearchBox.Text))
                     {
-                        EmployeeSearchBox.Text = "Search...";
+                        EmployeeSearchBox.Text = ResourceManager.GetString("label_search", "Search...");
                         EmployeeSearchBox.Foreground = Brushes.Gray;
                     }
                 };
 
                 EmployeeSearchBox.TextChanged += (s, e) =>
                 {
-                    if (EmployeeSearchBox.Text != "Search...")
+                    if (EmployeeSearchBox.Text != ResourceManager.GetString("label_search", "Search..."))
                     {
                         FilterEmployees(EmployeeSearchBox.Text);
                     }
@@ -231,7 +231,7 @@ namespace ManagementApp.Views
                 // Setup shift employee search
                 ShiftEmployeeSearchBox.GotFocus += (s, e) =>
                 {
-                    if (ShiftEmployeeSearchBox.Text == "Search...")
+                    if (ShiftEmployeeSearchBox.Text == ResourceManager.GetString("label_search", "Search..."))
                     {
                         ShiftEmployeeSearchBox.Text = "";
                         ShiftEmployeeSearchBox.Foreground = Brushes.Black;
@@ -242,14 +242,14 @@ namespace ManagementApp.Views
                 {
                     if (string.IsNullOrEmpty(ShiftEmployeeSearchBox.Text))
                     {
-                        ShiftEmployeeSearchBox.Text = "Search...";
+                        ShiftEmployeeSearchBox.Text = ResourceManager.GetString("label_search", "Search...");
                         ShiftEmployeeSearchBox.Foreground = Brushes.Gray;
                     }
                 };
 
                 ShiftEmployeeSearchBox.TextChanged += (s, e) =>
                 {
-                    if (ShiftEmployeeSearchBox.Text != "Search...")
+                    if (ShiftEmployeeSearchBox.Text != ResourceManager.GetString("label_search", "Search..."))
                     {
                         FilterShiftEmployees(ShiftEmployeeSearchBox.Text);
                     }
@@ -278,12 +278,12 @@ namespace ManagementApp.Views
             try
             {
                 // Add common management positions
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "CEO" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "HR Manager" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Shift Supervisor" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "HR Specialist" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Operations Manager" });
-                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Deputy Manager" });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_ceo", "CEO") });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_hr_manager", "HR Manager") });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_shift_supervisor", "Shift Supervisor") });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_hr_specialist", "HR Specialist") });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_operations_manager", "Operations Manager") });
+                ReportAssignedToComboBox.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = ResourceManager.GetString("role_deputy_manager", "Deputy Manager") });
                 
                 // Add current employees
                 var employees = _controller.GetAllEmployees();
@@ -515,7 +515,7 @@ namespace ManagementApp.Views
         {
             try
             {
-                if (string.IsNullOrEmpty(query) || query == "Search...")
+                if (string.IsNullOrEmpty(query) || query == ResourceManager.GetString("label_search", "Search..."))
                 {
                     LoadEmployees();
                     return;
@@ -536,7 +536,7 @@ namespace ManagementApp.Views
             {
                 var todayGeorgian = GeorgianDateHelper.GetCurrentGeorgianDate();
                 
-                if (string.IsNullOrEmpty(query) || query == "Search...")
+                if (string.IsNullOrEmpty(query) || query == ResourceManager.GetString("label_search", "Search..."))
                 {
                     // Reload all available employees for shift assignment
                     var employees = _controller.GetAllEmployees();
@@ -1104,7 +1104,7 @@ namespace ManagementApp.Views
                     var selectedId = (ShiftGroupComboBox.SelectedItem as ComboBoxItem)?.Tag as string;
                     ShiftGroupComboBox.Items.Clear();
                     
-                    var allItem = new ComboBoxItem { Content = "All groups", Tag = "all" };
+                    var allItem = new ComboBoxItem { Content = ResourceManager.GetString("role_all_groups", "All groups"), Tag = "all" };
                     ShiftGroupComboBox.Items.Add(allItem);
                     
                     foreach (var group in groups)
@@ -1181,25 +1181,25 @@ namespace ManagementApp.Views
 
             string confirmMessage = shiftType switch
             {
-                "morning" => "Are you sure you want to clear all morning shifts?",
-                "afternoon" => "Are you sure you want to clear all afternoon shifts?",
-                "night" => "Are you sure you want to clear all night shifts?",
+                "morning" => ResourceManager.GetString("msg_confirm_clear_morning", "Are you sure you want to clear all morning shifts?"),
+                "afternoon" => ResourceManager.GetString("msg_confirm_clear_afternoon", "Are you sure you want to clear all afternoon shifts?"),
+                "night" => ResourceManager.GetString("msg_confirm_clear_night", "Are you sure you want to clear all night shifts?"),
                 _ => null
             };
             if (string.IsNullOrEmpty(confirmMessage)) return;
 
             try
             {
-                if (MessageBox.Show(confirmMessage, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                if (MessageBox.Show(confirmMessage, ResourceManager.GetString("header_confirm_delete", "Confirm"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                     return;
                 _controller.ClearShift(shiftType, null);
                 LoadShifts();
                 string statusMessage = shiftType switch
                 {
-                    "morning" => "Morning shift cleared",
-                    "afternoon" => "Afternoon shift cleared",
-                    "night" => "Night shift cleared",
-                    _ => $"{shiftType} shift cleared"
+                    "morning" => ResourceManager.GetString("msg_morning_cleared", "Morning shift cleared"),
+                    "afternoon" => ResourceManager.GetString("msg_afternoon_cleared", "Afternoon shift cleared"),
+                    "night" => ResourceManager.GetString("msg_night_cleared", "Night shift cleared"),
+                    _ => string.Format(ResourceManager.GetString("msg_shift_cleared", "{0} shift cleared"), shiftType)
                 };
                 UpdateStatus(statusMessage);
             }
@@ -1219,16 +1219,16 @@ namespace ManagementApp.Views
                     groupId = tag == "all" ? null : tag;
                 }
 
-                if (MessageBox.Show("Are you sure you want to rotate morning, afternoon and night shifts?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (MessageBox.Show(ResourceManager.GetString("msg_confirm_rotate_shifts", "Are you sure you want to rotate morning, afternoon and night shifts?"), ResourceManager.GetString("header_confirm_delete", "Confirm"), MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     if (_controller.SwapShifts(groupId))
                     {
                         LoadShifts();
-                        UpdateStatus("Shifts swapped successfully");
+                        UpdateStatus(ResourceManager.GetString("msg_shifts_swapped", "Shifts swapped successfully"));
                     }
                     else
                     {
-                        MessageBox.Show("Error rotating shifts", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show(ResourceManager.GetString("err_rotate_shifts", "Error rotating shifts"), ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
@@ -1323,7 +1323,7 @@ namespace ManagementApp.Views
                 // Load rotation settings into UI
                 LoadRotationSettings();
                 
-                UpdateStatus("Automatic shift rotation enabled");
+                UpdateStatus(ResourceManager.GetString("msg_rotation_enabled", "Automatic shift rotation enabled"));
             }
             catch (Exception ex)
             {
@@ -1343,7 +1343,7 @@ namespace ManagementApp.Views
                 RotationConfigExpander.Visibility = Visibility.Collapsed;
                 RotationConfigExpander.IsExpanded = false;
                 
-                UpdateStatus("Auto shift rotation disabled");
+                UpdateStatus(ResourceManager.GetString("msg_rotation_disabled", "Auto shift rotation disabled"));
             }
             catch (Exception ex)
             {
@@ -1369,7 +1369,7 @@ namespace ManagementApp.Views
                     _controller.SaveData();
                     
                     UpdateRotationConfigurationUI();
-                    UpdateStatus($"Rotation day changed to {selectedItem.Content}");
+                    UpdateStatus(string.Format(ResourceManager.GetString("msg_rotation_day_changed", "Rotation day changed to {0}"), selectedItem.Content));
                 }
             }
             catch (Exception ex)
@@ -1386,13 +1386,16 @@ namespace ManagementApp.Views
                 RotationDayComboBox.Items.Clear();
                 
                 var dayNames = new[] { "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+                var dayKeys = new[] { "day_saturday", "day_sunday", "day_monday", "day_tuesday", "day_wednesday", "day_thursday", "day_friday" };
                 var currentDay = _controller.Settings.GetValueOrDefault("auto_rotate_day", "Saturday").ToString() ?? "Saturday";
                 
-                foreach (var dayName in dayNames)
+                for (int i = 0; i < dayNames.Length; i++)
                 {
+                    var dayName = dayNames[i];
+                    var dayKey = dayKeys[i];
                     var item = new ComboBoxItem
                     {
-                        Content = dayName,
+                        Content = ResourceManager.GetString(dayKey, dayName),
                         Tag = dayName
                     };
                     RotationDayComboBox.Items.Add(item);
@@ -1432,19 +1435,19 @@ namespace ManagementApp.Views
                 // Get Persian day name for display
                 var dayMapping = new Dictionary<string, string>
                 {
-                    { "Saturday", "Saturday" },
-                    { "Sunday", "Sunday" },
-                    { "Monday", "Monday" },
-                    { "Tuesday", "Tuesday" },
-                    { "Wednesday", "Wednesday" },
-                    { "Thursday", "Thursday" },
-                    { "Friday", "Friday" }
+                    { "Saturday", ResourceManager.GetString("day_saturday", "Saturday") },
+                    { "Sunday", ResourceManager.GetString("day_sunday", "Sunday") },
+                    { "Monday", ResourceManager.GetString("day_monday", "Monday") },
+                    { "Tuesday", ResourceManager.GetString("day_tuesday", "Tuesday") },
+                    { "Wednesday", ResourceManager.GetString("day_wednesday", "Wednesday") },
+                    { "Thursday", ResourceManager.GetString("day_thursday", "Thursday") },
+                    { "Friday", ResourceManager.GetString("day_friday", "Friday") }
                 };
                 
-                var dayName = dayMapping.GetValueOrDefault(rotationDay, "Saturday");
+                var dayName = dayMapping.GetValueOrDefault(rotationDay, rotationDay);
                 
                 // Update schedule info
-                RotationScheduleInfo.Text = $"Shifts rotate automatically every week on {dayName}.";
+                RotationScheduleInfo.Text = string.Format(ResourceManager.GetString("label_shifts_rotate_automatically", "Shifts rotate automatically every week on {0}."), dayName);
                 
                 // Calculate and display next rotation date using controller method
                 var nextRotationDate = _controller.GetNextRotationDate();
@@ -1452,11 +1455,11 @@ namespace ManagementApp.Views
                 {
                     var georgianStr = GeorgianDateHelper.ToGeorgianString(nextRotationDate.Value);
                     var formattedDate = GeorgianDateHelper.FormatForDisplay(georgianStr);
-                    NextRotationDate.Text = $"Next rotation: {formattedDate} ({dayName})";
+                    NextRotationDate.Text = string.Format(ResourceManager.GetString("label_next_rotation", "Next rotation: {0} ({1})"), formattedDate, dayName);
                 }
                 else
                 {
-                    NextRotationDate.Text = "Next rotation date could not be calculated";
+                    NextRotationDate.Text = ResourceManager.GetString("label_next_rotation_error", "Next rotation date could not be calculated");
                 }
             }
             catch (Exception ex)
@@ -2142,27 +2145,27 @@ namespace ManagementApp.Views
                 // Load Absent employees
                 var absentEmployees = GetEmployeesByAbsenceCategory("Absent", todayGeorgian);
                 AbsentEmployeesListBox.ItemsSource = absentEmployees;
-                AbsentEmployeesExpander.Header = $"Absent Employees ({absentEmployees.Count})";
+                AbsentEmployeesExpander.Header = string.Format(ResourceManager.GetString("expander_absent_employees", "Absent Employees ({0})"), absentEmployees.Count);
 
                 // Load Sick employees
                 var sickEmployees = GetEmployeesByAbsenceCategory("Sick", todayGeorgian);
                 SickEmployeesListBox.ItemsSource = sickEmployees;
-                SickEmployeesExpander.Header = $"Sick Employees ({sickEmployees.Count})";
+                SickEmployeesExpander.Header = string.Format(ResourceManager.GetString("expander_sick_employees", "Sick Employees ({0})"), sickEmployees.Count);
 
                 // Load Leave employees
                 var leaveEmployees = GetEmployeesByAbsenceCategory("Leave", todayGeorgian);
                 LeaveEmployeesListBox.ItemsSource = leaveEmployees;
-                LeaveEmployeesExpander.Header = $"Leave Employees ({leaveEmployees.Count})";
+                LeaveEmployeesExpander.Header = string.Format(ResourceManager.GetString("expander_leave_employees", "Leave Employees ({0})"), leaveEmployees.Count);
 
                 // Update Employee Management section lists
                 EmployeeManagementAbsentListBox.ItemsSource = absentEmployees;
-                EmployeeManagementAbsentExpander.Header = $"Absent Employees ({absentEmployees.Count})";
+                EmployeeManagementAbsentExpander.Header = string.Format(ResourceManager.GetString("expander_absent_employees", "Absent Employees ({0})"), absentEmployees.Count);
 
                 EmployeeManagementSickListBox.ItemsSource = sickEmployees;
-                EmployeeManagementSickExpander.Header = $"Sick Employees ({sickEmployees.Count})";
+                EmployeeManagementSickExpander.Header = string.Format(ResourceManager.GetString("expander_sick_employees", "Sick Employees ({0})"), sickEmployees.Count);
 
                 EmployeeManagementLeaveListBox.ItemsSource = leaveEmployees;
-                EmployeeManagementLeaveExpander.Header = $"Leave Employees ({leaveEmployees.Count})";
+                EmployeeManagementLeaveExpander.Header = string.Format(ResourceManager.GetString("expander_leave_employees", "Leave Employees ({0})"), leaveEmployees.Count);
 
                 _logger.LogInformation("Loaded absence lists - Absent: {AbsentCount}, Sick: {SickCount}, Leave: {LeaveCount}", 
                     absentEmployees.Count, sickEmployees.Count, leaveEmployees.Count);
@@ -2866,7 +2869,7 @@ namespace ManagementApp.Views
                             UpdateShiftStatistics();
                             LoadEmployees(); // Refresh employee lists
                             LoadAbsenceLists(); // Refresh absence lists
-                            UpdateStatus($"Employee {employee.FullName} assigned to {shiftType} shift");
+                            UpdateStatus(string.Format(ResourceManager.GetString("msg_employee_assigned", "Employee {0} assigned to {1} shift"), employee.FullName, shiftType));
                         });
                     }
                 }
@@ -2909,15 +2912,15 @@ namespace ManagementApp.Views
                                         LoadShiftSlots();
                                         UpdateShiftStatistics();
                                         LoadEmployees();
-                                        UpdateStatus($"Employee {employee.FullName} photo updated and assigned to shift");
+                                        UpdateStatus(string.Format(ResourceManager.GetString("msg_employee_photo_updated_assigned", "Employee {0} photo updated and assigned to shift"), employee.FullName));
                                     });
                                 }
                                 else
                                 {
                                     // Create new employee automatically from folder name
                                     var dialogResult = MessageBox.Show(
-                                        $"Employee {detectedFirstName} {detectedLastName} not found.\nDo you want to create a new employee with this name?",
-                                        "Create new employee",
+                                        string.Format(ResourceManager.GetString("msg_employee_not_found_create", "Employee {0} {1} not found.\nDo you want to create a new employee with this name?"), detectedFirstName, detectedLastName),
+                                        ResourceManager.GetString("header_create_new_employee", "Create new employee"),
                                         MessageBoxButton.YesNo,
                                         MessageBoxImage.Question);
                                     
@@ -2949,7 +2952,7 @@ namespace ManagementApp.Views
                                                     LoadShiftSlots();
                                                     UpdateShiftStatistics();
                                                     LoadEmployees();
-                                                    UpdateStatus($"New employee {detectedFirstName} {detectedLastName} created and assigned to shift");
+                                                    UpdateStatus(string.Format(ResourceManager.GetString("msg_new_employee_created_assigned", "New employee {0} {1} created and assigned to shift"), detectedFirstName, detectedLastName));
                                                 });
                                             }
                                         }

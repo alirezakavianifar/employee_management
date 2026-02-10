@@ -58,6 +58,9 @@
     <string key="label_shift_capacity">ظرفیت شیفت:</string>
     <string key="label_rotation_type">نوع چرخش:</string>
     <string key="label_day_of_week">روز هفته:</string>
+    <string key="label_shifts_rotate_automatically">شیفت‌ها به طور خودکار هر هفته در روز {0} می‌چرخند.</string>
+    <string key="label_next_rotation">چرخش بعدی: {0} ({1})</string>
+    <string key="label_next_rotation_error">تاریخ چرخش بعدی قابل محاسبه نیست</string>
     <string key="label_group_name">نام گروه:</string>
     <string key="label_description">توضیحات:</string>
     <string key="label_group_color">رنگ گروه:</string>
@@ -132,6 +135,16 @@
     <string key="filter_pending">در انتظار</string>
     <string key="filter_in_progress">در حال انجام</string>
     <string key="filter_completed">انجام شده</string>
+
+    <!-- Role Names -->
+    <string key="role_none">هیچکدام</string>
+    <string key="role_ceo">مدیر عامل</string>
+    <string key="role_hr_manager">مدیر منابع انسانی</string>
+    <string key="role_shift_supervisor">سرپرست شیفت</string>
+    <string key="role_hr_specialist">کارشناس منابع انسانی</string>
+    <string key="role_operations_manager">مدیر عملیات</string>
+    <string key="role_deputy_manager">جانشین مدیر</string>
+    <string key="role_all_groups">همه گروه‌ها</string>
     
     <!-- Priority Levels -->
     <string key="priority_low">کم</string>
@@ -165,6 +178,8 @@
     <string key="dialog_manage_status_cards">مدیریت کارت‌های وضعیت</string>
     <string key="dialog_add_task">افزودن وظیفه</string>
     <string key="dialog_edit_task">ویرایش وظیفه</string>
+    <string key="dialog_add_shift_group">افزودن گروه شیفت جدید</string>
+    <string key="dialog_edit_shift_group">ویرایش گروه شیفت</string>
     
     <!-- DisplayApp Specific -->
     <string key="display_last_update">آخرین بروزرسانی: {0}</string>
@@ -195,6 +210,13 @@
     <string key="msg_select_csv">انتخاب فایل CSV</string>
     <string key="msg_import_result">{0} کارمند وارد شد، {1} رد شد</string>
     <string key="msg_controller_error">خطای کنترلر</string>
+    <string key="msg_employee_assigned">کارمند {0} به شیفت {1} تخصیص یافت</string>
+    <string key="msg_employee_photo_updated_assigned">عکس کارمند {0} بروزرسانی و به شیفت تخصیص یافت</string>
+    <string key="msg_new_employee_created_assigned">کارمند جدید {0} {1} ایجاد و به شیفت تخصیص یافت</string>
+    <string key="msg_shift_cleared">شیفت {0} پاک شد</string>
+    <string key="err_rotate_shifts">خطا در چرخش شیفت‌ها</string>
+    <string key="header_create_new_employee">ایجاد کارمند جدید</string>
+    <string key="msg_employee_not_found_create">کارمند {0} {1} یافت نشد.\nآیا می‌خواهید کارمند جدیدی با این نام ایجاد کنید؟</string>
     <string key="header_confirm_delete">تأیید حذف</string>
     <string key="err_group_id_empty">شناسه گروه نمی‌تواند خالی باشد</string>
     <string key="err_group_name_empty">نام گروه نمی‌تواند خالی باشد</string>
@@ -232,6 +254,17 @@
     <string key="msg_group_deleted">گروه شیفت «{0}» با موفقیت حذف شد.</string>
     <string key="err_cannot_delete_default_group">امکان حذف گروه پیش‌فرض وجود ندارد</string>
     <string key="msg_confirm_delete_group">آیا از حذف گروه «{0}» اطمینان دارید؟\n\nاین عمل قابل بازگشت نیست.</string>
+    <string key="msg_confirm_clear_morning">آیا مطمئن هستید که می‌خواهید تمام شیفت‌های صبح را پاک کنید؟</string>
+    <string key="msg_confirm_clear_afternoon">آیا مطمئن هستید که می‌خواهید تمام شیفت‌های عصر را پاک کنید؟</string>
+    <string key="msg_confirm_clear_night">آیا مطمئن هستید که می‌خواهید تمام شیفت‌های شب را پاک کنید؟</string>
+    <string key="msg_confirm_rotate_shifts">آیا مطمئن هستید که می‌خواهید شیفت‌های صبح، عصر و شب را بچرخانید؟</string>
+    <string key="msg_morning_cleared">شیفت صبح پاک شد</string>
+    <string key="msg_afternoon_cleared">شیفت عصر پاک شد</string>
+    <string key="msg_night_cleared">شیفت شب پاک شد</string>
+    <string key="msg_shifts_swapped">شیفت‌ها با موفقیت جابجا شدند</string>
+    <string key="msg_rotation_enabled">چرخش خودکار شیفت‌ها فعال شد</string>
+    <string key="msg_rotation_disabled">چرخش خودکار شیفت‌ها غیرفعال شد</string>
+    <string key="msg_rotation_day_changed">روز چرخش به {0} تغییر یافت</string>
     <string key="new_group">گروه جدید</string>
     
     <!-- Status Card Defaults -->
@@ -356,4 +389,13 @@
     <string key="hint_supervisor_preset">پیش‌تنظیم سریع: تغییر "سرپرست" به "سرکارگر"</string>
     <string key="btn_apply_preset">اعمال پیش‌تنظیم</string>
     <string key="msg_preset_applied">پیش‌تنظیم با موفقیت اعمال شد. همه ارجاعات به سرپرست به سرکارگر تغییر یافت.</string>
+    
+    <!-- Week Days -->
+    <string key="day_saturday">شنبه</string>
+    <string key="day_sunday">یکشنبه</string>
+    <string key="day_monday">دوشنبه</string>
+    <string key="day_tuesday">سه‌شنبه</string>
+    <string key="day_wednesday">چهارشنبه</string>
+    <string key="day_thursday">پنجشنبه</string>
+    <string key="day_friday">جمعه</string>
 </resources>

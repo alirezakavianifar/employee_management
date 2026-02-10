@@ -33,6 +33,10 @@ namespace ManagementApp.Controls
             DependencyProperty.Register("ShiftColor", typeof(Brush), typeof(ShiftSlotControl), 
                 new PropertyMetadata(Brushes.Gray, OnColorChanged));
 
+        public static readonly DependencyProperty SlotIndexProperty =
+            DependencyProperty.Register("SlotIndex", typeof(int), typeof(ShiftSlotControl), 
+                new PropertyMetadata(0, OnSlotIndexChanged));
+
         public Shift ShiftData
         {
             get { return (Shift)GetValue(ShiftDataProperty); }
@@ -57,6 +61,12 @@ namespace ManagementApp.Controls
             set { SetValue(ShiftColorProperty, value); }
         }
 
+        public int SlotIndex
+        {
+            get { return (int)GetValue(SlotIndexProperty); }
+            set { SetValue(SlotIndexProperty, value); }
+        }
+
         public ShiftSlotControl()
         {
             InitializeComponent();
@@ -71,13 +81,21 @@ namespace ManagementApp.Controls
         private static void OnTitleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (ShiftSlotControl)d;
-            control.TitleBlock.Text = e.NewValue as string;
+            var val = e.NewValue as string;
+            control.TitleBlock.Text = val;
+            control.TitleBlock.Visibility = string.IsNullOrEmpty(val) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (ShiftSlotControl)d;
             control.TitleBlock.Foreground = e.NewValue as Brush;
+        }
+
+        private static void OnSlotIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (ShiftSlotControl)d;
+            control.UpdateUI();
         }
 
         public void UpdateUI()
@@ -89,8 +107,8 @@ namespace ManagementApp.Controls
 
             if (ShiftData == null) return;
 
-            // Check for Status Card (First slot)
-            var statusCardId = ShiftData.GetStatusCardAtSlot(0);
+            // Check for Status Card (at SlotIndex)
+            var statusCardId = ShiftData.GetStatusCardAtSlot(SlotIndex);
             if (!string.IsNullOrEmpty(statusCardId))
             {
                 // Render Status Card
@@ -139,8 +157,8 @@ namespace ManagementApp.Controls
                 return;
             }
 
-            // Check for Employee (First slot)
-            var employee = ShiftData.GetEmployeeAtSlot(0);
+            // Check for Employee (at SlotIndex)
+            var employee = ShiftData.GetEmployeeAtSlot(SlotIndex);
             if (employee != null)
             {
                 // Render Employee
@@ -191,7 +209,7 @@ namespace ManagementApp.Controls
                 // Visual feedback
                 MainBorder.Background = new SolidColorBrush(Color.FromArgb(20, 0, 0, 255));
             }
-            else if (e.Data.GetDataPresent("EmployeeLabel") && ShiftData?.GetEmployeeAtSlot(0) != null)
+            else if (e.Data.GetDataPresent("EmployeeLabel") && ShiftData?.GetEmployeeAtSlot(SlotIndex) != null)
             {
                 // Allow label drop only when slot has an employee
                 e.Effects = DragDropEffects.Copy;
@@ -220,7 +238,8 @@ namespace ManagementApp.Controls
                 { 
                     ShiftType = this.ShiftType,
                     DroppedItem = employee,
-                    ItemType = DropItemType.Employee
+                    ItemType = DropItemType.Employee,
+                    SlotIndex = this.SlotIndex
                 });
             }
             else if (e.Data.GetDataPresent(typeof(StatusCard)))
@@ -230,10 +249,11 @@ namespace ManagementApp.Controls
                 { 
                     ShiftType = this.ShiftType,
                     DroppedItem = card,
-                    ItemType = DropItemType.StatusCard
+                    ItemType = DropItemType.StatusCard,
+                    SlotIndex = this.SlotIndex
                 });
             }
-            else if (e.Data.GetDataPresent("EmployeeLabel") && ShiftData?.GetEmployeeAtSlot(0) != null)
+            else if (e.Data.GetDataPresent("EmployeeLabel") && ShiftData?.GetEmployeeAtSlot(SlotIndex) != null)
             {
                 var label = e.Data.GetData("EmployeeLabel") as EmployeeLabel;
                 if (label != null)
@@ -242,7 +262,8 @@ namespace ManagementApp.Controls
                     { 
                         ShiftType = this.ShiftType,
                         DroppedItem = label,
-                        ItemType = DropItemType.EmployeeLabel
+                        ItemType = DropItemType.EmployeeLabel,
+                        SlotIndex = this.SlotIndex
                     });
                 }
             }
@@ -259,7 +280,7 @@ namespace ManagementApp.Controls
             if (sender is not System.Windows.Controls.MenuItem menuItem)
                 return;
             var label = menuItem.DataContext as EmployeeLabel;
-            var employee = ShiftData?.GetEmployeeAtSlot(0);
+            var employee = ShiftData?.GetEmployeeAtSlot(SlotIndex);
             if (label != null && employee != null)
                 OnRemoveLabelRequested?.Invoke(this, new RemoveLabelRequestedEventArgs(employee, label.LabelId));
         }
@@ -281,7 +302,7 @@ namespace ManagementApp.Controls
                 return;
             if (sender is not FrameworkElement fe || fe.DataContext is not EmployeeLabel label)
                 return;
-            var employee = ShiftData?.GetEmployeeAtSlot(0);
+            var employee = ShiftData?.GetEmployeeAtSlot(SlotIndex);
             if (employee == null)
                 return;
             var dragData = new DataObject("EmployeeLabelRemove", new RemoveLabelDragData(employee, label.LabelId));
@@ -317,6 +338,7 @@ namespace ManagementApp.Controls
         public string ShiftType { get; set; }
         public object DroppedItem { get; set; }
         public DropItemType ItemType { get; set; }
+        public int SlotIndex { get; set; }
     }
 
     public enum DropItemType

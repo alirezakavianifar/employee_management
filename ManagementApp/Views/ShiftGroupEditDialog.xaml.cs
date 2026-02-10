@@ -5,6 +5,7 @@ using System.Windows;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.Services;
+using Shared.Utils;
 using ManagementApp.Controllers;
 
 namespace ManagementApp.Views
@@ -35,7 +36,7 @@ namespace ManagementApp.Views
                 InitializeComponent();
                 _controller = controller;
                 _logger = LoggingService.CreateLogger<ShiftGroupEditDialog>();
-                Title = "Add new shift group";
+                Title = ResourceManager.GetString("dialog_add_shift_group", "Add new shift group");
                 
                 // Set default values after initialization
                 SetDefaultValues();
@@ -44,7 +45,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error in ShiftGroupEditDialog constructor");
-                MessageBox.Show($"Error creating form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} creating form: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -52,7 +53,7 @@ namespace ManagementApp.Views
         public ShiftGroupEditDialog(ShiftGroup group, MainController? controller = null) : this(controller)
         {
             _originalGroup = group;
-            Title = "Edit shift group";
+            Title = ResourceManager.GetString("dialog_edit_shift_group", "Edit shift group");
             
             // Load data after controls are initialized
             this.Loaded += (s, e) => 
@@ -69,14 +70,14 @@ namespace ManagementApp.Views
                         catch (Exception ex)
                         {
                             _logger?.LogError(ex, "Error in delayed LoadGroupData");
-                            MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} loading data: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }), System.Windows.Threading.DispatcherPriority.Loaded);
                 }
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "Error in Loaded event handler");
-                    MessageBox.Show($"Error loading form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} loading form: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
         }
@@ -86,9 +87,9 @@ namespace ManagementApp.Views
             try
             {
                 if (NameTextBox != null)
-                    NameTextBox.Text = "New group";
+                    NameTextBox.Text = ResourceManager.GetString("new_group", "New group");
                 if (DescriptionTextBox != null)
-                    DescriptionTextBox.Text = "Group description";
+                    DescriptionTextBox.Text = ResourceManager.GetString("no_description", "Group description");
                 if (MorningCapacityTextBox != null) MorningCapacityTextBox.Text = "15";
                 if (AfternoonCapacityTextBox != null) AfternoonCapacityTextBox.Text = "15";
                 if (NightCapacityTextBox != null) NightCapacityTextBox.Text = "15";
@@ -116,7 +117,7 @@ namespace ManagementApp.Views
 
                 // Add "None" option for optional supervisor
                 var employeeList = employees.ToList();
-                employeeList.Insert(0, new Employee { EmployeeId = string.Empty, FirstName = "None", LastName = "" });
+                employeeList.Insert(0, new Employee { EmployeeId = string.Empty, FirstName = ResourceManager.GetString("role_none", "None"), LastName = "" });
 
                 if (MorningForemanComboBox != null)
                 {
@@ -210,7 +211,7 @@ namespace ManagementApp.Views
                     var employees = _controller.GetAllEmployees();
                     var employeeList = employees.ToList();
                     // Add "None" option to local list for matching
-                    var noneEmployee = new Employee { EmployeeId = string.Empty, FirstName = "None", LastName = "" };
+                    var noneEmployee = new Employee { EmployeeId = string.Empty, FirstName = ResourceManager.GetString("role_none", "None"), LastName = "" };
                     employeeList.Insert(0, noneEmployee);
 
                     // Ensure ComboBoxes have the employee list

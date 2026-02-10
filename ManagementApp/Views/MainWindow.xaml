@@ -590,7 +590,7 @@
                                  Margin="0"/>
 
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="Absence Management" Margin="5">
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="5">
                                 <!-- Absent Employees -->

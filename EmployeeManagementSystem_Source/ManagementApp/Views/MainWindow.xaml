@@ -493,8 +493,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                     <Label Content="{converters:Res label_shift_group}" VerticalAlignment="Center"/>
                                     <ComboBox x:Name="ShiftGroupComboBox" Width="150" Margin="5,0" VerticalAlignment="Center" SelectionChanged="ShiftGroupComboBox_SelectionChanged"/>
-                                    <Label Content="{converters:Res label_shift_capacity}" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                    <TextBox x:Name="ShiftCapacityTextBox" Width="50" Text="1" IsReadOnly="True" Margin="5,0" VerticalAlignment="Center" ToolTip="{converters:Res tooltip_capacity_per_slot}"/>
+
                                     <!-- Capacity button removed as it's fixed 1 for now, or we keep it for model updates -->
                                     <StackPanel x:Name="ShiftToolbarButtonsPanel" Orientation="Horizontal">
                                         <Button Content="{converters:Res btn_swap_shifts}" Click="SwapShifts_Click" Margin="5,0"/>
@@ -591,7 +590,7 @@
                                  Margin="0"/>
 
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="Absence Management" Margin="5">
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="5">
                                 <!-- Absent Employees -->

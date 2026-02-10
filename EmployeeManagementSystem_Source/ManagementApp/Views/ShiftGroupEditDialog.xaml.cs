@@ -5,6 +5,7 @@ using System.Windows;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
 using Shared.Services;
+using Shared.Utils;
 using ManagementApp.Controllers;
 
 namespace ManagementApp.Views
@@ -20,9 +21,9 @@ namespace ManagementApp.Views
         public new string Name => NameTextBox?.Text?.Trim() ?? "";
         public string Description => DescriptionTextBox?.Text?.Trim() ?? "";
         public string Color => ColorHexTextBlock?.Text?.Trim() ?? "#4CAF50";
-        public int MorningCapacity => 15;
-        public int AfternoonCapacity => 15;
-        public int NightCapacity => 15;
+        public int MorningCapacity => int.TryParse(MorningCapacityTextBox?.Text, out int val) ? val : 15;
+        public int AfternoonCapacity => int.TryParse(AfternoonCapacityTextBox?.Text, out int val) ? val : 15;
+        public int NightCapacity => int.TryParse(NightCapacityTextBox?.Text, out int val) ? val : 15;
         public bool IsGroupActive => true;
         public string MorningForemanId => (MorningForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
         public string AfternoonForemanId => (AfternoonForemanComboBox?.SelectedItem as Employee)?.EmployeeId ?? string.Empty;
@@ -35,7 +36,7 @@ namespace ManagementApp.Views
                 InitializeComponent();
                 _controller = controller;
                 _logger = LoggingService.CreateLogger<ShiftGroupEditDialog>();
-                Title = "Add new shift group";
+                Title = ResourceManager.GetString("dialog_add_shift_group", "Add new shift group");
                 
                 // Set default values after initialization
                 SetDefaultValues();
@@ -44,7 +45,7 @@ namespace ManagementApp.Views
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Error in ShiftGroupEditDialog constructor");
-                MessageBox.Show($"Error creating form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} creating form: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 throw;
             }
         }
@@ -52,7 +53,7 @@ namespace ManagementApp.Views
         public ShiftGroupEditDialog(ShiftGroup group, MainController? controller = null) : this(controller)
         {
             _originalGroup = group;
-            Title = "Edit shift group";
+            Title = ResourceManager.GetString("dialog_edit_shift_group", "Edit shift group");
             
             // Load data after controls are initialized
             this.Loaded += (s, e) => 
@@ -69,14 +70,14 @@ namespace ManagementApp.Views
                         catch (Exception ex)
                         {
                             _logger?.LogError(ex, "Error in delayed LoadGroupData");
-                            MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} loading data: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }), System.Windows.Threading.DispatcherPriority.Loaded);
                 }
                 catch (Exception ex)
                 {
                     _logger?.LogError(ex, "Error in Loaded event handler");
-                    MessageBox.Show($"Error loading form: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"{ResourceManager.GetString("msg_error", "Error")} loading form: {ex.Message}", ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
         }
@@ -86,9 +87,12 @@ namespace ManagementApp.Views
             try
             {
                 if (NameTextBox != null)
-                    NameTextBox.Text = "New group";
+                    NameTextBox.Text = ResourceManager.GetString("new_group", "New group");
                 if (DescriptionTextBox != null)
-                    DescriptionTextBox.Text = "Group description";
+                    DescriptionTextBox.Text = ResourceManager.GetString("no_description", "Group description");
+                if (MorningCapacityTextBox != null) MorningCapacityTextBox.Text = "15";
+                if (AfternoonCapacityTextBox != null) AfternoonCapacityTextBox.Text = "15";
+                if (NightCapacityTextBox != null) NightCapacityTextBox.Text = "15";
                 UpdateColorDisplay("#4CAF50");
             }
             catch (Exception ex)
@@ -111,25 +115,23 @@ namespace ManagementApp.Views
                 if (employees == null)
                     employees = new List<Employee>();
 
-                // Foremen are required, so don't add null option
+                // Add "None" option for optional supervisor
                 var employeeList = employees.ToList();
+                employeeList.Insert(0, new Employee { EmployeeId = string.Empty, FirstName = ResourceManager.GetString("role_none", "None"), LastName = "" });
 
                 if (MorningForemanComboBox != null)
                 {
                     MorningForemanComboBox.ItemsSource = employeeList;
-                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
                 if (AfternoonForemanComboBox != null)
                 {
                     AfternoonForemanComboBox.ItemsSource = employeeList;
-                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
                 
                 if (NightForemanComboBox != null)
                 {
                     NightForemanComboBox.ItemsSource = employeeList;
-                    // DisplayMemberPath removed - ItemTemplate in XAML handles display
                 }
 
                 _logger?.LogInformation("Loaded {Count} employees for foreman selection", employees.Count);
@@ -198,50 +200,48 @@ namespace ManagementApp.Views
                 UpdateColorDisplay(safeColor);
                 _logger?.LogInformation("Set color display to: {Text}", safeColor);
 
+                // Set Capacity
+                if (MorningCapacityTextBox != null) MorningCapacityTextBox.Text = _originalGroup.MorningCapacity.ToString();
+                if (AfternoonCapacityTextBox != null) AfternoonCapacityTextBox.Text = _originalGroup.AfternoonCapacity.ToString();
+                if (NightCapacityTextBox != null) NightCapacityTextBox.Text = _originalGroup.NightCapacity.ToString();
+
                 // Load foreman selections
                 if (_controller != null)
                 {
                     var employees = _controller.GetAllEmployees();
                     var employeeList = employees.ToList();
+                    // Add "None" option to local list for matching
+                    var noneEmployee = new Employee { EmployeeId = string.Empty, FirstName = ResourceManager.GetString("role_none", "None"), LastName = "" };
+                    employeeList.Insert(0, noneEmployee);
 
                     // Ensure ComboBoxes have the employee list
-                    if (MorningForemanComboBox != null)
-                    {
-                        MorningForemanComboBox.ItemsSource = employeeList;
-                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
-                    }
+                    if (MorningForemanComboBox != null) MorningForemanComboBox.ItemsSource = employeeList;
+                    if (AfternoonForemanComboBox != null) AfternoonForemanComboBox.ItemsSource = employeeList;
+                    if (NightForemanComboBox != null) NightForemanComboBox.ItemsSource = employeeList;
 
-                    if (AfternoonForemanComboBox != null)
+                    // Helper to find employee or return None
+                    Employee FindEmployeeOrNone(string? id)
                     {
-                        AfternoonForemanComboBox.ItemsSource = employeeList;
-                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
-                    }
-                    
-                    if (NightForemanComboBox != null)
-                    {
-                        NightForemanComboBox.ItemsSource = employeeList;
-                        // DisplayMemberPath removed - ItemTemplate in XAML handles display
+                        if (string.IsNullOrEmpty(id)) return noneEmployee;
+                        return employeeList.FirstOrDefault(e => e.EmployeeId == id) ?? noneEmployee;
                     }
 
                     // Set morning foreman
-                    if (MorningForemanComboBox != null && _originalGroup.MorningShift != null && !string.IsNullOrEmpty(_originalGroup.MorningShift.TeamLeaderId))
+                    if (MorningForemanComboBox != null)
                     {
-                        var morningForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.MorningShift.TeamLeaderId);
-                        MorningForemanComboBox.SelectedItem = morningForeman;
+                        MorningForemanComboBox.SelectedItem = FindEmployeeOrNone(_originalGroup.MorningShift?.TeamLeaderId);
                     }
 
                     // Set afternoon foreman
-                    if (AfternoonForemanComboBox != null && _originalGroup.AfternoonShift != null && !string.IsNullOrEmpty(_originalGroup.AfternoonShift.TeamLeaderId))
+                    if (AfternoonForemanComboBox != null)
                     {
-                        var afternoonForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.AfternoonShift.TeamLeaderId);
-                        AfternoonForemanComboBox.SelectedItem = afternoonForeman;
+                         AfternoonForemanComboBox.SelectedItem = FindEmployeeOrNone(_originalGroup.AfternoonShift?.TeamLeaderId);
                     }
                     
                     // Set night foreman
-                    if (NightForemanComboBox != null && _originalGroup.NightShift != null && !string.IsNullOrEmpty(_originalGroup.NightShift.TeamLeaderId))
+                    if (NightForemanComboBox != null)
                     {
-                        var nightForeman = employees.FirstOrDefault(emp => emp.EmployeeId == _originalGroup.NightShift.TeamLeaderId);
-                        NightForemanComboBox.SelectedItem = nightForeman;
+                        NightForemanComboBox.SelectedItem = FindEmployeeOrNone(_originalGroup.NightShift?.TeamLeaderId);
                     }
                 }
 
@@ -266,29 +266,7 @@ namespace ManagementApp.Views
                     return;
                 }
 
-                // Validate that morning foreman is selected
-                if (string.IsNullOrEmpty(MorningForemanId))
-                {
-                    MessageBox.Show("Please select the morning shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    MorningForemanComboBox?.Focus();
-                    return;
-                }
-
-                // Validate that afternoon foreman is selected
-                if (string.IsNullOrEmpty(AfternoonForemanId))
-                {
-                    MessageBox.Show("Please select the afternoon shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    AfternoonForemanComboBox?.Focus();
-                    return;
-                }
-                
-                // Validate that night foreman is selected
-                if (string.IsNullOrEmpty(NightForemanId))
-                {
-                    MessageBox.Show("Please select the night shift supervisor.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    NightForemanComboBox?.Focus();
-                    return;
-                }
+                // Supervisor validation removed - optional
 
                 DialogResult = true;
                 Close();
@@ -350,6 +328,12 @@ namespace ManagementApp.Views
                     ColorHexTextBlock.Text = "#4CAF50";
                 }
             }
+        }
+
+        private void NumberValidationTextBox(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
     }
 }

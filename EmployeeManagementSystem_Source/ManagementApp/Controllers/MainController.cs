@@ -1716,11 +1716,12 @@ namespace ManagementApp.Controllers
 
         public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, string? supervisorId = null,
                                     string? color = null, int? morningCapacity = null, int? afternoonCapacity = null, 
-                                    int? nightCapacity = null, bool? isActive = null)
+                                    int? nightCapacity = null, bool? isActive = null,
+                                    string? morningForemanId = null, string? afternoonForemanId = null, string? nightForemanId = null)
         {
             try
             {
-                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity, supervisorId, isActive);
+                var success = ShiftGroupManager.UpdateShiftGroup(groupId, name, description, color, morningCapacity, afternoonCapacity, nightCapacity, supervisorId, isActive, morningForemanId, afternoonForemanId, nightForemanId);
                 if (success)
                 {
                     ShiftGroupsUpdated?.Invoke();
