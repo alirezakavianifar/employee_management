@@ -737,7 +737,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Task Management">
+            <TabItem Header="{converters:Res tab_task_management}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -746,7 +746,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Task List -->
-                    <GroupBox Grid.Column="0" Header="Task List" Margin="5">
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_task_list}" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -756,10 +756,10 @@
 
                             <!-- Task Filter -->
                             <ComboBox Grid.Row="0" x:Name="TaskFilterComboBox" Margin="5">
-                                <ComboBoxItem Content="All Tasks"/>
-                                <ComboBoxItem Content="Pending"/>
-                                <ComboBoxItem Content="In Progress"/>
-                                <ComboBoxItem Content="Completed"/>
+                                <ComboBoxItem Content="{converters:Res filter_all_tasks}"/>
+                                <ComboBoxItem Content="{converters:Res filter_pending}"/>
+                                <ComboBoxItem Content="{converters:Res filter_in_progress}"/>
+                                <ComboBoxItem Content="{converters:Res filter_completed}"/>
                             </ComboBox>
 
                             <!-- Task List -->
@@ -771,9 +771,9 @@
 
                             <!-- Task Actions -->
                             <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
-                                <Button Content="Add Task" Click="AddTask_Click" Margin="2"/>
-                                <Button Content="Edit Task" Click="EditTask_Click" Margin="2"/>
-                                <Button Content="Delete Task" Click="DeleteTask_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_add_task}" Click="AddTask_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_edit_task}" Click="EditTask_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_delete_task}" Click="DeleteTask_Click" Margin="2"/>
                             </StackPanel>
                         </Grid>
                     </GroupBox>
@@ -789,7 +789,7 @@
                                  Margin="0"/>
 
                     <!-- Task Details -->
-                    <GroupBox Grid.Column="2" Header="Task Details" Margin="5">
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_task_details}" Margin="5">
                         <Grid x:Name="TaskDetailsGrid" Margin="10">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -809,43 +809,43 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Content="Title:"/>
+                            <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_title}"/>
                             <TextBox Grid.Row="0" Grid.Column="1" x:Name="TaskTitleTextBox" Margin="5"/>
 
-                            <Label Grid.Row="1" Grid.Column="0" Content="Description:"/>
+                            <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_description}"/>
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="TaskDescriptionTextBox" 
                                     Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="5"/>
 
-                            <Label Grid.Row="2" Grid.Column="0" Content="Priority:"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_priority}"/>
                             <ComboBox Grid.Row="2" Grid.Column="1" x:Name="TaskPriorityComboBox" Margin="5">
-                                <ComboBoxItem Content="Low"/>
-                                <ComboBoxItem Content="Medium" IsSelected="True"/>
-                                <ComboBoxItem Content="High"/>
-                                <ComboBoxItem Content="Urgent"/>
+                                <ComboBoxItem Content="{converters:Res priority_low}"/>
+                                <ComboBoxItem Content="{converters:Res priority_medium}" IsSelected="True"/>
+                                <ComboBoxItem Content="{converters:Res priority_high}"/>
+                                <ComboBoxItem Content="{converters:Res priority_urgent}"/>
                             </ComboBox>
 
-                            <Label Grid.Row="3" Grid.Column="0" Content="Estimated Hours:"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_estimated_hours}"/>
                             <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="8.0" Margin="5"/>
 
-                            <Label Grid.Row="4" Grid.Column="0" Content="Target Date:"/>
+                            <Label Grid.Row="4" Grid.Column="0" Content="{converters:Res label_target_date}"/>
                             <controls:GeorgianDatePicker Grid.Row="4" Grid.Column="1" x:Name="TaskTargetDatePicker" Margin="5"/>
 
-                            <Label Grid.Row="5" Grid.Column="0" Content="Status:"/>
+                            <Label Grid.Row="5" Grid.Column="0" Content="{converters:Res label_status}"/>
                             <ComboBox Grid.Row="5" Grid.Column="1" x:Name="TaskStatusComboBox" Margin="5">
-                                <ComboBoxItem Content="Pending"/>
-                                <ComboBoxItem Content="In Progress"/>
-                                <ComboBoxItem Content="Completed"/>
+                                <ComboBoxItem Content="{converters:Res filter_pending}"/>
+                                <ComboBoxItem Content="{converters:Res filter_in_progress}"/>
+                                <ComboBoxItem Content="{converters:Res filter_completed}"/>
                             </ComboBox>
 
                             <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" 
                                        Orientation="Horizontal" Margin="5">
-                                <Button Content="Save Changes" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
-                                <Button Content="Start Task" Click="StartTask_Click" Margin="0,0,5,0"/>
-                                <Button Content="Complete Task" Click="CompleteTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_save_changes}" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_start_task}" Click="StartTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_complete_task}" Click="CompleteTask_Click" Margin="0,0,5,0"/>
                             </StackPanel>
 
                             <!-- Task Assignment -->
-                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="Employee Assignment" Margin="5">
+                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_employee_assignment}" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -857,14 +857,14 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="Assigned employees:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_assigned_employees}"/>
                                     <ListBox Grid.Row="1" Grid.Column="0" x:Name="AssignedEmployeesListBox" 
                                             Height="80" Margin="0,5,5,0">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock Text="{Binding DisplayText}" Width="200" Margin="5,0"/>
-                                                    <Button Content="Remove" Width="50" Height="20" FontSize="10"
+                                                    <Button Content="{converters:Res btn_remove}" Width="50" Height="20" FontSize="10"
                                                             Click="RemoveEmployeeFromTask_Click" Tag="{Binding EmployeeId}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -872,20 +872,20 @@
                                     </ListBox>
                                     
                                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="5,5,0,0">
-                                        <Button Content="Assign New Employee" Click="AddEmployeeToTask_Click" 
+                                        <Button Content="{converters:Res btn_assign_new_employee}" Click="AddEmployeeToTask_Click" 
                                                 Width="140" Height="30" Margin="0,0,0,5"/>
-                                        <Button Content="View Employee Tasks" Click="ViewEmployeeTasks_Click" 
+                                        <Button Content="{converters:Res btn_view_employee_tasks}" Click="ViewEmployeeTasks_Click" 
                                                 Width="140" Height="30"/>
                                     </StackPanel>
                                 </Grid>
                             </GroupBox>
 
                             <!-- Task Progress -->
-                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="Task Progress" Margin="5">
+                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_task_progress}" Margin="5">
                                 <StackPanel Margin="10">
-                                    <Label Content="Actual Hours:"/>
+                                    <Label Content="{converters:Res label_actual_hours}"/>
                                     <TextBox x:Name="TaskActualHoursTextBox" Margin="0,5"/>
-                                    <Label Content="Notes:"/>
+                                    <Label Content="{converters:Res label_notes}"/>
                                     <TextBox x:Name="TaskNotesTextBox" 
                                             Height="60" 
                                             TextWrapping="Wrap" 
@@ -895,7 +895,7 @@
                             </GroupBox>
 
                             <!-- Daily Progress Entry -->
-                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="Daily Progress" Margin="5">
+                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_daily_progress}" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -910,23 +910,23 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="Shift group:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_shift_group}"/>
                                     <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DailyProgressGroupComboBox" 
                                              Margin="5"
                                              SelectionChanged="DailyProgressGroupComboBox_SelectionChanged"/>
 
-                                    <Label Grid.Row="1" Grid.Column="0" Content="Shift Type:"/>
+                                    <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_shift_type}"/>
                                     <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DailyProgressShiftTypeComboBox" Margin="5"
                                              SelectionChanged="DailyProgressShiftTypeComboBox_SelectionChanged">
-                                        <ComboBoxItem Content="Morning" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_morning}" Tag="morning"/>
                                         <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
                                     </ComboBox>
 
-                                    <Label Grid.Row="2" Grid.Column="0" Content="Date:"/>
+                                    <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_date}"/>
                                     <controls:GeorgianDatePicker Grid.Row="2" Grid.Column="1" 
                                                                  x:Name="DailyProgressDatePicker" Margin="5"/>
 
-                                    <Label Grid.Row="3" Grid.Column="0" Content="Number of boxes:"/>
+                                    <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_number_of_boxes}"/>
                                     <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
                                         <TextBox x:Name="DailyProgressBoxesTextBox" Width="100" 
                                                 PreviewTextInput="DailyProgressBoxesTextBox_PreviewTextInput"/>
@@ -934,36 +934,36 @@
                                     </StackPanel>
 
                                     <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
-                                           Content="Record" x:Name="RecordDailyProgressButton" 
+                                           Content="{converters:Res btn_record}" x:Name="RecordDailyProgressButton" 
                                            Click="RecordDailyProgress_Click" 
                                            Width="100" Height="30" Margin="5" HorizontalAlignment="Left"/>
 
                                     <!-- Status Display -->
                                     <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
-                                        <Label Content="Status:" FontWeight="Bold"/>
+                                        <Label Content="{converters:Res label_status}" FontWeight="Bold"/>
                                         <TextBlock x:Name="DailyProgressStatusTextBlock" Margin="5,5,5,0" 
                                                   TextWrapping="Wrap" FontSize="12"/>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Completed:"/>
+                                            <Label Content="{converters:Res label_completed}"/>
                                             <TextBlock x:Name="DailyProgressCompletedTextBlock" Margin="5,0"/>
-                                            <Label Content="of" Margin="10,0,0,0"/>
+                                            <Label Content="{converters:Res label_of}" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="DailyProgressTargetTextBlock" Margin="5,0"/>
-                                            <Label Content="boxes" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Percentage:"/>
+                                            <Label Content="{converters:Res label_percentage}"/>
                                             <TextBlock x:Name="DailyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
                                             <Label Content="%" Margin="5,0,10,0"/>
-                                            <Label Content="Difference:" Margin="10,0,0,0"/>
+                                            <Label Content="{converters:Res label_difference}" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="DailyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="boxes" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </GroupBox>
 
                             <!-- Weekly Progress View -->
-                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="Weekly Progress" Margin="5">
+                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_weekly_progress}" Margin="5">
                                 <Grid Margin="10">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -976,43 +976,43 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <Label Grid.Row="0" Grid.Column="0" Content="Shift group:"/>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_shift_group}"/>
                                     <ComboBox Grid.Row="0" Grid.Column="1" x:Name="WeeklyProgressGroupComboBox" 
                                              Margin="5"
                                              SelectionChanged="WeeklyProgressGroupComboBox_SelectionChanged"/>
 
-                                    <Label Grid.Row="1" Grid.Column="0" Content="Shift Type:"/>
+                                    <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_shift_type}"/>
                                     <ComboBox Grid.Row="1" Grid.Column="1" x:Name="WeeklyProgressShiftTypeComboBox" Margin="5"
                                              SelectionChanged="WeeklyProgressShiftTypeComboBox_SelectionChanged">
-                                        <ComboBoxItem Content="Morning" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_morning}" Tag="morning"/>
                                         <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
                                     </ComboBox>
 
                                     <!-- Weekly Summary -->
                                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
-                                        <Label Content="Weekly summary:" FontWeight="Bold"/>
+                                        <Label Content="{converters:Res label_weekly_summary}" FontWeight="Bold"/>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Week start date:"/>
+                                            <Label Content="{converters:Res label_week_start_date}"/>
                                             <TextBlock x:Name="WeeklyProgressWeekStartTextBlock" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Completed:"/>
+                                            <Label Content="{converters:Res label_completed}"/>
                                             <TextBlock x:Name="WeeklyProgressTotalCompletedTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="of" Margin="10,0,0,0"/>
+                                            <Label Content="{converters:Res label_of}" Margin="10,0,0,0"/>
                                             <TextBlock Text="1000" Margin="5,0"/>
-                                            <Label Content="Box (weekly target)" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_weekly_target}" Margin="5,0"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Status:"/>
+                                            <Label Content="{converters:Res label_status}"/>
                                             <TextBlock x:Name="WeeklyProgressStatusTextBlock" Margin="5,0" FontWeight="Bold"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
-                                            <Label Content="Percentage:"/>
+                                            <Label Content="{converters:Res label_percentage}"/>
                                             <TextBlock x:Name="WeeklyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
                                             <Label Content="%" Margin="5,0,10,0"/>
-                                            <Label Content="Difference:" Margin="10,0,0,0"/>
+                                            <Label Content="{converters:Res label_difference}" Margin="10,0,0,0"/>
                                             <TextBlock x:Name="WeeklyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
-                                            <Label Content="boxes" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -1039,7 +1039,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Reports">
+            <TabItem Header="{converters:Res tab_reports}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -1048,26 +1048,26 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Report Options -->
-                    <GroupBox Grid.Column="0" Header="Report Options" Margin="5">
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_report_options}" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="Report Type:"/>
+                            <Label Content="{converters:Res label_report_type}"/>
                             <ComboBox x:Name="ReportTypeComboBox" Margin="0,5">
-                                <ComboBoxItem Content="Daily Report"/>
-                                <ComboBoxItem Content="Weekly Report"/>
-                                <ComboBoxItem Content="Monthly Report"/>
+                                <ComboBoxItem Content="{converters:Res report_daily}"/>
+                                <ComboBoxItem Content="{converters:Res report_weekly}"/>
+                                <ComboBoxItem Content="{converters:Res report_monthly}"/>
                             </ComboBox>
 
-                            <Label Content="Start Date:" Margin="0,10,0,5"/>
+                            <Label Content="{converters:Res label_start_date}" Margin="0,10,0,5"/>
                             <controls:GeorgianDatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
 
-                            <Label Content="End Date:" Margin="0,0,0,5"/>
+                            <Label Content="{converters:Res label_end_date}" Margin="0,0,0,5"/>
                             <controls:GeorgianDatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
 
-                            <Label Content="Report Author:" Margin="0,10,0,5"/>
+                            <Label Content="{converters:Res label_report_author}" Margin="0,10,0,5"/>
                             <ComboBox x:Name="ReportAssignedToComboBox" Margin="0,0,0,10"/>
 
-                            <Button Content="Generate Report" Click="GenerateReport_Click" Margin="0,10"/>
-                            <Button Content="Print" 
+                            <Button Content="{converters:Res btn_generate_report}" Click="GenerateReport_Click" Margin="0,10"/>
+                            <Button Content="{converters:Res btn_print}" 
                                    Click="PrintReport_Click" 
                                    Width="100" 
                                    Height="35" 
@@ -1081,10 +1081,10 @@
                             <Border Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" 
                                     CornerRadius="5" Margin="0,15,0,0" Padding="8">
                                 <StackPanel>
-                                    <TextBlock Text="ℹ️ Performance formula:" 
+                                    <TextBlock Text="{converters:Res label_performance_formula}" 
                                                FontWeight="Bold" FontSize="11" 
                                                Foreground="#333" Margin="0,0,0,5"/>
-                                    <TextBlock Text="Base (70) + Employees (×2) + Shift (×3) - Absence (×2) + Daily changes (±12)" 
+                                    <TextBlock Text="{converters:Res label_formula_description}" 
                                                FontSize="10" Foreground="#666" 
                                                TextWrapping="Wrap" LineHeight="16"/>
                                 </StackPanel>
@@ -1103,7 +1103,7 @@
                                  Margin="0"/>
 
                     <!-- Report Preview -->
-                    <GroupBox Grid.Column="2" Header="Report Preview" Margin="5">
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_report_preview}" Margin="5">
                         <ScrollViewer>
                             <TextBlock x:Name="ReportPreviewTextBlock" 
                                       FontFamily="Tahoma" 
@@ -1115,7 +1115,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Settings">
+            <TabItem x:Name="SettingsTabItem" Header="{converters:Res tab_settings}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
@@ -1124,92 +1124,165 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Settings Options -->
-                    <GroupBox Grid.Column="0" Header="System Settings" Margin="5">
-                        <StackPanel Margin="10">
-                            <Label Content="Data folder path:" FontWeight="Bold" Margin="0,0,0,5"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBox x:Name="DataDirectoryTextBox" 
-                                        Width="300" 
-                                        IsReadOnly="True"
-                                        Margin="0,0,5,0"/>
-                                <Button Content="Select Folder" 
-                                        Click="SelectDataDirectory_Click" 
-                                        Width="100"/>
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_system_settings}" Margin="5">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10">
+                                <Label Content="{converters:Res label_language}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10" SelectionChanged="LanguageComboBox_SelectionChanged">
+                                    <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
+                                    <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
+                                </ComboBox>
+
+                                <Label Content="{converters:Res label_data_folder_path}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBox x:Name="DataDirectoryTextBox" 
+                                            Width="300" 
+                                            IsReadOnly="True"
+                                            Margin="0,0,5,0"/>
+                                    <Button Content="{converters:Res btn_select_folder}" 
+                                            Click="SelectDataDirectory_Click" 
+                                            Width="100"/>
+                                </StackPanel>
+
+                                <Label Content="{converters:Res label_current_path}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="CurrentDataDirectoryTextBlock" 
+                                          TextWrapping="Wrap" 
+                                          Foreground="Gray" 
+                                          Margin="0,0,0,10"/>
+
+                                <CheckBox x:Name="CopyExistingDataCheckBox" 
+                                         Content="{converters:Res checkbox_move_existing_data}" 
+                                         IsChecked="True"
+                                         Margin="0,0,0,10"/>
+
+                                <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,0,0,10">
+                                    <Label Content="{converters:Res label_transferring_data}" FontWeight="Bold"/>
+                                    <ProgressBar x:Name="DataCopyProgressBar" 
+                                                Height="20" 
+                                                IsIndeterminate="True"/>
+                                </StackPanel>
+
+                                <Button Content="{converters:Res btn_save_settings}" 
+                                        Click="SaveSettings_Click" 
+                                        Background="#4CAF50" 
+                                        Foreground="White" 
+                                        FontWeight="Bold"
+                                        Margin="0,10"/>
+                                
+                                <Button Content="{converters:Res btn_reset_to_default}" 
+                                        Click="ResetSettings_Click" 
+                                        Background="#FF9800" 
+                                        Foreground="White" 
+                                        Margin="0,5"/>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <Label Content="{converters:Res label_display_bg_color}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border x:Name="DisplayColorPreview" 
+                                            Width="50" Height="30" 
+                                            BorderBrush="Black" BorderThickness="2" 
+                                            Background="#1a1a1a" Margin="0,0,10,0"/>
+                                    <Button x:Name="SelectDisplayColorButton" 
+                                            Content="{converters:Res btn_select_color}" 
+                                            Click="SelectDisplayColorButton_Click" 
+                                            Width="120"/>
+                                </StackPanel>
+
+                                <Label Content="{converters:Res label_display_content}" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+                                    <CheckBox x:Name="ShowPerformanceChartCheckBox"
+                                              Content="{converters:Res checkbox_show_performance_chart}"
+                                              IsChecked="True"
+                                              Margin="0,0,0,5"/>
+                                    <CheckBox x:Name="ShowAiRecommendationCheckBox"
+                                              Content="{converters:Res checkbox_show_ai_recommendation}"
+                                              IsChecked="True"/>
+                                </StackPanel>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <Label Content="{converters:Res label_shift_settings}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <Label Content="{converters:Res label_default_capacity}" Width="120"/>
+                                    <TextBox x:Name="DefaultShiftCapacityTextBox" 
+                                            Width="60" 
+                                            Text="15"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Label Content="{converters:Res label_sync_interval}" Width="120"/>
+                                    <TextBox x:Name="SyncIntervalTextBox" 
+                                            Width="60" 
+                                            Text="30"/>
+                                </StackPanel>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <!-- Text Customization Section -->
+                                <Label Content="{converters:Res header_text_customization}" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <Label Content="{converters:Res label_search_keys}" Width="140"/>
+                                    <TextBox x:Name="TextCustomizationSearchBox" 
+                                            Width="200" 
+                                            TextChanged="TextCustomizationSearchBox_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- Resource Overrides DataGrid -->
+                                <DataGrid x:Name="TextCustomizationDataGrid"
+                                          Height="200"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          SelectionMode="Single"
+                                          SelectionUnit="Cell"
+                                          IsReadOnly="False"
+                                          Margin="0,5,0,10">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="150" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Default" Binding="{Binding DefaultValue}" Width="180" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Custom" Binding="{Binding CustomValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" IsReadOnly="False"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <Button x:Name="ApplyOverrideButton"
+                                            Content="{converters:Res btn_apply_override}" 
+                                            Click="ApplyOverride_Click" 
+                                            Width="80"
+                                            Background="#4CAF50" 
+                                            Foreground="White"
+                                            Margin="0,0,5,0"/>
+                                    <Button x:Name="ClearOverrideButton"
+                                            Content="{converters:Res btn_clear_override}" 
+                                            Click="ClearOverride_Click" 
+                                            Width="80"
+                                            Margin="0,0,5,0"/>
+                                    <Button x:Name="ResetAllOverridesButton"
+                                            Content="{converters:Res btn_reset_all_overrides}" 
+                                            Click="ResetAllOverrides_Click" 
+                                            Background="#FF9800" 
+                                            Foreground="White"
+                                            Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Border Background="#E3F2FD" BorderBrush="#2196F3" BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{converters:Res hint_supervisor_preset}" 
+                                                  FontWeight="SemiBold" 
+                                                  Margin="0,0,0,5"/>
+                                        <Button x:Name="ApplySupervisorPresetButton"
+                                                Content="{converters:Res btn_apply_preset}" 
+                                                Click="ApplySupervisorPreset_Click" 
+                                                Width="120"
+                                                Background="#2196F3" 
+                                                Foreground="White"
+                                                HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-
-                            <Label Content="Current path:" Margin="0,0,0,5"/>
-                            <TextBlock x:Name="CurrentDataDirectoryTextBlock" 
-                                      TextWrapping="Wrap" 
-                                      Foreground="Gray" 
-                                      Margin="0,0,0,10"/>
-
-                            <CheckBox x:Name="CopyExistingDataCheckBox" 
-                                     Content="Move existing data to new location" 
-                                     IsChecked="True"
-                                     Margin="0,0,0,10"/>
-
-                            <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,0,0,10">
-                                <Label Content="Transferring data..." FontWeight="Bold"/>
-                                <ProgressBar x:Name="DataCopyProgressBar" 
-                                            Height="20" 
-                                            IsIndeterminate="True"/>
-                            </StackPanel>
-
-                            <Button Content="Save Settings" 
-                                    Click="SaveSettings_Click" 
-                                    Background="#4CAF50" 
-                                    Foreground="White" 
-                                    FontWeight="Bold"
-                                    Margin="0,10"/>
-                            
-                            <Button Content="Reset to Default" 
-                                    Click="ResetSettings_Click" 
-                                    Background="#FF9800" 
-                                    Foreground="White" 
-                                    Margin="0,5"/>
-
-                            <Separator Margin="0,20,0,10"/>
-
-                            <Label Content="Display background color:" FontWeight="Bold" Margin="0,0,0,5"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <Border x:Name="DisplayColorPreview" 
-                                        Width="50" Height="30" 
-                                        BorderBrush="Black" BorderThickness="2" 
-                                        Background="#1a1a1a" Margin="0,0,10,0"/>
-                                <Button x:Name="SelectDisplayColorButton" 
-                                        Content="Select color" 
-                                        Click="SelectDisplayColorButton_Click" 
-                                        Width="120"/>
-                            </StackPanel>
-
-                            <Label Content="Display content:" FontWeight="Bold" Margin="0,10,0,5"/>
-                            <StackPanel Orientation="Vertical" Margin="0,0,0,10">
-                                <CheckBox x:Name="ShowPerformanceChartCheckBox"
-                                          Content="Show performance chart on display"
-                                          IsChecked="True"
-                                          Margin="0,0,0,5"/>
-                                <CheckBox x:Name="ShowAiRecommendationCheckBox"
-                                          Content="Show AI recommendation text on display"
-                                          IsChecked="True"/>
-                            </StackPanel>
-
-                            <Separator Margin="0,20,0,10"/>
-
-                            <Label Content="Shift settings:" FontWeight="Bold" Margin="0,0,0,5"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <Label Content="Default capacity:" Width="120"/>
-                                <TextBox x:Name="DefaultShiftCapacityTextBox" 
-                                        Width="60" 
-                                        Text="15"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <Label Content="Sync interval (seconds):" Width="120"/>
-                                <TextBox x:Name="SyncIntervalTextBox" 
-                                        Width="60" 
-                                        Text="30"/>
-                            </StackPanel>
-                        </StackPanel>
+                        </ScrollViewer>
                     </GroupBox>
 
                     <!-- Splitter -->
@@ -1223,25 +1296,25 @@
                                  Margin="0"/>
 
                     <!-- Settings Information -->
-                    <GroupBox Grid.Column="2" Header="System information" Margin="5">
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_system_info}" Margin="5">
                         <StackPanel Margin="10">
-                            <Label Content="Sync status:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="{converters:Res label_sync_status}" FontWeight="Bold" Margin="0,0,0,5"/>
                             <TextBlock x:Name="SyncStatusTextBlock" 
                                       Text="Active" 
                                       Foreground="Green" 
                                       Margin="0,0,0,20"/>
 
-                            <Label Content="Last update:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="{converters:Res label_last_update}" FontWeight="Bold" Margin="0,0,0,5"/>
                             <TextBlock x:Name="LastUpdateTextBlock" 
                                       Text="--" 
                                       Margin="0,0,0,20"/>
 
-                            <Label Content="Available report files:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="{converters:Res label_available_report_files}" FontWeight="Bold" Margin="0,0,0,5"/>
                             <ListBox x:Name="ReportFilesListBox" 
                                     Height="150" 
                                     Margin="0,0,0,20"/>
 
-                            <Label Content="System logs:" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <Label Content="{converters:Res label_system_logs}" FontWeight="Bold" Margin="0,0,0,5"/>
                             <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
                                 <TextBlock x:Name="SystemLogsTextBlock" 
                                           FontFamily="Consolas" 
@@ -1253,7 +1326,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Daily Preview">
+            <TabItem Header="{converters:Res tab_daily_preview}">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -1264,7 +1337,7 @@
                     <!-- Header with Date -->
                     <Border Grid.Row="0" Background="#2E3440" Padding="15" Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Daily summary" 
+                            <TextBlock Text="{converters:Res label_daily_summary}" 
                                       FontFamily="Tahoma" 
                                       FontSize="18" 
                                       FontWeight="Bold" 
@@ -1282,7 +1355,7 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="10">
                             <!-- Absence Statistics -->
-                            <GroupBox Header="Absence statistics" Margin="0,0,0,15">
+                            <GroupBox Header="{converters:Res header_absence_stats}" Margin="0,0,0,15">
                                 <Grid Margin="15">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -1302,7 +1375,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="Sick Employees" 
+                                            <TextBlock Text="{converters:Res label_sick_employees}" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1326,7 +1399,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="Leave Employees" 
+                                            <TextBlock Text="{converters:Res label_leave_employees}" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1350,7 +1423,7 @@
                                            Padding="15" 
                                            Margin="5">
                                         <StackPanel>
-                                            <TextBlock Text="Absent Employees" 
+                                            <TextBlock Text="{converters:Res label_absent_employees}" 
                                                       FontFamily="Tahoma" 
                                                       FontSize="14" 
                                                       FontWeight="Bold" 
@@ -1368,7 +1441,7 @@
                             </GroupBox>
                             
                             <!-- Group Statistics -->
-                            <GroupBox Header="Shift Group Statistics" Margin="0,0,0,15">
+                            <GroupBox Header="{converters:Res header_shift_group_stats}" Margin="0,0,0,15">
                                 <ItemsControl x:Name="GroupStatsItemsControl" Margin="15">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>

@@ -13,6 +13,7 @@
         <converters:EmployeePhotoConverter x:Key="EmployeePhotoConverter"/>
         <converters:ImagePathConverter x:Key="ImagePathConverter"/>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:ShiftToSlotListConverter x:Key="ShiftToSlotListConverter"/>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
@@ -31,56 +32,128 @@
             <Border Grid.Row="0" Background="{Binding Color, TargetNullValue=#4CAF50, FallbackValue=#4CAF50}" 
                     Padding="10" CornerRadius="5,5,0,0"
                     AllowDrop="True" Drop="Header_Drop">
-                <StackPanel>
-                    <TextBlock Text="{Binding Name}" 
-                               Foreground="White" FontWeight="Bold" 
-                               HorizontalAlignment="Center" FontSize="14"/>
-                    <StackPanel HorizontalAlignment="Center" Margin="0,4,0,0"
-                                Visibility="{Binding SupervisorName, Converter={StaticResource StringToVisibilityConverter}}">
-                        <Image Width="40" Height="40" Stretch="UniformToFill"
-                               Source="{Binding SupervisorPhotoPath, Converter={StaticResource ImagePathConverter}}"
-                               Margin="0,0,0,2"/>
-                        <TextBlock Text="{Binding SupervisorName, StringFormat='Supervisor: {0}', TargetNullValue={converters:Res supervisor_not_assigned}}"
-                                   Foreground="#E0E0E0" FontSize="11"
-                                   HorizontalAlignment="Center"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding Name}" 
+                                   Foreground="White" FontWeight="Bold" 
+                                   HorizontalAlignment="Center" FontSize="14"/>
+                        <StackPanel HorizontalAlignment="Center" Margin="0,4,0,0"
+                                    Visibility="{Binding SupervisorName, Converter={StaticResource StringToVisibilityConverter}}">
+                            <Image Width="40" Height="40" Stretch="UniformToFill"
+                                   Source="{Binding SupervisorPhotoPath, Converter={StaticResource ImagePathConverter}}"
+                                   Margin="0,0,0,2"/>
+                            <TextBlock Text="{Binding SupervisorName, StringFormat='Supervisor: {0}', TargetNullValue={converters:Res supervisor_not_assigned}}"
+                                       Foreground="#E0E0E0" FontSize="11"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{converters:Res hint_drag_drop_supervisor}"
+                                   Foreground="#AAAAAA" FontSize="9"
+                                   HorizontalAlignment="Center" Margin="0,2,0,0"
+                                   Visibility="{Binding SupervisorName, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Inverse}"/>
                     </StackPanel>
-                    <TextBlock Text="{converters:Res hint_drag_drop_supervisor}"
-                               Foreground="#AAAAAA" FontSize="9"
-                               HorizontalAlignment="Center" Margin="0,2,0,0"
-                               Visibility="{Binding SupervisorName, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Inverse}"/>
-                </StackPanel>
+
+                    <!-- Edit Button -->
+                    <Button Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right"
+                            Width="24" Height="24" Background="Transparent" BorderThickness="0"
+                            Click="EditGroup_Click" Cursor="Hand" ToolTip="Edit Group">
+                        <Path Data="M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04Z" 
+                              Fill="White" Stretch="Uniform" Margin="4"/>
+                    </Button>
+                </Grid>
             </Border>
 
             <!-- Morning Shift -->
-            <local:ShiftSlotControl Grid.Row="1" 
-                                  ShiftData="{Binding MorningShift}"
-                                  ShiftType="morning"
-                                  ShiftTitle="Morning Shift"
-                                  ShiftColor="#4CAF50"
-                                  OnItemDropped="ShiftSlot_ItemDropped"
-                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"/>
+            <!-- Morning Shift -->
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Morning Shift" Foreground="#4CAF50" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding MorningShift, Converter={StaticResource ShiftToSlotListConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:ShiftSlotControl ShiftData="{Binding Shift}"
+                                                  SlotIndex="{Binding Index}"
+                                                  ShiftType="morning"
+                                                  ShiftColor="#4CAF50"
+                                                  OnItemDropped="ShiftSlot_ItemDropped"
+                                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"
+                                                  Margin="2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
 
             <Border Grid.Row="2" Background="#EEEEEE"/>
 
             <!-- Afternoon Shift -->
-            <local:ShiftSlotControl Grid.Row="3" 
-                                  ShiftData="{Binding AfternoonShift}"
-                                  ShiftType="afternoon"
-                                  ShiftTitle="Afternoon Shift"
-                                  ShiftColor="#FF9800"
-                                  OnItemDropped="ShiftSlot_ItemDropped"
-                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"/>
+            <!-- Afternoon Shift -->
+            <Grid Grid.Row="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Afternoon Shift" Foreground="#FF9800" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding AfternoonShift, Converter={StaticResource ShiftToSlotListConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:ShiftSlotControl ShiftData="{Binding Shift}"
+                                                  SlotIndex="{Binding Index}"
+                                                  ShiftType="afternoon"
+                                                  ShiftColor="#FF9800"
+                                                  OnItemDropped="ShiftSlot_ItemDropped"
+                                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"
+                                                  Margin="2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
 
             <Border Grid.Row="4" Background="#EEEEEE"/>
 
             <!-- Night Shift -->
-            <local:ShiftSlotControl Grid.Row="5" 
-                                  ShiftData="{Binding NightShift}"
-                                  ShiftType="night"
-                                  ShiftTitle="Night Shift"
-                                  ShiftColor="#3F51B5"
-                                  OnItemDropped="ShiftSlot_ItemDropped"
-                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"/>
+            <!-- Night Shift -->
+            <Grid Grid.Row="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Night Shift" Foreground="#3F51B5" FontSize="10" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding NightShift, Converter={StaticResource ShiftToSlotListConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:ShiftSlotControl ShiftData="{Binding Shift}"
+                                                  SlotIndex="{Binding Index}"
+                                                  ShiftType="night"
+                                                  ShiftColor="#3F51B5"
+                                                  OnItemDropped="ShiftSlot_ItemDropped"
+                                                  OnRemoveLabelRequested="ShiftSlot_RemoveLabelRequested"
+                                                  Margin="2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
         </Grid>
     </Border>
 </UserControl>

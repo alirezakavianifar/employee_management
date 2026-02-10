@@ -172,6 +172,7 @@ namespace DisplayApp
                 Current.Dispatcher.Invoke(() =>
                 {
                     ResourceBridge.Instance.CurrentLanguage = newLang;
+                    ResourceBridge.Instance.NotifyLanguageChanged();
                     ApplyFlowDirection();
                 });
             }

@@ -92,7 +92,54 @@ namespace DisplayApp
             // Start sync
             _syncManager.StartSync();
             
+            // Sync language combo with current language
+            var lang = ResourceBridge.Instance.CurrentLanguage;
+            LanguageComboBox.SelectedItem = lang == LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
+            
+            ResourceBridge.Instance.PropertyChanged += ResourceBridge_PropertyChanged;
+            
             _logger.LogInformation("DisplayApp started successfully");
+        }
+
+        private void ResourceBridge_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(ResourceBridge.CurrentLanguage))
+                return;
+            Dispatcher.Invoke(RefreshCodeBehindText);
+        }
+
+        private void RefreshCodeBehindText()
+        {
+            LastUpdateText.Text = string.Format(ResourceManager.GetString("display_last_update", "Last update: {0}"), _lastUpdateTime.ToString("HH:mm:ss"));
+            CountdownText.Text = string.Format(ResourceManager.GetString("display_next_update", "Next update: {0}"), _countdownSeconds);
+        }
+
+        private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LanguageComboBox.SelectedItem is not ComboBoxItem item || item.Tag is not string tag)
+                return;
+            var sharedData = App.SharedDataDirectory;
+            if (string.IsNullOrEmpty(sharedData))
+                return;
+            var lang = tag.Trim().ToLowerInvariant() == "fa" ? LanguageConfigHelper.LanguageFa : LanguageConfigHelper.LanguageEn;
+            if (lang == ResourceBridge.Instance.CurrentLanguage)
+                return;
+            try
+            {
+                LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
+                ResourceManager.LoadResourcesForLanguage(sharedData, lang);
+                ResourceBridge.Instance.CurrentLanguage = lang;
+                ResourceBridge.Instance.NotifyLanguageChanged();
+                App.ApplyFlowDirection();
+                RefreshCodeBehindText();
+                _logger?.LogInformation("Language switched to {Lang}", lang);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error switching language");
+                MessageBox.Show(ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
+                    ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private string GetDisplayConfigPath()
@@ -523,13 +570,15 @@ namespace DisplayApp
                 Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
-            if (managerData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
+            var managerPhotoPath = managerData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
+            var resolvedManagerPhoto = Employee.ResolvePhotoPath(managerPhotoPath);
+            if (!string.IsNullOrEmpty(resolvedManagerPhoto))
             {
                 try
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.UriSource = new Uri(resolvedManagerPhoto, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -762,18 +811,12 @@ namespace DisplayApp
                     Height = 40,
                     Stretch = Stretch.UniformToFill
                 };
-                if (!string.IsNullOrEmpty(group.SupervisorPhotoPath))
+                var resolvedSupervisorPhoto = Employee.ResolvePhotoPath(group.SupervisorPhotoPath);
+                if (!string.IsNullOrEmpty(resolvedSupervisorPhoto))
                 {
                     try
                     {
-                        if (System.IO.File.Exists(group.SupervisorPhotoPath))
-                        {
-                            supervisorImage.Source = new BitmapImage(new Uri(group.SupervisorPhotoPath, UriKind.Absolute));
-                        }
-                        else
-                        {
-                            supervisorImage.Source = CreateEmployeePlaceholderImage(40);
-                        }
+                        supervisorImage.Source = new BitmapImage(new Uri(resolvedSupervisorPhoto, UriKind.Absolute));
                     }
                     catch
                     {
@@ -1101,13 +1144,15 @@ namespace DisplayApp
                 Margin = new Thickness(0) // No margin to ensure proper centering
             };
             
-            if (employeeData.TryGetValue("photo_path", out var photoPath) && !string.IsNullOrEmpty(photoPath.ToString()))
+            var rawPhotoPath = employeeData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
+            var resolvedPhoto = Employee.ResolvePhotoPath(rawPhotoPath);
+            if (!string.IsNullOrEmpty(resolvedPhoto))
             {
                 try
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
-                    bitmap.UriSource = new Uri(photoPath.ToString(), UriKind.Absolute);
+                    bitmap.UriSource = new Uri(resolvedPhoto, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();
@@ -1590,7 +1635,8 @@ namespace DisplayApp
             var fullName = $"{firstName} {lastName}".Trim();
             var personnelId = absenceData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             var employeeId = absenceData.GetValueOrDefault("employee_id", "").ToString();
-            var photoPath = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            var photoPathRaw = absenceData.GetValueOrDefault("photo_path", "").ToString();
+            var photoPath = Employee.ResolvePhotoPath(photoPathRaw) ?? photoPathRaw;
             var phone = absenceData.GetValueOrDefault("phone", "").ToString() ?? "";
             var showPhone = ParseShowPhone(absenceData, true);
             
@@ -1636,7 +1682,7 @@ namespace DisplayApp
             {
                 try
                 {
-                    image.Source = new BitmapImage(new Uri(photoPath));
+                    image.Source = new BitmapImage(new Uri(photoPath, UriKind.Absolute));
                 }
                 catch (Exception ex)
                 {
@@ -1778,7 +1824,7 @@ namespace DisplayApp
         private void CountdownTimer_Tick(object sender, EventArgs e)
         {
             _countdownSeconds--;
-            CountdownText.Text = $"Next update: {_countdownSeconds}";
+            CountdownText.Text = string.Format(ResourceManager.GetString("display_next_update", "Next update: {0}"), _countdownSeconds);
             
             if (_countdownSeconds <= 0)
             {

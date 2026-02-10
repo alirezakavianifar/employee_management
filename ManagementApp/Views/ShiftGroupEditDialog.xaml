@@ -11,6 +11,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -46,13 +47,37 @@
             </Button>
         </StackPanel>
 
-        <!-- Foreman Selection -->
+        <!-- Capacity -->
         <StackPanel Grid.Row="3" Margin="0,0,0,15">
-            <Label Content="Shift supervisors (required):" FontWeight="Bold" Margin="0,0,0,10"/>
+            <Label Content="Shift capacities:" FontWeight="Bold"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                    <Label Content="Morning:" FontSize="10"/>
+                    <TextBox x:Name="MorningCapacityTextBox" Text="15" Height="25" PreviewTextInput="NumberValidationTextBox"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                    <Label Content="Afternoon:" FontSize="10"/>
+                    <TextBox x:Name="AfternoonCapacityTextBox" Text="15" Height="25" PreviewTextInput="NumberValidationTextBox"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                    <Label Content="Night:" FontSize="10"/>
+                    <TextBox x:Name="NightCapacityTextBox" Text="15" Height="25" PreviewTextInput="NumberValidationTextBox"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <!-- Foreman Selection -->
+        <StackPanel Grid.Row="4" Margin="0,0,0,15">
+            <Label Content="Shift supervisors:" FontWeight="Bold" Margin="0,0,0,10"/>
             
             <!-- Morning Shift Foreman -->
             <StackPanel Margin="0,0,0,10">
-                <Label Content="Morning shift supervisor (required):" FontSize="12"/>
+                <Label Content="Morning shift supervisor:" FontSize="12"/>
                 <ComboBox x:Name="MorningForemanComboBox" Height="25">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
@@ -64,7 +89,7 @@
             
             <!-- Afternoon Shift Foreman -->
             <StackPanel Margin="0,0,0,10">
-                <Label Content="Afternoon shift supervisor (required):" FontSize="12"/>
+                <Label Content="Afternoon shift supervisor:" FontSize="12"/>
                 <ComboBox x:Name="AfternoonForemanComboBox" Height="25">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
@@ -76,7 +101,7 @@
             
             <!-- Night Shift Foreman -->
             <StackPanel>
-                <Label Content="Night shift supervisor (required):" FontSize="12"/>
+                <Label Content="Night shift supervisor:" FontSize="12"/>
                 <ComboBox x:Name="NightForemanComboBox" Height="25">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
@@ -88,7 +113,7 @@
         </StackPanel>
 
         <!-- Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button x:Name="OkButton" Content="OK" Width="80" Height="30" Margin="0,0,10,0" Click="OkButton_Click" IsDefault="True"/>
             <Button x:Name="CancelButton" Content="Cancel" Width="80" Height="30" Click="CancelButton_Click" IsCancel="True"/>
         </StackPanel>

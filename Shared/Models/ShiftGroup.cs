@@ -77,7 +77,8 @@ namespace Shared.Models
 
         public void Update(string? name = null, string? description = null, string? color = null, 
                           int? morningCapacity = null, int? afternoonCapacity = null, int? nightCapacity = null, 
-                          string? supervisorId = null, bool? isActive = null)
+                          string? supervisorId = null, bool? isActive = null,
+                          string? morningForemanId = null, string? afternoonForemanId = null, string? nightForemanId = null)
         {
             if (!string.IsNullOrEmpty(name))
                 Name = name;
@@ -113,6 +114,23 @@ namespace Shared.Models
                 SupervisorId = supervisorId;
             if (isActive.HasValue)
                 IsActive = isActive.Value;
+            
+            // Update shift foremen if provided
+            if (morningForemanId != null)
+            {
+                if (MorningShift == null) MorningShift = new Shift("morning", MorningCapacity);
+                MorningShift.SetTeamLeader(morningForemanId);
+            }
+            if (afternoonForemanId != null)
+            {
+                if (AfternoonShift == null) AfternoonShift = new Shift("afternoon", AfternoonCapacity);
+                AfternoonShift.SetTeamLeader(afternoonForemanId);
+            }
+            if (nightForemanId != null)
+            {
+                if (NightShift == null) NightShift = new Shift("night", NightCapacity);
+                NightShift.SetTeamLeader(nightForemanId);
+            }
             
             UpdatedAt = DateTime.Now;
         }
@@ -509,12 +527,13 @@ namespace Shared.Models
 
        public bool UpdateShiftGroup(string groupId, string? name = null, string? description = null, 
                                     string? color = null, int? morningCapacity = null, int? afternoonCapacity = null, 
-                                    int? nightCapacity = null, string? supervisorId = null, bool? isActive = null)
+                                    int? nightCapacity = null, string? supervisorId = null, bool? isActive = null,
+                                    string? morningForemanId = null, string? afternoonForemanId = null, string? nightForemanId = null)
         {
             if (!ShiftGroups.ContainsKey(groupId))
                 return false;
 
-            ShiftGroups[groupId].Update(name, description, color, morningCapacity, afternoonCapacity, nightCapacity, supervisorId, isActive);
+            ShiftGroups[groupId].Update(name, description, color, morningCapacity, afternoonCapacity, nightCapacity, supervisorId, isActive, morningForemanId, afternoonForemanId, nightForemanId);
             return true;
         }
 

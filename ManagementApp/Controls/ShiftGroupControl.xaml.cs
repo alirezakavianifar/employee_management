@@ -22,7 +22,7 @@ namespace ManagementApp.Controls
             var controller = MainWindow.Instance.Controller;
             string groupId = group.GroupId;
             string shiftType = e.ShiftType;
-            int slotIndex = 0; // Single slot per shift requirement
+            int slotIndex = e.SlotIndex;
 
             if (e.ItemType == DropItemType.Employee && e.DroppedItem is Employee employee)
             {
@@ -83,7 +83,7 @@ namespace ManagementApp.Controls
             {
                 // Assign label to employee in this slot
                 var slotControl = sender as ShiftSlotControl;
-                var targetEmployee = slotControl?.ShiftData?.GetEmployeeAtSlot(0);
+                var targetEmployee = slotControl?.ShiftData?.GetEmployeeAtSlot(slotControl.SlotIndex);
                 if (targetEmployee != null && MainWindow.Instance?.LabelService != null)
                 {
                     MainWindow.Instance.LabelService.AssignLabelToEmployee(targetEmployee, label.LabelId);
@@ -105,15 +105,47 @@ namespace ManagementApp.Controls
         private void Header_Drop(object sender, DragEventArgs e)
         {
             if (DataContext is not ShiftGroup group) return;
-            var controller = MainWindow.Instance?.Controller;
-            if (controller == null) return;
-
+            // MainWindow instance check safety
+            if (MainWindow.Instance == null || MainWindow.Instance.Controller == null) return;
+            
             if (e.Data.GetDataPresent(typeof(Employee)))
             {
-                var employee = e.Data.GetData(typeof(Employee)) as Employee;
-                if (employee != null)
+                 var employee = e.Data.GetData(typeof(Employee)) as Employee;
+                 if (employee != null)
+                 {
+                     MainWindow.Instance.Controller.AssignSupervisor(group.GroupId, employee.EmployeeId);
+                 }
+            }
+        }
+
+        private void EditGroup_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is not ShiftGroup group) return;
+            
+            var dialog = new ShiftGroupEditDialog(group);
+            dialog.Owner = Window.GetWindow(this);
+            if (dialog.ShowDialog() == true)
+            {
+                // Explicitly call UpdateShiftGroup to save changes
+                if (MainWindow.Instance != null && MainWindow.Instance.Controller != null)
                 {
-                    controller.AssignSupervisor(group.GroupId, employee.EmployeeId);
+                    MainWindow.Instance.Controller.UpdateShiftGroup(
+                        group.GroupId,
+                        dialog.Name,
+                        dialog.Description,
+                        null, // supervisorId (not used in this dialog)
+                        dialog.Color,
+                        dialog.MorningCapacity,
+                        dialog.AfternoonCapacity,
+                        dialog.NightCapacity,
+                        dialog.IsGroupActive,
+                        dialog.MorningForemanId,
+                        dialog.AfternoonForemanId,
+                        dialog.NightForemanId
+                    );
+                    
+                    // Refresh UI
+                    MainWindow.Instance.LoadShifts();
                 }
             }
         }

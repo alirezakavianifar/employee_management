@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Shared.Models;
 
 namespace ManagementApp.Converters
 {
@@ -15,11 +16,12 @@ namespace ManagementApp.Converters
             {
                 try
                 {
-                    if (File.Exists(photoPath))
+                    var resolved = Employee.ResolvePhotoPath(photoPath);
+                    if (!string.IsNullOrEmpty(resolved))
                     {
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(photoPath, UriKind.Absolute);
+                        bitmap.UriSource = new Uri(resolved, UriKind.Absolute);
                         bitmap.DecodePixelWidth = 40;
                         bitmap.DecodePixelHeight = 40;
                         bitmap.EndInit();

@@ -10,7 +10,8 @@ $sharedSource = "Shared"
 
 # Pre-copy cleanup: remove destination subfolders to ensure clean sync and remove stale content
 Write-Host "Cleaning destination folders..." -ForegroundColor Yellow
-foreach ($folder in @("ManagementApp", "DisplayApp", "Shared")) {
+$foldersToSync = @("ManagementApp", "DisplayApp", "Shared", "SharedData", "SharedTests", "RoleManagementTests")
+foreach ($folder in $foldersToSync) {
     $destFolder = Join-Path $sourcePath $folder
     if (Test-Path $destFolder) {
         Remove-Item -Path $destFolder -Recurse -Force
@@ -75,10 +76,27 @@ Copy-SourceDirectory -SourceDir $displayAppSource -DestDir "$sourcePath\DisplayA
 # Update Shared
 Copy-SourceDirectory -SourceDir $sharedSource -DestDir "$sourcePath\Shared" -ProjectName "Shared"
 
+# Update SharedData
+Copy-SourceDirectory -SourceDir "SharedData" -DestDir "$sourcePath\SharedData" -ProjectName "SharedData"
+
+# Update SharedTests
+Copy-SourceDirectory -SourceDir "SharedTests" -DestDir "$sourcePath\SharedTests" -ProjectName "SharedTests"
+
+# Update RoleManagementTests
+if (Test-Path "RoleManagementTests") {
+    Copy-SourceDirectory -SourceDir "RoleManagementTests" -DestDir "$sourcePath\RoleManagementTests" -ProjectName "RoleManagementTests"
+}
+
 # Copy solution file
 if (Test-Path "ManagementApp.sln") {
     Copy-Item -Path "ManagementApp.sln" -Destination "$sourcePath\ManagementApp.sln" -Force
     Write-Host "  Solution file updated" -ForegroundColor Green
+}
+
+# Copy CHANGELOG.md
+if (Test-Path "CHANGELOG.md") {
+    Copy-Item -Path "CHANGELOG.md" -Destination "$sourcePath\CHANGELOG.md" -Force
+    Write-Host "  CHANGELOG.md updated" -ForegroundColor Green
 }
 
 # Update SOURCE_CODE_SUMMARY.txt with current date

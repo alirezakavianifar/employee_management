@@ -129,6 +129,7 @@ namespace DisplayApp
                 LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
                 ResourceManager.LoadResourcesForLanguage(sharedData, lang);
                 ResourceBridge.Instance.CurrentLanguage = lang;
+                ResourceBridge.Instance.NotifyLanguageChanged();
                 App.ApplyFlowDirection();
                 RefreshCodeBehindText();
                 _logger?.LogInformation("Language switched to {Lang}", lang);

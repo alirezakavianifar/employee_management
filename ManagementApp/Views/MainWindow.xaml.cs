@@ -1138,7 +1138,7 @@ namespace ManagementApp.Views
 
 
 
-        private void LoadShifts()
+        public void LoadShifts()
         {
              LoadShiftGroups();
              LoadAbsenceLists();
@@ -1152,28 +1152,7 @@ namespace ManagementApp.Views
 
 
 
-        private void ChangeCapacity_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (int.TryParse(ShiftCapacityTextBox.Text, out int newCapacity) && newCapacity > 0)
-                {
-                    _logger.LogInformation("Changing capacity to {NewCapacity}", newCapacity);
-                    _controller.SetShiftCapacity(newCapacity);
-                    LoadShifts();
-                    UpdateStatus($"Shift capacity changed to {newCapacity}");
-                }
-                else
-                {
-                    MessageBox.Show("Please enter a positive integer", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error changing shift capacity");
-                MessageBox.Show($"Error changing capacity: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+
 
         /// <summary>Width below which the shift toolbar action buttons are hidden (e.g. when Absence Management or left pane is expanded).</summary>
         private const double ShiftToolbarButtonsHideWidthThreshold = 560;
@@ -5646,6 +5625,7 @@ namespace ManagementApp.Views
                 Shared.Utils.LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
                 Shared.Utils.ResourceManager.LoadResourcesForLanguage(sharedData, lang);
                 Shared.Utils.ResourceBridge.Instance.CurrentLanguage = lang;
+                Shared.Utils.ResourceBridge.Instance.NotifyLanguageChanged();
                 App.ApplyFlowDirection();
                 UpdateStatus(Shared.Utils.ResourceManager.GetString("msg_data_loaded", "Data loaded"));
             }

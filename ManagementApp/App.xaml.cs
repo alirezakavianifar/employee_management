@@ -179,6 +179,7 @@ namespace ManagementApp
                 Current.Dispatcher.Invoke(() =>
                 {
                     ResourceBridge.Instance.CurrentLanguage = newLang;
+                    ResourceBridge.Instance.NotifyLanguageChanged();
                     ApplyFlowDirection();
                 });
             }
