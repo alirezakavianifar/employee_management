@@ -1126,11 +1126,14 @@
                     <GroupBox Grid.Column="0" Header="{converters:Res header_system_settings}" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="10">
-                                <Label Content="{converters:Res label_language}" FontWeight="Bold" Margin="0,0,0,5"/>
-                                <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10" SelectionChanged="LanguageComboBox_SelectionChanged">
-                                    <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
-                                    <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
-                                </ComboBox>
+                                <!-- Language selection hidden as per user request -->
+                                <StackPanel Visibility="Collapsed">
+                                    <Label Content="{converters:Res label_language}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                    <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10" SelectionChanged="LanguageComboBox_SelectionChanged">
+                                        <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
+                                        <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
+                                    </ComboBox>
+                                </StackPanel>
 
                                 <Label Content="{converters:Res label_data_folder_path}" FontWeight="Bold" Margin="0,0,0,5"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
