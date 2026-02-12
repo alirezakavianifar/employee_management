@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
+    <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" NoWarn="NU1701" />
   </ItemGroup>
 
   <PropertyGroup>

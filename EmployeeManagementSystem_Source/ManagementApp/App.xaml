@@ -15,7 +15,7 @@
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Padding" Value="10,5"/>
                 <Setter Property="Margin" Value="5"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -25,7 +25,7 @@
                                     CornerRadius="3">
                                 <ContentPresenter HorizontalAlignment="Center" 
                                                 VerticalAlignment="Center"
-                                                FlowDirection="RightToLeft"/>
+                                                FlowDirection="LeftToRight"/>
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
@@ -35,14 +35,14 @@
             <Style x:Key="PersianLabel" TargetType="Label">
                 <Setter Property="FontFamily" Value="Tahoma"/>
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
                 <Setter Property="Margin" Value="5"/>
             </Style>
             
             <Style x:Key="PersianTextBox" TargetType="TextBox">
                 <Setter Property="FontFamily" Value="Tahoma"/>
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
                 <Setter Property="Margin" Value="5"/>
                 <Setter Property="Padding" Value="5"/>
             </Style>
@@ -50,7 +50,7 @@
             <Style x:Key="PersianComboBox" TargetType="ComboBox">
                 <Setter Property="FontFamily" Value="Tahoma"/>
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
                 <Setter Property="Margin" Value="5"/>
                 <Setter Property="Padding" Value="5"/>
             </Style>

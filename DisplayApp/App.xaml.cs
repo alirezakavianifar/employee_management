@@ -11,7 +11,7 @@ namespace DisplayApp
     {
         private ILogger<App> _logger;
         private static string? _sharedDataDirectory;
-        private static FileSystemWatcher? _languageConfigWatcher;
+
         private static FileSystemWatcher? _overridesWatcher;
 
         internal static string? SharedDataDirectory => _sharedDataDirectory;
@@ -26,9 +26,9 @@ namespace DisplayApp
 
                 // Load localized resources and apply language (RTL/LTR)
                 LoadLocalizedResources();
-                ApplyFlowDirection();
 
-                StartLanguageConfigWatcher();
+
+
                 StartOverridesWatcher();
                 _logger.LogInformation("Localized resources loaded");
 
@@ -40,7 +40,7 @@ namespace DisplayApp
                 var mainWindow = new MainWindow();
                 MainWindow = mainWindow;
                 mainWindow.Show();
-                ApplyFlowDirection(); // Apply RTL/LTR now that MainWindow is set
+
 
                 _logger.LogInformation("DisplayApp started successfully");
             }
@@ -77,44 +77,9 @@ namespace DisplayApp
             }
         }
 
-        internal static void ApplyFlowDirection()
-        {
-            var lang = ResourceBridge.Instance.CurrentLanguage;
-            var flow = lang == LanguageConfigHelper.LanguageFa ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-            Current.Dispatcher.Invoke(() =>
-            {
-                if (Current.MainWindow != null)
-                    Current.MainWindow.FlowDirection = flow;
-            });
-        }
 
-        private void StartLanguageConfigWatcher()
-        {
-            if (string.IsNullOrEmpty(_sharedDataDirectory))
-                return;
-            var configPath = LanguageConfigHelper.GetLanguageConfigPath(_sharedDataDirectory);
-            if (string.IsNullOrEmpty(configPath))
-                return;
-            var configDir = Path.GetDirectoryName(configPath);
-            var configFileName = Path.GetFileName(configPath);
-            if (string.IsNullOrEmpty(configDir) || string.IsNullOrEmpty(configFileName))
-                return;
-            try
-            {
-                _languageConfigWatcher?.Dispose();
-                _languageConfigWatcher = new FileSystemWatcher(configDir, configFileName)
-                {
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
-                };
-                _languageConfigWatcher.Changed += OnLanguageConfigChanged;
-                _languageConfigWatcher.EnableRaisingEvents = true;
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Could not start language config watcher");
-            }
 
-        }
+
 
         private void StartOverridesWatcher()
         {
@@ -159,28 +124,7 @@ namespace DisplayApp
             }
         }
 
-        private void OnLanguageConfigChanged(object sender, FileSystemEventArgs e)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(_sharedDataDirectory))
-                    return;
-                var newLang = LanguageConfigHelper.GetCurrentLanguage(_sharedDataDirectory);
-                if (newLang == ResourceBridge.Instance.CurrentLanguage)
-                    return;
-                ResourceManager.LoadResourcesForLanguage(_sharedDataDirectory, newLang);
-                Current.Dispatcher.Invoke(() =>
-                {
-                    ResourceBridge.Instance.CurrentLanguage = newLang;
-                    ResourceBridge.Instance.NotifyLanguageChanged();
-                    ApplyFlowDirection();
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error applying language change from file");
-            }
-        }
+
 
         protected override void OnExit(ExitEventArgs e)
         {

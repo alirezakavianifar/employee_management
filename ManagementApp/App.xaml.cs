@@ -13,7 +13,7 @@ namespace ManagementApp
     {
         private static readonly ILogger<App> Logger = LoggingService.CreateLogger<App>();
         private static string? _sharedDataDirectory;
-        private static FileSystemWatcher? _languageConfigWatcher;
+
 
         /// <summary>SharedData directory used for resources and language config. Used by Settings to switch language.</summary>
         internal static string? SharedDataDirectory => _sharedDataDirectory;
@@ -32,8 +32,8 @@ namespace ManagementApp
                 
                 // Load localized resources and apply language (RTL/LTR)
                 LoadLocalizedResources();
-                ApplyFlowDirection();
-                StartLanguageConfigWatcher();
+                // Load localized resources
+                LoadLocalizedResources();
                 Logger.LogInformation("Localized resources loaded");
                 
                 // Set up global exception handling to catch silent failures
@@ -50,7 +50,6 @@ namespace ManagementApp
                     mainWindow.Show();
                     mainWindow.Activate(); // Bring window to front
                     mainWindow.Focus(); // Focus the window
-                    ApplyFlowDirection(); // Apply RTL/LTR now that MainWindow is set
                     Logger.LogInformation("MainWindow created and shown successfully");
                 }
                 catch (Exception windowEx)
@@ -128,66 +127,11 @@ namespace ManagementApp
             }
         }
 
-        internal static void ApplyFlowDirection()
-        {
-            var lang = ResourceBridge.Instance.CurrentLanguage;
-            var flow = lang == LanguageConfigHelper.LanguageFa ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
-            Current.Dispatcher.Invoke(() =>
-            {
-                if (Current.MainWindow != null)
-                    Current.MainWindow.FlowDirection = flow;
-            });
-        }
 
-        private void StartLanguageConfigWatcher()
-        {
-            if (string.IsNullOrEmpty(_sharedDataDirectory))
-                return;
-            var configPath = LanguageConfigHelper.GetLanguageConfigPath(_sharedDataDirectory);
-            if (string.IsNullOrEmpty(configPath))
-                return;
-            var configDir = Path.GetDirectoryName(configPath);
-            var configFileName = Path.GetFileName(configPath);
-            if (string.IsNullOrEmpty(configDir) || string.IsNullOrEmpty(configFileName))
-                return;
-            try
-            {
-                _languageConfigWatcher?.Dispose();
-                _languageConfigWatcher = new FileSystemWatcher(configDir, configFileName)
-                {
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
-                };
-                _languageConfigWatcher.Changed += OnLanguageConfigChanged;
-                _languageConfigWatcher.EnableRaisingEvents = true;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Could not start language config watcher");
-            }
-        }
 
-        private void OnLanguageConfigChanged(object sender, FileSystemEventArgs e)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(_sharedDataDirectory))
-                    return;
-                var newLang = LanguageConfigHelper.GetCurrentLanguage(_sharedDataDirectory);
-                if (newLang == ResourceBridge.Instance.CurrentLanguage)
-                    return;
-                ResourceManager.LoadResourcesForLanguage(_sharedDataDirectory, newLang);
-                Current.Dispatcher.Invoke(() =>
-                {
-                    ResourceBridge.Instance.CurrentLanguage = newLang;
-                    ResourceBridge.Instance.NotifyLanguageChanged();
-                    ApplyFlowDirection();
-                });
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Error applying language change from file");
-            }
-        }
+
+
+
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {

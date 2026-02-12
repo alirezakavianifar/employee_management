@@ -1862,13 +1862,10 @@ namespace ManagementApp.Controllers
                 employee.Phone = phone;
                 employee.ShowPhone = showPhone;
 
-                // Create dedicated folder for worker: Data/Workers/FirstName_LastName/
-                var workersRoot = GetEmployeeImagesFolder();
-                var workerFolder = Path.Combine(workersRoot, $"{firstName}_{lastName}");
-                if (!Directory.Exists(workerFolder))
-                    Directory.CreateDirectory(workerFolder);
+                // Photo storage directory (Staff folder)
+                var staffRoot = GetEmployeeImagesFolder();
 
-                // If photo path is provided and file exists, copy it to employee folder
+                // If photo path is provided and file exists, copy it to staff folder
                 if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
                 {
                     // Format: FirstName_LastName_PersonnelId.ext (use timestamp if PersonnelId is empty)
@@ -1876,7 +1873,7 @@ namespace ManagementApp.Controllers
                         ? $"{firstName}_{lastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}"
                         : $"{firstName}_{lastName}_{personnelId}";
                     var photoFileName = $"{fileNamePart}{Path.GetExtension(photoPath)}";
-                    var destPhotoPath = Path.Combine(workerFolder, photoFileName);
+                    var destPhotoPath = Path.Combine(staffRoot, photoFileName);
                     
                     // Only copy if source is different from destination
                     if (!Path.GetFullPath(photoPath).Equals(Path.GetFullPath(destPhotoPath), StringComparison.OrdinalIgnoreCase))
@@ -1884,7 +1881,7 @@ namespace ManagementApp.Controllers
                         File.Copy(photoPath, destPhotoPath, true);
                     }
                     employee.PhotoPath = destPhotoPath;
-                    _logger.LogInformation("Copied photo to employee folder: {Path}", destPhotoPath);
+                    _logger.LogInformation("Copied photo to staff folder: {Path}", destPhotoPath);
                 }
 
                 Employees[employeeId] = employee;
@@ -1918,76 +1915,53 @@ namespace ManagementApp.Controllers
                 var newLastName = lastName ?? oldLastName;
                 var newPersonnelId = personnelId ?? employee.PersonnelId;
 
-                var workersRoot = GetEmployeeImagesFolder();
-                var oldFolder = Path.Combine(workersRoot, $"{oldFirstName}_{oldLastName}");
-                var newFolder = Path.Combine(workersRoot, $"{newFirstName}_{newLastName}");
+                var staffRoot = GetEmployeeImagesFolder();
                 
-                // Handle Folder Rename if Name Changed
-                if ((firstName != null || lastName != null) && !string.Equals(oldFolder, newFolder, StringComparison.OrdinalIgnoreCase))
+                // If Name or PersonnelId Changed, we might want to rename the current photo file
+                if ((firstName != null || lastName != null || personnelId != null) && !string.IsNullOrEmpty(employee.PhotoPath))
                 {
-                    if (Directory.Exists(oldFolder))
+                    if (employee.PhotoPath.StartsWith(staffRoot, StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        var ext = Path.GetExtension(employee.PhotoPath);
+                        var newFileNamePart = string.IsNullOrEmpty(newPersonnelId)
+                            ? $"{newFirstName}_{newLastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}"
+                            : $"{newFirstName}_{newLastName}_{newPersonnelId}";
+                        var newFileName = $"{newFileNamePart}{ext}";
+                        var newPhotoPath = Path.Combine(staffRoot, newFileName);
+
+                        if (!string.Equals(employee.PhotoPath, newPhotoPath, StringComparison.OrdinalIgnoreCase))
                         {
-                            if (!Directory.Exists(newFolder))
+                            try
                             {
-                                Directory.Move(oldFolder, newFolder);
-                                _logger.LogInformation("Renamed worker folder from {Old} to {New}", oldFolder, newFolder);
-                                
-                                // Update photo path if it was inside old folder
-                                if (!string.IsNullOrEmpty(employee.PhotoPath) && employee.PhotoPath.StartsWith(oldFolder, StringComparison.OrdinalIgnoreCase))
+                                if (File.Exists(employee.PhotoPath))
                                 {
-                                    var fileName = Path.GetFileName(employee.PhotoPath);
-                                    employee.PhotoPath = Path.Combine(newFolder, fileName);
-                                    
-                                    // Also rename the photo file to match new name if strictly following convention
-                                    var ext = Path.GetExtension(fileName);
-                                    var newFileNamePart = string.IsNullOrEmpty(newPersonnelId)
-                                        ? $"{newFirstName}_{newLastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}"
-                                        : $"{newFirstName}_{newLastName}_{newPersonnelId}";
-                                    var newFileName = $"{newFileNamePart}{ext}";
-                                    var newPhotoPath = Path.Combine(newFolder, newFileName);
-                                    
-                                    if (employee.PhotoPath != newPhotoPath)
-                                    {
-                                        try 
-                                        {
-                                            File.Move(employee.PhotoPath, newPhotoPath);
-                                            employee.PhotoPath = newPhotoPath;
-                                            _logger.LogInformation("Renamed photo file to {Path}", newPhotoPath);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                             _logger.LogWarning(ex, "Failed to rename photo file");
-                                        }
-                                    }
+                                    File.Move(employee.PhotoPath, newPhotoPath);
+                                    employee.PhotoPath = newPhotoPath;
+                                    _logger.LogInformation("Renamed photo file to {Path}", newPhotoPath);
                                 }
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error renaming worker folder");
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to rename photo file");
+                            }
                         }
                     }
                 }
-                
-                if (!Directory.Exists(newFolder))
-                    Directory.CreateDirectory(newFolder);
 
                 // Handle New Photo
                 if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
                 {
-                    // Check if photo is already in the new folder
-                    var isAlreadyInPlace = photoPath.StartsWith(newFolder, StringComparison.OrdinalIgnoreCase);
+                    // Check if photo is already in the staff folder
+                    var isAlreadyInPlace = photoPath.StartsWith(staffRoot, StringComparison.OrdinalIgnoreCase);
                     
                     if (!isAlreadyInPlace)
                     {
-                         // Format: FirstName_LastName_PersonnelId.ext
+                        // Format: FirstName_LastName_PersonnelId.ext
                         var fileNamePart = string.IsNullOrEmpty(newPersonnelId)
                             ? $"{newFirstName}_{newLastName}_{DateTimeOffset.Now.ToUnixTimeSeconds()}"
                             : $"{newFirstName}_{newLastName}_{newPersonnelId}";
                         var photoFileName = $"{fileNamePart}{Path.GetExtension(photoPath)}";
-                        var destPhotoPath = Path.Combine(newFolder, photoFileName);
+                        var destPhotoPath = Path.Combine(staffRoot, photoFileName);
                         
                         // Only copy if source is different from destination
                         if (!Path.GetFullPath(photoPath).Equals(Path.GetFullPath(destPhotoPath), StringComparison.OrdinalIgnoreCase))
@@ -1995,13 +1969,7 @@ namespace ManagementApp.Controllers
                             File.Copy(photoPath, destPhotoPath, true);
                         }
                         photoPath = destPhotoPath;
-                        _logger.LogInformation("Copied new photo to employee folder: {Path}", destPhotoPath);
-                    }
-                    else
-                    {
-                        // Even if it is in place, we might need to rename it if name changed and it's the same file
-                        // But usually if photoPath is provided, it's a new file or same file.
-                        // If it is same file in same folder, we don't do anything.
+                        _logger.LogInformation("Copied new photo to staff folder: {Path}", destPhotoPath);
                     }
                 }
 
@@ -3183,37 +3151,20 @@ namespace ManagementApp.Controllers
 
         public string GetEmployeeImagesFolder()
         {
-            var workersDir = Path.Combine(_dataDir, "Workers");
-            if (!Directory.Exists(workersDir))
+            var config = Shared.Utils.AppConfigHelper.Config;
+            var staffDir = Path.Combine(config.ImagesDirectory, "Staff");
+            if (!Directory.Exists(staffDir))
             {
-                Directory.CreateDirectory(workersDir);
+                Directory.CreateDirectory(staffDir);
             }
-            return workersDir;
+            return staffDir;
         }
 
         public (string? FirstName, string? LastName) DetectNameFromFolder(string filePath)
         {
             try
             {
-                // First try to detect from parent folder name if it's inside Workers directory
-                var directory = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    var workersDir = GetEmployeeImagesFolder();
-                    // Check if the file is in a subdirectory of Workers (e.g. Data/Workers/John_Doe/photo.jpg)
-                    if (directory.StartsWith(workersDir, StringComparison.OrdinalIgnoreCase) && 
-                        !directory.Equals(workersDir, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var folderName = Path.GetFileName(directory);
-                        var parts = folderName.Split('_');
-                        if (parts.Length >= 2)
-                        {
-                            return (parts[0], parts[1]);
-                        }
-                    }
-                }
-
-                // Fallback: Parse filename format: FirstName_LastName_PersonnelId.ext
+                // Parse filename format: FirstName_LastName_PersonnelId.ext
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
                 if (string.IsNullOrEmpty(fileName))
                     return (null, null);
@@ -3224,7 +3175,6 @@ namespace ManagementApp.Controllers
                 if (partsFileName.Length >= 2)
                 {
                     // First part is FirstName, second part is LastName
-                    // If there are more parts, they could be PersonnelId or timestamp, we ignore them for name detection
                     return (partsFileName[0], partsFileName[1]);
                 }
             }

@@ -5,7 +5,7 @@
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
     </Style>
 
     <!-- Button Styles -->
@@ -14,7 +14,7 @@
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="Margin" Value="5"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Background" Value="#E5E9F0"/>
         <Setter Property="BorderBrush" Value="#D8DEE9"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -24,7 +24,7 @@
     <Style TargetType="TextBox">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Margin" Value="5"/>
         <Setter Property="Padding" Value="5"/>
         <Setter Property="BorderBrush" Value="#D8DEE9"/>
@@ -35,7 +35,7 @@
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Margin" Value="5"/>
         <Setter Property="Padding" Value="5"/>
         <Setter Property="BorderBrush" Value="#D8DEE9"/>
@@ -46,7 +46,7 @@
     <Style TargetType="Label">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Margin" Value="5"/>
     </Style>
 
@@ -54,7 +54,7 @@
     <Style TargetType="ListBox">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Margin" Value="5"/>
         <Setter Property="BorderBrush" Value="#D8DEE9"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -65,7 +65,7 @@
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Bold"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Margin" Value="5"/>
         <Setter Property="BorderBrush" Value="#D8DEE9"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -75,13 +75,13 @@
     <Style TargetType="TabControl">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
     </Style>
 
     <Style TargetType="TabItem">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="Padding" Value="10,5"/>
     </Style>
 
@@ -89,7 +89,7 @@
     <Style TargetType="DataGrid">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
         <Setter Property="AutoGenerateColumns" Value="False"/>
         <Setter Property="CanUserAddRows" Value="False"/>
         <Setter Property="CanUserDeleteRows" Value="False"/>
@@ -104,7 +104,7 @@
     <Style TargetType="StatusBar">
         <Setter Property="FontFamily" Value="Tahoma"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="FlowDirection" Value="RightToLeft"/>
+        <Setter Property="FlowDirection" Value="LeftToRight"/>
     </Style>
 
 </ResourceDictionary>

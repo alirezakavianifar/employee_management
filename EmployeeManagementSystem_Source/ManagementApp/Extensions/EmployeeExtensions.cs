@@ -50,7 +50,7 @@ namespace ManagementApp.Extensions
                 var formattedText = new FormattedText(
                     $"{employee.FirstName}\n{employee.LastName}",
                     System.Globalization.CultureInfo.CurrentCulture,
-                    System.Windows.FlowDirection.RightToLeft,
+                    System.Windows.FlowDirection.LeftToRight,
                     new Typeface("Tahoma"),
                     12,
                     Brushes.DarkGray,

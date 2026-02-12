@@ -7,7 +7,6 @@ namespace ManagementApp.Views
 {
     public partial class StatusCardEditDialog : Window
     {
-        private bool _isEditMode = false;
 
         public StatusCardEditDialog()
         {
@@ -17,7 +16,6 @@ namespace ManagementApp.Views
 
         public StatusCardEditDialog(StatusCard existingCard) : this()
         {
-            _isEditMode = true;
             Title = "Edit status card";
 
             StatusCardIdTextBox.Text = existingCard.StatusCardId;

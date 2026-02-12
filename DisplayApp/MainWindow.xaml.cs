@@ -92,54 +92,16 @@ namespace DisplayApp
             // Start sync
             _syncManager.StartSync();
             
-            // Sync language combo with current language
-            var lang = ResourceBridge.Instance.CurrentLanguage;
-            LanguageComboBox.SelectedItem = lang == LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
-            
-            ResourceBridge.Instance.PropertyChanged += ResourceBridge_PropertyChanged;
+            // Start sync
+            _syncManager.StartSync();
             
             _logger.LogInformation("DisplayApp started successfully");
-        }
-
-        private void ResourceBridge_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName != nameof(ResourceBridge.CurrentLanguage))
-                return;
-            Dispatcher.Invoke(RefreshCodeBehindText);
         }
 
         private void RefreshCodeBehindText()
         {
             LastUpdateText.Text = string.Format(ResourceManager.GetString("display_last_update", "Last update: {0}"), _lastUpdateTime.ToString("HH:mm:ss"));
             CountdownText.Text = string.Format(ResourceManager.GetString("display_next_update", "Next update: {0}"), _countdownSeconds);
-        }
-
-        private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (LanguageComboBox.SelectedItem is not ComboBoxItem item || item.Tag is not string tag)
-                return;
-            var sharedData = App.SharedDataDirectory;
-            if (string.IsNullOrEmpty(sharedData))
-                return;
-            var lang = tag.Trim().ToLowerInvariant() == "fa" ? LanguageConfigHelper.LanguageFa : LanguageConfigHelper.LanguageEn;
-            if (lang == ResourceBridge.Instance.CurrentLanguage)
-                return;
-            try
-            {
-                LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
-                ResourceManager.LoadResourcesForLanguage(sharedData, lang);
-                ResourceBridge.Instance.CurrentLanguage = lang;
-                ResourceBridge.Instance.NotifyLanguageChanged();
-                App.ApplyFlowDirection();
-                RefreshCodeBehindText();
-                _logger?.LogInformation("Language switched to {Lang}", lang);
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error switching language");
-                MessageBox.Show(ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
-                    ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
 
         private string GetDisplayConfigPath()

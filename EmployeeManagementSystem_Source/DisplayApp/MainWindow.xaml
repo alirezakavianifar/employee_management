@@ -22,19 +22,12 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Grid.Column="0" Text="{converters:Res display_app_title}" 
-                          Style="{StaticResource TitleTextStyle}" 
-                          HorizontalAlignment="Left"/>
+                <TextBlock Grid.Column="2" Text="{converters:Res display_app_title}" 
+                           Style="{StaticResource TitleTextStyle}" 
+                           HorizontalAlignment="Right"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0">
-                    <TextBlock Text="{converters:Res label_language}" Style="{StaticResource BodyTextStyle}" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox x:Name="LanguageComboBox" Width="120" Margin="5,0" 
-                              Style="{StaticResource DarkComboBoxStyle}"
-                              ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"
-                              SelectionChanged="LanguageComboBox_SelectionChanged">
-                        <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
-                        <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
-                    </ComboBox>
+
                     <Button x:Name="ExitFullscreenButton" Content="{converters:Res btn_exit_fullscreen}" 
                            Style="{StaticResource SecondaryButtonStyle}"
                            Click="ExitFullscreenButton_Click" Margin="5"/>
@@ -43,7 +36,7 @@
                            Click="CloseButton_Click" Margin="5"/>
                 </StackPanel>
                 
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <TextBlock x:Name="LastUpdateText" Text="{converters:Res display_last_update_label}" 
                               Style="{StaticResource BodyTextStyle}" Margin="10,0"/>
                     <TextBlock x:Name="CountdownText" Text="{converters:Res display_next_update_label}" 
@@ -120,7 +113,7 @@
                 </Grid.ColumnDefinitions>
                 
                 <!-- Chart with AI Recommendation -->
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,5,0">
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="5,0,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -152,7 +145,7 @@
                 </Border>
                 
                 <!-- Absence Section with Categories -->
-                <Border Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource CardStyle}" Margin="3,0,0,0">
+                <Border Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CardStyle}" Margin="0,0,3,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

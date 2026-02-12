@@ -4495,8 +4495,8 @@
         "color": "#FF5722",
         "priority": 100,
         "is_active": true,
-        "created_at": "2026-02-10T02:47:27",
-        "updated_at": "2026-02-10T02:47:27"
+        "created_at": "2026-02-10T13:33:13",
+        "updated_at": "2026-02-10T13:33:13"
       },
       {
         "role_id": "supervisor",
@@ -4505,8 +4505,8 @@
         "color": "#FF9800",
         "priority": 80,
         "is_active": true,
-        "created_at": "2026-02-10T02:47:27",
-        "updated_at": "2026-02-10T02:47:27"
+        "created_at": "2026-02-10T13:33:13",
+        "updated_at": "2026-02-10T13:33:13"
       },
       {
         "role_id": "employee",
@@ -4515,8 +4515,8 @@
         "color": "#4CAF50",
         "priority": 50,
         "is_active": true,
-        "created_at": "2026-02-10T02:47:27",
-        "updated_at": "2026-02-10T02:47:27"
+        "created_at": "2026-02-10T13:33:13",
+        "updated_at": "2026-02-10T13:33:13"
       },
       {
         "role_id": "intern",
@@ -4525,8 +4525,8 @@
         "color": "#2196F3",
         "priority": 30,
         "is_active": true,
-        "created_at": "2026-02-10T02:47:27",
-        "updated_at": "2026-02-10T02:47:27"
+        "created_at": "2026-02-10T13:33:13",
+        "updated_at": "2026-02-10T13:33:13"
       },
       {
         "role_id": "contractor",
@@ -4535,11 +4535,11 @@
         "color": "#9C27B0",
         "priority": 20,
         "is_active": true,
-        "created_at": "2026-02-10T02:47:27",
-        "updated_at": "2026-02-10T02:47:27"
+        "created_at": "2026-02-10T13:33:13",
+        "updated_at": "2026-02-10T13:33:13"
       }
     ],
-    "last_modified": "2026-02-10T02:48:25"
+    "last_modified": "2026-02-10T13:33:13"
   },
   "shifts": {
     "morning": {
@@ -4575,23 +4575,23 @@
         "team_leader_id": "",
         "assigned_employees": [
           {
-            "employee_id": "emp_21_1766520044",
-            "first_name": "امیر",
-            "last_name": "جعفری",
+            "employee_id": "emp_4_1758880570",
+            "first_name": "Abdolzahra",
+            "last_name": "Harris",
             "role": "employee",
             "role_id": "employee",
             "shift_group_id": "default",
-            "photo_path": "D:\\projects\\employee_management_csharp\\SharedData\\Workers\\امیر_جعفری\\امیر_جعفری_1766520044.jpg",
+            "photo_path": "E:\\projects\\employee_management_csharp\\SharedData\\Workers\\Abdolzahra_Harris\\Abdolzahra_Harris_224397.jpg",
             "is_manager": false,
-            "created_at": "2025-12-23T23:30:44",
-            "updated_at": "2025-12-23T23:30:44",
+            "created_at": "2025-09-26T13:26:10",
+            "updated_at": "2026-02-05T04:29:56",
             "shield_color": "Blue",
-            "show_shield": false,
+            "show_shield": true,
             "sticker_paths": [],
             "medal_badge_path": "",
-            "personnel_id": "1301",
+            "personnel_id": "224397",
             "labels": [],
-            "phone": "",
+            "phone": "0912567897",
             "show_phone": true
           },
           {
@@ -4633,8 +4633,8 @@
   "shift_groups": {
     "DefaultGroupId": "default",
     "ShiftGroups": {
-      "default": "{\r\n  \"GroupId\": \"default\",\r\n  \"Name\": \"Default group\",\r\n  \"Description\": \"Default group for backward compatibility\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 2,\r\n  \"AfternoonCapacity\": 4,\r\n  \"EveningCapacity\": 15,\r\n  \"NightCapacity\": 4,\r\n  \"SupervisorId\": \"emp_29_1766815104\",\r\n  \"SupervisorName\": \"Ali Amini\",\r\n  \"SupervisorPhotoPath\": \"E:\\\\projects\\\\employee_management_csharp\\\\SharedData\\\\Images\\\\Staff\\\\Ali_Amini_182968.jpg\",\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2026-02-10T00:02:28.9751273-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T02:47:44.686754-08:00\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_21_1766520044\\\",\\r\\n    \\\"emp_34_1766815104\\\"\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9752984-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:47:44.6866946-08:00\\\"\\r\\n}\",\r\n  \"AfternoonShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"afternoon\\\",\\r\\n  \\\"Capacity\\\": 4,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9754232-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:47:44.6867007-08:00\\\"\\r\\n}\",\r\n  \"EveningShift\": null,\r\n  \"NightShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"night\\\",\\r\\n  \\\"Capacity\\\": 4,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9756851-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:47:44.6867068-08:00\\\"\\r\\n}\"\r\n}",
-      "group_1770717557": "{\r\n  \"GroupId\": \"group_1770717557\",\r\n  \"Name\": \"New group\",\r\n  \"Description\": \"Group description\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 2,\r\n  \"AfternoonCapacity\": 4,\r\n  \"EveningCapacity\": 15,\r\n  \"NightCapacity\": 15,\r\n  \"SupervisorId\": \"emp_30_1766815104\",\r\n  \"SupervisorName\": \"Ali Green\",\r\n  \"SupervisorPhotoPath\": \"E:\\\\projects\\\\employee_management_csharp\\\\SharedData\\\\Images\\\\Staff\\\\Ali_Green_605582.jpg\",\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2026-02-10T01:59:17.3348021-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T02:48:25.4589733-08:00\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_4_1758880570\\\",\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348721-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:48:25.4589521-08:00\\\"\\r\\n}\",\r\n  \"AfternoonShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"afternoon\\\",\\r\\n  \\\"Capacity\\\": 4,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348883-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:48:25.4589596-08:00\\\"\\r\\n}\",\r\n  \"EveningShift\": null,\r\n  \"NightShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"night\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348954-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:48:25.4589653-08:00\\\"\\r\\n}\"\r\n}"
+      "default": "{\r\n  \"GroupId\": \"default\",\r\n  \"Name\": \"Default group\",\r\n  \"Description\": \"Default group for backward compatibility\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 2,\r\n  \"AfternoonCapacity\": 4,\r\n  \"EveningCapacity\": 15,\r\n  \"NightCapacity\": 4,\r\n  \"SupervisorId\": \"emp_29_1766815104\",\r\n  \"SupervisorName\": \"Ali Amini\",\r\n  \"SupervisorPhotoPath\": \"E:\\\\projects\\\\employee_management_csharp\\\\SharedData\\\\Images\\\\Staff\\\\Ali_Amini_182968.jpg\",\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2026-02-10T00:02:28.9751273-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T02:47:44.686754-08:00\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_4_1758880570\\\",\\r\\n    \\\"emp_34_1766815104\\\"\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9752984-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T13:13:02.6520422-08:00\\\"\\r\\n}\",\r\n  \"AfternoonShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"afternoon\\\",\\r\\n  \\\"Capacity\\\": 4,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9754232-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:47:44.6867007-08:00\\\"\\r\\n}\",\r\n  \"EveningShift\": null,\r\n  \"NightShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"night\\\",\\r\\n  \\\"Capacity\\\": 4,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T00:02:28.9756851-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T02:47:44.6867068-08:00\\\"\\r\\n}\"\r\n}",
+      "group_1770717557": "{\r\n  \"GroupId\": \"group_1770717557\",\r\n  \"Name\": \"New group\",\r\n  \"Description\": \"Group description\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 2,\r\n  \"AfternoonCapacity\": 2,\r\n  \"EveningCapacity\": 15,\r\n  \"NightCapacity\": 2,\r\n  \"SupervisorId\": \"emp_30_1766815104\",\r\n  \"SupervisorName\": \"Ali Green\",\r\n  \"SupervisorPhotoPath\": \"E:\\\\projects\\\\employee_management_csharp\\\\SharedData\\\\Images\\\\Staff\\\\Ali_Green_605582.jpg\",\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2026-02-10T01:59:17.3348021-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T13:22:17.2295736-08:00\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    \\\"emp_0_1758802432\\\"\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348721-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T13:22:17.2295555-08:00\\\"\\r\\n}\",\r\n  \"AfternoonShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"afternoon\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    \\\"emp_219_1766815115\\\"\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348883-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T13:22:17.2295621-08:00\\\"\\r\\n}\",\r\n  \"EveningShift\": null,\r\n  \"NightShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"night\\\",\\r\\n  \\\"Capacity\\\": 2,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    null,\\r\\n    \\\"emp_220_1766815115\\\"\\r\\n  ],\\r\\n  \\\"StatusCardIds\\\": [\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"TeamLeaderId\\\": \\\"\\\",\\r\\n  \\\"CreatedAt\\\": \\\"2026-02-10T01:59:17.3348954-08:00\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2026-02-10T13:22:17.2295679-08:00\\\"\\r\\n}\"\r\n}"
     }
   },
   "status_cards": {
@@ -4668,8 +4668,12 @@
   },
   "absences": {
     "Leave": [],
-    "Sick": [],
-    "Absent": []
+    "Sick": [
+      "{\r\n  \"EmployeeId\": \"emp_221_1766815115\",\r\n  \"FirstName\": \"Zahra\",\r\n  \"LastName\": \"Robinson\",\r\n  \"EmployeeName\": \"Zahra Robinson\",\r\n  \"PhotoPath\": \"E:\\\\projects\\\\employee_management_csharp\\\\SharedData\\\\Images\\\\Staff\\\\Zahra_Robinson_354365.jpg\",\r\n  \"Phone\": \"\",\r\n  \"ShowPhone\": true,\r\n  \"Category\": \"Sick\",\r\n  \"Date\": \"2026/02/10\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2026-02-10T13:13:38.7034609-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T13:13:38.7034666-08:00\"\r\n}"
+    ],
+    "Absent": [
+      "{\r\n  \"EmployeeId\": \"emp_6_1758880589\",\r\n  \"FirstName\": \"عثمان\",\r\n  \"LastName\": \"دمبله\",\r\n  \"EmployeeName\": \"عثمان دمبله\",\r\n  \"PhotoPath\": \"\",\r\n  \"Phone\": \"\",\r\n  \"ShowPhone\": true,\r\n  \"Category\": \"Absent\",\r\n  \"Date\": \"2026/02/10\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2026-02-10T13:13:32.1354427-08:00\",\r\n  \"UpdatedAt\": \"2026-02-10T13:13:32.1354871-08:00\"\r\n}"
+    ]
   },
   "tasks": {
     "Tasks": {
@@ -4691,5 +4695,5 @@
     "auto_rotate_shifts": true,
     "auto_rotate_day": "Friday"
   },
-  "last_modified": "2026-02-10T02:48:25"
+  "last_modified": "2026-02-10T13:33:13"
 }

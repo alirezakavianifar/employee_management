@@ -42,9 +42,9 @@
         </Border>
 
         <!-- Main Content -->
-        <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" SelectionChanged="MainTabControl_SelectionChanged">
+        <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" SelectionChanged="MainTabControl_SelectionChanged" FlowDirection="RightToLeft">
             <TabItem Header="{converters:Res tab_employee_management}">
-                <Grid>
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -54,7 +54,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Employee List -->
-                    <GroupBox Grid.Column="0" Header="{converters:Res header_employee_list}" Margin="5">
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_employee_list}" Margin="5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -155,183 +155,12 @@
                                  ShowsPreview="False"
                                  Margin="0"/>
 
-                    <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
-                        <StackPanel Margin="10">
-                            <Label Content="{converters:Res label_absence_type}"/>
-                            <ComboBox x:Name="AbsenceTypeComboBox" Margin="0,5">
-                                <ComboBoxItem Content="{converters:Res absence_leave}"/>
-                                <ComboBoxItem Content="{converters:Res absence_sick}"/>
-                                <ComboBoxItem Content="{converters:Res absence_absent}"/>
-                            </ComboBox>
 
-                            <Label Content="{converters:Res label_absence_date}" Margin="0,10,0,5"/>
-                            <controls:GeorgianDatePicker x:Name="AbsenceDatePicker" Margin="0,0,0,10"/>
-
-                            <Label Content="{converters:Res label_notes}" Margin="0,10,0,5"/>
-                            <TextBox x:Name="AbsenceNotesTextBox" 
-                                    Height="60" 
-                                    TextWrapping="Wrap" 
-                                    AcceptsReturn="True"
-                                    Margin="0,0,0,10"/>
-
-                            <Button Content="{converters:Res btn_mark_absent}" Click="MarkAbsent_Click" Margin="0,5"/>
-                            <Button Content="{converters:Res btn_remove_absence}" Click="RemoveAbsence_Click" Margin="0,5"/>
-
-                            <!-- Absence List -->
-                            <Label Content="{converters:Res label_absence_list}" Margin="0,20,0,5"/>
-                            <ListBox x:Name="AbsenceListBox" 
-                                    Height="100" 
-                                    Margin="0,5">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding CategoryDisplay}" Width="80" Margin="5,0"/>
-                                            <TextBlock Text="{Binding DateDisplay}" Width="120" Margin="5,0"/>
-                                            <TextBlock Text="{Binding Notes}" Width="100" Margin="5,0" TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-
-                            <!-- Categorized Absence Lists -->
-                            <Label Content="{converters:Res label_absent_employees_today}" FontWeight="Bold" Margin="0,20,0,5"/>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
-                                <StackPanel>
-                                    <!-- Absent Employees -->
-                                    <Expander x:Name="EmployeeManagementAbsentExpander" 
-                                             Header="Absent Employees (0)" 
-                                             IsExpanded="True"
-                                             Margin="0,0,0,5">
-                                        <ListBox x:Name="EmployeeManagementAbsentListBox" 
-                                                Height="120"
-                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
-                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
-                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
-                                                Margin="5">
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="White"
-                                                            BorderBrush="#FFCCCC"
-                                                            BorderThickness="1"
-                                                            CornerRadius="4"
-                                                            Padding="8"
-                                                            Margin="2"
-                                                            Cursor="Hand">
-                                                        <StackPanel Orientation="Vertical"
-                                                                   HorizontalAlignment="Center">
-                                                            <Image Width="50"
-                                                                   Height="50"
-                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
-                                                                   Stretch="UniformToFill"
-                                                                   Margin="0,0,0,5"/>
-                                                            <TextBlock Text="{Binding FullName}"
-                                                                      FontFamily="Tahoma"
-                                                                      FontSize="10"
-                                                                      TextAlignment="Center"
-                                                                      TextWrapping="Wrap"
-                                                                      MaxWidth="100"
-                                                                      Foreground="DarkBlue"
-                                                                      HorizontalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                    </Expander>
-
-                                    <!-- Sick Employees -->
-                                    <Expander x:Name="EmployeeManagementSickExpander" 
-                                             Header="Sick Employees (0)" 
-                                             IsExpanded="True"
-                                             Margin="0,0,0,5">
-                                        <ListBox x:Name="EmployeeManagementSickListBox" 
-                                                Height="120"
-                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
-                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
-                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
-                                                Margin="5">
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="White"
-                                                            BorderBrush="#FFE0B2"
-                                                            BorderThickness="1"
-                                                            CornerRadius="4"
-                                                            Padding="8"
-                                                            Margin="2"
-                                                            Cursor="Hand">
-                                                        <StackPanel Orientation="Vertical"
-                                                                   HorizontalAlignment="Center">
-                                                            <Image Width="50"
-                                                                   Height="50"
-                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
-                                                                   Stretch="UniformToFill"
-                                                                   Margin="0,0,0,5"/>
-                                                            <TextBlock Text="{Binding FullName}"
-                                                                      FontFamily="Tahoma"
-                                                                      FontSize="10"
-                                                                      TextAlignment="Center"
-                                                                      TextWrapping="Wrap"
-                                                                      MaxWidth="100"
-                                                                      Foreground="DarkBlue"
-                                                                      HorizontalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                    </Expander>
-
-                                    <!-- Employees on Leave -->
-                                    <Expander x:Name="EmployeeManagementLeaveExpander" 
-                                             Header="Leave Employees (0)" 
-                                             IsExpanded="True"
-                                             Margin="0,0,0,5">
-                                        <ListBox x:Name="EmployeeManagementLeaveListBox" 
-                                                Height="120"
-                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
-                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
-                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
-                                                Margin="5">
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="White"
-                                                            BorderBrush="#BBDEFB"
-                                                            BorderThickness="1"
-                                                            CornerRadius="4"
-                                                            Padding="8"
-                                                            Margin="2"
-                                                            Cursor="Hand">
-                                                        <StackPanel Orientation="Vertical"
-                                                                   HorizontalAlignment="Center">
-                                                            <Image Width="50"
-                                                                   Height="50"
-                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
-                                                                   Stretch="UniformToFill"
-                                                                   Margin="0,0,0,5"/>
-                                                            <TextBlock Text="{Binding FullName}"
-                                                                      FontFamily="Tahoma"
-                                                                      FontSize="10"
-                                                                      TextAlignment="Center"
-                                                                      TextWrapping="Wrap"
-                                                                      MaxWidth="100"
-                                                                      Foreground="DarkBlue"
-                                                                      HorizontalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                    </Expander>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </StackPanel>
-                    </GroupBox>
                 </Grid>
             </TabItem>
 
             <TabItem Header="{converters:Res tab_shift_management}">
-                <Grid>
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -341,7 +170,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Employee List for Shift Assignment -->
-                    <Grid Grid.Column="0">
+                    <Grid Grid.Column="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="2*"/>
                             <RowDefinition Height="Auto"/>
@@ -415,12 +244,12 @@
                         
                         <!-- Label Creation Panel -->
                         <!-- Tools TabControl -->
-                        <TabControl Grid.Row="2" Margin="5">
+                        <TabControl Grid.Row="2" Margin="5" FlowDirection="RightToLeft">
                             <TabItem Header="{converters:Res tab_labels}">
                                 <controls:LabelCreationPanel x:Name="LabelPanel" Margin="0"/>
                             </TabItem>
                             <TabItem Header="{converters:Res tab_status_cards}">
-                                <Grid>
+                                <Grid FlowDirection="LeftToRight">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
@@ -590,7 +419,7 @@
                                  Margin="0"/>
 
                     <!-- Absence Management -->
-                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_absence_management}" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="5">
                                 <!-- Absent Employees -->
@@ -737,7 +566,7 @@
             </TabItem>
 
             <TabItem Header="{converters:Res tab_task_management}">
-                <Grid>
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -1039,7 +868,7 @@
             </TabItem>
 
             <TabItem Header="{converters:Res tab_reports}">
-                <Grid>
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -1115,7 +944,7 @@
             </TabItem>
 
             <TabItem x:Name="SettingsTabItem" Header="{converters:Res tab_settings}">
-                <Grid>
+                <Grid FlowDirection="LeftToRight">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -1126,11 +955,7 @@
                     <GroupBox Grid.Column="0" Header="{converters:Res header_system_settings}" Margin="5">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="10">
-                                <Label Content="{converters:Res label_language}" FontWeight="Bold" Margin="0,0,0,5"/>
-                                <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10" SelectionChanged="LanguageComboBox_SelectionChanged">
-                                    <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
-                                    <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
-                                </ComboBox>
+
 
                                 <Label Content="{converters:Res label_data_folder_path}" FontWeight="Bold" Margin="0,0,0,5"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -1326,7 +1151,7 @@
             </TabItem>
 
             <TabItem Header="{converters:Res tab_daily_preview}">
-                <Grid Margin="10">
+                <Grid Margin="10" FlowDirection="LeftToRight">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>

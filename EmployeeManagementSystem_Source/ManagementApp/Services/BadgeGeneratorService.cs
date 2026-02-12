@@ -128,7 +128,7 @@ namespace ManagementApp.Services
                     var formattedText = new FormattedText(
                         employeeName,
                         System.Globalization.CultureInfo.CurrentCulture,
-                        System.Windows.FlowDirection.RightToLeft, // RTL for Persian/Arabic
+                        System.Windows.FlowDirection.LeftToRight, // English only logic
                         new Typeface("Tahoma"),
                         CalculateFontSize(smallRectWidth, smallRectActualHeight, employeeName),
                         Brushes.Black,

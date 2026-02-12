@@ -137,7 +137,7 @@ namespace ManagementApp.Views
                 
                 // Initialize settings display
                 UpdateSettingsDisplay();
-                Shared.Utils.ResourceBridge.Instance.PropertyChanged += ResourceBridge_PropertyChanged;
+
                 _controller.ShiftsUpdated += OnShiftsUpdated;
                 _controller.AbsencesUpdated += OnAbsencesUpdated;
                 _controller.AbsencesUpdated += LoadAbsenceLists; // Refresh absence lists when absences change
@@ -416,7 +416,7 @@ namespace ManagementApp.Views
                 LoadEmployees();
                 LoadShifts();
                 LoadStatusCards();
-                LoadAbsences();
+                LoadAbsenceLists(); // Loading all absence lists instead of the obsolete single list
                 LoadTasks();
                 UpdateStatus(ResourceManager.GetString("msg_data_loaded", "Data loaded"));
                 
@@ -637,7 +637,7 @@ namespace ManagementApp.Views
             try
             {
                 var absences = _controller.AbsenceManager.GetAbsencesByEmployee(employee);
-                AbsenceListBox.ItemsSource = absences;
+                // AbsenceListBox.ItemsSource = absences; // Obsolete
             }
             catch (Exception ex)
             {
@@ -1017,66 +1017,6 @@ namespace ManagementApp.Views
             }
         }
 
-        private void MarkAbsent_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (_selectedEmployee == null)
-                {
-                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var selectedType = (AbsenceTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
-                if (string.IsNullOrEmpty(selectedType))
-                {
-                    MessageBox.Show("Please select an absence type", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var customDate = AbsenceDatePicker.SelectedDate;
-                var success = _controller.MarkEmployeeAbsent(_selectedEmployee, selectedType, AbsenceNotesTextBox.Text, customDate);
-                if (success)
-                {
-                    LoadEmployeeAbsences(_selectedEmployee);
-                    LoadEmployees(); // Refresh to update shift availability
-                    LoadAbsenceLists(); // Refresh categorized absence lists
-                    UpdateStatus($"Employee {_selectedEmployee.FullName} marked as {selectedType}");
-                    AbsenceNotesTextBox.Clear();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error marking employee absent");
-                MessageBox.Show($"Error recording absence: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void RemoveAbsence_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (_selectedEmployee == null)
-                {
-                    MessageBox.Show("Please select an employee", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var success = _controller.RemoveAbsence(_selectedEmployee);
-                if (success)
-                {
-                    LoadEmployeeAbsences(_selectedEmployee);
-                    LoadEmployees(); // Refresh to update shift availability
-                    LoadAbsenceLists(); // Refresh categorized absence lists
-                    UpdateStatus($"Absence for {_selectedEmployee.FullName} removed");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error removing absence");
-                MessageBox.Show($"Error removing absence: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         #endregion
 
@@ -2157,16 +2097,6 @@ namespace ManagementApp.Views
                 LeaveEmployeesListBox.ItemsSource = leaveEmployees;
                 LeaveEmployeesExpander.Header = string.Format(ResourceManager.GetString("expander_leave_employees", "Leave Employees ({0})"), leaveEmployees.Count);
 
-                // Update Employee Management section lists
-                EmployeeManagementAbsentListBox.ItemsSource = absentEmployees;
-                EmployeeManagementAbsentExpander.Header = string.Format(ResourceManager.GetString("expander_absent_employees", "Absent Employees ({0})"), absentEmployees.Count);
-
-                EmployeeManagementSickListBox.ItemsSource = sickEmployees;
-                EmployeeManagementSickExpander.Header = string.Format(ResourceManager.GetString("expander_sick_employees", "Sick Employees ({0})"), sickEmployees.Count);
-
-                EmployeeManagementLeaveListBox.ItemsSource = leaveEmployees;
-                EmployeeManagementLeaveExpander.Header = string.Format(ResourceManager.GetString("expander_leave_employees", "Leave Employees ({0})"), leaveEmployees.Count);
-
                 _logger.LogInformation("Loaded absence lists - Absent: {AbsentCount}, Sick: {SickCount}, Leave: {LeaveCount}", 
                     absentEmployees.Count, sickEmployees.Count, leaveEmployees.Count);
             }
@@ -3245,7 +3175,7 @@ namespace ManagementApp.Views
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft
+                    FlowDirection = FlowDirection.LeftToRight
                 };
 
                 var stackPanel = new StackPanel { Margin = new Thickness(10) };
@@ -3333,8 +3263,8 @@ namespace ManagementApp.Views
         {
             try
             {
-                var absences = _controller.GetAllAbsences();
-                AbsenceListBox.ItemsSource = absences;
+                // Redirect to the new multi-list loading logic
+                LoadAbsenceLists();
             }
             catch (Exception ex)
             {
@@ -3751,7 +3681,7 @@ namespace ManagementApp.Views
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft,
+                    FlowDirection = FlowDirection.LeftToRight,
                     FontFamily = new System.Windows.Media.FontFamily("Tahoma")
                 };
 
@@ -3860,7 +3790,7 @@ namespace ManagementApp.Views
                     Height = 500,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft,
+                    FlowDirection = FlowDirection.LeftToRight,
                     FontFamily = new System.Windows.Media.FontFamily("Tahoma")
                 };
 
@@ -5425,16 +5355,7 @@ namespace ManagementApp.Views
             return reportData;
         }
 
-        private void ResourceBridge_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName != nameof(Shared.Utils.ResourceBridge.CurrentLanguage))
-                return;
-            Dispatcher.Invoke(() =>
-            {
-                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
-                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
-            });
-        }
+
 
         private void OnSettingsUpdated()
         {
@@ -5612,33 +5533,7 @@ namespace ManagementApp.Views
             }
         }
 
-        private void LanguageComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (LanguageComboBox.SelectedItem is not System.Windows.Controls.ComboBoxItem item ||
-                item.Tag is not string tag)
-                return;
-            var sharedData = App.SharedDataDirectory;
-            if (string.IsNullOrEmpty(sharedData))
-                return;
-            var lang = tag.Trim().ToLowerInvariant() == "fa" ? Shared.Utils.LanguageConfigHelper.LanguageFa : Shared.Utils.LanguageConfigHelper.LanguageEn;
-            if (lang == Shared.Utils.ResourceBridge.Instance.CurrentLanguage)
-                return;
-            try
-            {
-                Shared.Utils.LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
-                Shared.Utils.ResourceManager.LoadResourcesForLanguage(sharedData, lang);
-                Shared.Utils.ResourceBridge.Instance.CurrentLanguage = lang;
-                Shared.Utils.ResourceBridge.Instance.NotifyLanguageChanged();
-                App.ApplyFlowDirection();
-                UpdateStatus(Shared.Utils.ResourceManager.GetString("msg_data_loaded", "Data loaded"));
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error switching language");
-                MessageBox.Show(Shared.Utils.ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
-                    Shared.Utils.ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+
 
         private void ResetSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -5959,9 +5854,7 @@ namespace ManagementApp.Views
         {
             try
             {
-                // Sync language combo with current language
-                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
-                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
+
 
                 var config = AppConfigHelper.Config;
                 DataDirectoryTextBox.Text = config.DataDirectory;

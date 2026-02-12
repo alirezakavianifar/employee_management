@@ -38,7 +38,9 @@ namespace Shared.Utils
             return null;
         }
         public const string LanguageEn = "en";
-        public const string LanguageFa = "fa";
+        // Persian language support removed
+        // public const string LanguageFa = "fa";
+
         private const string ConfigFolderName = "Config";
         private const string LanguageFileName = "language.json";
 
@@ -58,35 +60,15 @@ namespace Shared.Utils
         }
 
         /// <summary>
-        /// Reads the current language from the config file. Returns "en" if missing or invalid.
+        /// Reads the current language from the config file. Always returns "en".
         /// </summary>
         public static string GetCurrentLanguage(string? sharedDataDirectory)
         {
-            var path = GetLanguageConfigPath(sharedDataDirectory);
-            if (string.IsNullOrEmpty(path) || !File.Exists(path))
-                return LanguageEn;
-
-            try
-            {
-                var json = File.ReadAllText(path, System.Text.Encoding.UTF8);
-                var obj = JsonConvert.DeserializeObject<LanguageConfig>(json);
-                if (obj != null && !string.IsNullOrEmpty(obj.Language))
-                {
-                    var lang = obj.Language.Trim().ToLowerInvariant();
-                    if (lang == LanguageFa)
-                        return LanguageFa;
-                }
-            }
-            catch
-            {
-                // ignore
-            }
-
             return LanguageEn;
         }
 
         /// <summary>
-        /// Writes the language to the config file. Creates directory if needed.
+        /// Writes the language to the config file. Always writes "en".
         /// </summary>
         public static void SetCurrentLanguage(string? sharedDataDirectory, string language)
         {
@@ -94,8 +76,7 @@ namespace Shared.Utils
             if (string.IsNullOrEmpty(path))
                 return;
 
-            var lang = language?.Trim().ToLowerInvariant() == LanguageFa ? LanguageFa : LanguageEn;
-            var obj = new LanguageConfig { Language = lang };
+            var obj = new LanguageConfig { Language = LanguageEn };
             var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
             File.WriteAllText(path, json, System.Text.Encoding.UTF8);
         }

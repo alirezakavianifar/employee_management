@@ -16,7 +16,7 @@
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -176,7 +176,7 @@
                 <Setter Property="FontSize" Value="18"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="Margin" Value="0,0,0,10"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
             </Style>
             
             <Style x:Key="SubtitleTextStyle" TargetType="TextBlock">
@@ -184,14 +184,14 @@
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Margin" Value="0,5"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
             </Style>
             
             <Style x:Key="BodyTextStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="#cccccc"/>
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Margin" Value="0,3"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
             </Style>
             
             <Style x:Key="CountTextStyle" TargetType="TextBlock">
@@ -199,7 +199,7 @@
                 <Setter Property="FontSize" Value="24"/>
                 <Setter Property="FontWeight" Value="Bold"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
-                <Setter Property="FlowDirection" Value="RightToLeft"/>
+                <Setter Property="FlowDirection" Value="LeftToRight"/>
             </Style>
             
             <!-- Panel Styles -->

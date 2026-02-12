@@ -137,7 +137,7 @@ namespace ManagementApp.Views
                 
                 // Initialize settings display
                 UpdateSettingsDisplay();
-                Shared.Utils.ResourceBridge.Instance.PropertyChanged += ResourceBridge_PropertyChanged;
+
                 _controller.ShiftsUpdated += OnShiftsUpdated;
                 _controller.AbsencesUpdated += OnAbsencesUpdated;
                 _controller.AbsencesUpdated += LoadAbsenceLists; // Refresh absence lists when absences change
@@ -3245,7 +3245,7 @@ namespace ManagementApp.Views
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft
+                    FlowDirection = FlowDirection.LeftToRight
                 };
 
                 var stackPanel = new StackPanel { Margin = new Thickness(10) };
@@ -3751,7 +3751,7 @@ namespace ManagementApp.Views
                     Height = 400,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft,
+                    FlowDirection = FlowDirection.LeftToRight,
                     FontFamily = new System.Windows.Media.FontFamily("Tahoma")
                 };
 
@@ -3860,7 +3860,7 @@ namespace ManagementApp.Views
                     Height = 500,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Owner = this,
-                    FlowDirection = FlowDirection.RightToLeft,
+                    FlowDirection = FlowDirection.LeftToRight,
                     FontFamily = new System.Windows.Media.FontFamily("Tahoma")
                 };
 
@@ -5425,16 +5425,7 @@ namespace ManagementApp.Views
             return reportData;
         }
 
-        private void ResourceBridge_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName != nameof(Shared.Utils.ResourceBridge.CurrentLanguage))
-                return;
-            Dispatcher.Invoke(() =>
-            {
-                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
-                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
-            });
-        }
+
 
         private void OnSettingsUpdated()
         {
@@ -5612,33 +5603,7 @@ namespace ManagementApp.Views
             }
         }
 
-        private void LanguageComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (LanguageComboBox.SelectedItem is not System.Windows.Controls.ComboBoxItem item ||
-                item.Tag is not string tag)
-                return;
-            var sharedData = App.SharedDataDirectory;
-            if (string.IsNullOrEmpty(sharedData))
-                return;
-            var lang = tag.Trim().ToLowerInvariant() == "fa" ? Shared.Utils.LanguageConfigHelper.LanguageFa : Shared.Utils.LanguageConfigHelper.LanguageEn;
-            if (lang == Shared.Utils.ResourceBridge.Instance.CurrentLanguage)
-                return;
-            try
-            {
-                Shared.Utils.LanguageConfigHelper.SetCurrentLanguage(sharedData, lang);
-                Shared.Utils.ResourceManager.LoadResourcesForLanguage(sharedData, lang);
-                Shared.Utils.ResourceBridge.Instance.CurrentLanguage = lang;
-                Shared.Utils.ResourceBridge.Instance.NotifyLanguageChanged();
-                App.ApplyFlowDirection();
-                UpdateStatus(Shared.Utils.ResourceManager.GetString("msg_data_loaded", "Data loaded"));
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "Error switching language");
-                MessageBox.Show(Shared.Utils.ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
-                    Shared.Utils.ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+
 
         private void ResetSettings_Click(object sender, RoutedEventArgs e)
         {
@@ -5959,9 +5924,7 @@ namespace ManagementApp.Views
         {
             try
             {
-                // Sync language combo with current language
-                var lang = Shared.Utils.ResourceBridge.Instance.CurrentLanguage;
-                LanguageComboBox.SelectedItem = lang == Shared.Utils.LanguageConfigHelper.LanguageFa ? LanguagePersianItem : LanguageEnglishItem;
+
 
                 var config = AppConfigHelper.Config;
                 DataDirectoryTextBox.Text = config.DataDirectory;
