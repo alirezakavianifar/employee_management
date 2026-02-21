@@ -55,10 +55,16 @@
                                     ValueChanged="BadgeSizeSlider_ValueChanged"
                                     TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <TextBlock Text="Group Size" Foreground="White" FontSize="10" Width="60"/>
                             <Slider x:Name="GroupSizeSlider" Width="80" Minimum="0.5" Maximum="2.5" Value="1.0" 
                                     ValueChanged="GroupSizeSlider_ValueChanged"
+                                    TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="Font Size" Foreground="White" FontSize="10" Width="60"/>
+                            <Slider x:Name="FontSizeSlider" Width="80" Minimum="0.4" Maximum="2.0" Value="1.0" 
+                                    ValueChanged="FontSizeSlider_ValueChanged"
                                     TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>

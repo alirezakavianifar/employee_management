@@ -174,6 +174,16 @@ namespace DisplayApp
                 UpdateUI(_lastReportData);
         }
 
+        private void FontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded) return;
+            
+            _fontSizeMultiplier = e.NewValue;
+            
+            if (_lastReportData != null)
+                UpdateUI(_lastReportData);
+        }
+
         private string GetDisplayConfigPath()
         {
             // Use the shared helper so both apps point to the same config
@@ -691,7 +701,7 @@ namespace DisplayApp
                 {
                     Text = managerPhone,
                     Foreground = Brushes.White,
-                    FontSize = Math.Max(7, largeRectHeight * 0.10),
+                    FontSize = Math.Max(7, largeRectHeight * 0.10) * _fontSizeMultiplier,
                     FontWeight = FontWeights.SemiBold,
                     FontFamily = new FontFamily("Tahoma"),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -734,7 +744,7 @@ namespace DisplayApp
             
             // Display name with personnel ID if available
             var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
-            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
+            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25)) * _fontSizeMultiplier;
             
             // White text with strong black outline for visibility on white background (same as regular employees)
             var nameText = new TextBlock
@@ -1339,7 +1349,7 @@ namespace DisplayApp
                 {
                     Text = phone,
                     Foreground = Brushes.White,
-                    FontSize = Math.Max(7, largeRectHeight * 0.10),
+                    FontSize = Math.Max(7, largeRectHeight * 0.10) * _fontSizeMultiplier,
                     FontWeight = FontWeights.SemiBold,
                     FontFamily = new FontFamily("Tahoma"),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -1381,7 +1391,7 @@ namespace DisplayApp
             var fullName = $"{firstName} {lastName}".Trim();
             var personnelId = employeeData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
             
-            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25));
+            var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25)) * _fontSizeMultiplier;
             var nameColor = showShield ? GetShieldColorBrush(shieldColorName) : new SolidColorBrush(Color.FromRgb(0, 100, 200));
             
             // Create StackPanel for name and personnel ID on separate lines
@@ -1874,7 +1884,7 @@ namespace DisplayApp
                 {
                     Text = phone,
                     Foreground = Brushes.White,
-                    FontSize = 7,
+                    FontSize = 7 * _fontSizeMultiplier,
                     FontWeight = FontWeights.SemiBold,
                     FontFamily = new FontFamily("Tahoma"),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -1895,7 +1905,7 @@ namespace DisplayApp
             {
                 Text = displayName,
                 Foreground = Brushes.White,
-                FontSize = 9,
+                FontSize = 9 * _fontSizeMultiplier,
                 FontWeight = FontWeights.Bold,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextWrapping = TextWrapping.Wrap,
