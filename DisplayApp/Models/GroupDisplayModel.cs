@@ -11,8 +11,14 @@ namespace DisplayApp.Models
         public string SupervisorName { get; set; } = "";
         public string SupervisorPhotoPath { get; set; } = "";
         public string MorningForemanName { get; set; } = "";
+        public string MorningForemanPhotoPath { get; set; } = "";
         public string AfternoonForemanName { get; set; } = "";
+        public string AfternoonForemanPhotoPath { get; set; } = "";
         public string NightForemanName { get; set; } = "";
+        public string NightForemanPhotoPath { get; set; } = "";
+        public int MorningCapacity { get; set; } = 15;
+        public int AfternoonCapacity { get; set; } = 15;
+        public int NightCapacity { get; set; } = 15;
         public List<EmployeeDisplayModel> MorningShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
         public List<EmployeeDisplayModel> AfternoonShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();
         public List<EmployeeDisplayModel> NightShiftEmployees { get; set; } = new List<EmployeeDisplayModel>();

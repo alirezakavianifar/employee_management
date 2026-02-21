@@ -63,10 +63,10 @@
             </Grid.RowDefinitions>
             
              <!-- Managers Section -->
-             <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,10">
+             <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,5">
                  <StackPanel>
-                     <TextBlock Text="Managers" Style="{StaticResource SubtitleTextStyle}"/>
-                     <ScrollViewer Height="120" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                     <TextBlock Text="Managers" Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,2"/>
+                     <ScrollViewer Height="80" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                          <Grid x:Name="ManagersGrid">
                              <Grid.ColumnDefinitions>
                                  <ColumnDefinition Width="*"/>
@@ -92,8 +92,8 @@
                 
                 
                 <!-- Groups Container -->
-                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <Border Style="{StaticResource MainPanelStyle}" Margin="5">
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <Border Style="{StaticResource MainPanelStyle}" Margin="2">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -101,15 +101,13 @@
                             </Grid.RowDefinitions>
                             
                             <!-- Header -->
-                            <Border Grid.Row="0" Background="#2d2d2d" Padding="10,5" CornerRadius="3">
+                            <Border Grid.Row="0" Background="#2d2d2d" Padding="5,2" CornerRadius="3">
                                 <TextBlock Text="{converters:Res header_work_groups}" Style="{StaticResource SubtitleTextStyle}" 
                                            HorizontalAlignment="Center" FontWeight="Bold"/>
                             </Border>
                             
                             <!-- Groups Display Container -->
-                            <ScrollViewer Grid.Row="1" Margin="5" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                <StackPanel x:Name="GroupsContainer" Orientation="Horizontal" HorizontalAlignment="Center"/>
-                            </ScrollViewer>
+                            <WrapPanel Grid.Row="1" x:Name="GroupsContainer" Margin="2" Orientation="Horizontal" HorizontalAlignment="Center"/>
                         </Grid>
                     </Border>
                 </ScrollViewer>

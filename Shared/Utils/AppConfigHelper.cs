@@ -589,5 +589,6 @@ namespace Shared.Utils
         public string LogsDirectory { get; set; } = string.Empty;
         public bool SyncEnabled { get; set; } = true;
         public int SyncIntervalSeconds { get; set; } = 30;
+        public string AdminPassword { get; set; } = "admin123";
     }
 }

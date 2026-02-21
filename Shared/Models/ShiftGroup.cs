@@ -44,11 +44,11 @@ namespace Shared.Models
                 Description = "No description";
             if (string.IsNullOrEmpty(Color))
                 Color = "#4CAF50";
-            if (MorningCapacity <= 0)
+            if (MorningCapacity < 0)
                 MorningCapacity = 15;
-            if (AfternoonCapacity <= 0)
+            if (AfternoonCapacity < 0)
                 AfternoonCapacity = 15;
-            if (NightCapacity <= 0)
+            if (NightCapacity < 0)
                 NightCapacity = 15;
             
             MorningShift = new Shift("morning", MorningCapacity);
@@ -63,9 +63,9 @@ namespace Shared.Models
             Name = name ?? "New group";
             Description = description ?? "No description";
             Color = color ?? "#4CAF50";
-            MorningCapacity = morningCapacity > 0 ? morningCapacity : 15;
-            AfternoonCapacity = afternoonCapacity > 0 ? afternoonCapacity : 15;
-            NightCapacity = nightCapacity > 0 ? nightCapacity : 15;
+            MorningCapacity = morningCapacity >= 0 ? morningCapacity : 15;
+            AfternoonCapacity = afternoonCapacity >= 0 ? afternoonCapacity : 15;
+            NightCapacity = nightCapacity >= 0 ? nightCapacity : 15;
             IsActive = true;
             CreatedAt = DateTime.Now;
             UpdatedAt = DateTime.Now;
@@ -304,7 +304,7 @@ namespace Shared.Models
                 if (groupData != null && !string.IsNullOrEmpty(groupData.GroupId))
                 {
                     // Migration: map old EveningCapacity to AfternoonCapacity if needed
-                    int afternoonCap = groupData.AfternoonCapacity > 0 ? groupData.AfternoonCapacity : groupData.EveningCapacity;
+                    int afternoonCap = groupData.AfternoonCapacity >= 0 ? groupData.AfternoonCapacity : groupData.EveningCapacity;
                     int nightCap = groupData.NightCapacity;
                     
                     var group = new ShiftGroup(groupData.GroupId, groupData.Name, groupData.Description, 

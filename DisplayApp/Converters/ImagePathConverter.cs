@@ -13,9 +13,10 @@ namespace DisplayApp.Converters
             {
                 try
                 {
-                    if (System.IO.File.Exists(photoPath))
+                    var resolved = Shared.Models.Employee.ResolvePhotoPath(photoPath);
+                    if (!string.IsNullOrEmpty(resolved) && System.IO.File.Exists(resolved))
                     {
-                        return new BitmapImage(new Uri(photoPath, UriKind.Absolute));
+                        return new BitmapImage(new Uri(resolved, UriKind.Absolute));
                     }
                 }
                 catch

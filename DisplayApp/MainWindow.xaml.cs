@@ -43,6 +43,11 @@ namespace DisplayApp
         private string _configFilePath;
         private DispatcherTimer _configReloadTimer;
         
+        // Dynamic UI sizing
+        private double _badgeWidth = 55;
+        private double _badgeHeight = 70;
+        private double _fontSizeMultiplier = 1.0;
+        
         // Chart data
         public SeriesCollection SeriesCollection { get; set; }
         public string[] Labels { get; set; }
@@ -61,6 +66,7 @@ namespace DisplayApp
             
             // Load and apply visual settings from config
             ApplyBackgroundColor();
+            ApplyDisplayProfile();
             ApplyVisibilitySettings();
             
             // Setup config file watcher
@@ -190,6 +196,47 @@ namespace DisplayApp
                 _logger.LogError(ex, "Error applying background color");
                 // Use default color if there's an error
                 this.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1a1a1a"));
+            }
+        }
+
+        private void ApplyDisplayProfile()
+        {
+            try
+            {
+                var profile = _configHelper.GetDisplayProfile();
+                _logger.LogInformation("Applying display profile: {Profile}", profile);
+
+                switch (profile)
+                {
+                    case "UltraWide34":
+                        _badgeWidth = 70;
+                        _badgeHeight = 85;
+                        _fontSizeMultiplier = 1.0;
+                        break;
+                    case "UltraWide38":
+                        _badgeWidth = 80;
+                        _badgeHeight = 100;
+                        _fontSizeMultiplier = 1.15;
+                        break;
+                    case "UltraWide43":
+                        _badgeWidth = 95;
+                        _badgeHeight = 115;
+                        _fontSizeMultiplier = 1.3;
+                        break;
+                    case "Standard":
+                    default:
+                        _badgeWidth = 55;
+                        _badgeHeight = 70;
+                        _fontSizeMultiplier = 1.0;
+                        break;
+                }
+
+                _logger.LogInformation("Profile settings: Width={Width}, Height={Height}, FontScale={Scale}", 
+                    _badgeWidth, _badgeHeight, _fontSizeMultiplier);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error applying display profile");
             }
         }
 
@@ -472,10 +519,13 @@ namespace DisplayApp
                     const int managersPerRow = 8;
                     int totalRows = (int)Math.Ceiling((double)managers.Count / managersPerRow);
                     
+                    // Calculate row height based on badge height plus some margin for borders and padding
+                    double rowHeight = _badgeHeight + 8; 
+                    
                     // Create row definitions
                     for (int row = 0; row < totalRows; row++)
                     {
-                        ManagersGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(106) }); // 100 + 6 for margin
+                        ManagersGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(rowHeight) }); 
                     }
                     
                     for (int i = 0; i < managers.Count; i++)
@@ -522,9 +572,10 @@ namespace DisplayApp
         private Border CreateManagerCard(Dictionary<string, object> managerData)
         {
             // Badge dimensions (same as regular employees)
-            double badgeWidth = 80;
-            double badgeHeight = 100;
-            double borderThickness = 4; // Thick blue border
+            // Badge dimensions 
+            double badgeWidth = _badgeWidth;
+            double badgeHeight = _badgeHeight;
+            double borderThickness = 1; // Thick blue border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
             
@@ -535,7 +586,7 @@ namespace DisplayApp
                 BorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)), // Blue border
                 BorderThickness = new Thickness(borderThickness),
                 CornerRadius = new CornerRadius(4),
-                Margin = new Thickness(3),
+                Margin = new Thickness(1), // Reduced margin
                 Width = badgeWidth,
                 Height = badgeHeight,
                 ClipToBounds = true,
@@ -619,10 +670,20 @@ namespace DisplayApp
                     HorizontalAlignment = HorizontalAlignment.Center,
                     TextAlignment = TextAlignment.Center,
                     TextWrapping = TextWrapping.NoWrap,
-                    TextTrimming = TextTrimming.CharacterEllipsis
+                    TextTrimming = TextTrimming.None
                 };
 
-                phoneOverlay.Child = phoneTextBlock;
+                var viewBox = new Viewbox
+                {
+                    Child = phoneTextBlock,
+                    Stretch = Stretch.Uniform,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    MaxHeight = largeRectHeight * 0.15,
+                    MaxWidth = badgeWidth - 4
+                };
+
+                phoneOverlay.Child = viewBox;
                 photoContainer.Children.Add(phoneOverlay);
                 Panel.SetZIndex(phoneOverlay, 80);
             }
@@ -774,20 +835,21 @@ namespace DisplayApp
             var groupBorder = new Border
             {
                 Style = Application.Current.FindResource("CardStyle") as Style,
-                Margin = new Thickness(5),
-                MinWidth = 200, // Reduced width since it's now vertical stack
-                MaxWidth = 250
+                Margin = new Thickness(1), // Reduced margin
+                MinWidth = 160, // Reduced width since it's now vertical stack
+                MaxWidth = 220,
+                VerticalAlignment = VerticalAlignment.Top // Prevent stretching to fill height
             };
             
             var groupGrid = new Grid();
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            groupGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
             
             // Group header: head worker (photo + name) above group number/name; team can exist without head worker
             var headerBorder = new Border
             {
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 45)),
-                Padding = new Thickness(10, 5, 10, 5),
+                Padding = new Thickness(5, 2, 5, 2),
                 CornerRadius = new CornerRadius(3)
             };
             
@@ -873,11 +935,8 @@ namespace DisplayApp
             // Shifts container (Vertical stack: Morning, Afternoon, Night)
             var shiftsGrid = new Grid
             {
-                Margin = new Thickness(5)
+                Margin = new Thickness(1)
             };
-            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Morning (Row 0)
-            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Afternoon (Row 1)
-            shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Night (Row 2)
             
             // Convert group color to WPF format (add FF prefix for alpha if not present)
             var groupColor = group.Color ?? "#4CAF50";
@@ -889,20 +948,37 @@ namespace DisplayApp
                 groupColor = "#FF" + groupColor.Substring(1);
             // If color already has 8 hex digits, use as-is
             
+            int currentRow = 0;
+
             // Morning Shift (Top)
-            var morningBorder = CreateShiftPanel(ResourceManager.GetString("shift_morning", "Morning"), group.MorningShiftEmployees, groupColor, group.MorningForemanName, group.MorningShiftStatusCards);
-            Grid.SetRow(morningBorder, 0);
-            shiftsGrid.Children.Add(morningBorder);
+            if (group.MorningCapacity > 0)
+            {
+                shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
+                var morningBorder = CreateShiftPanel(ResourceManager.GetString("shift_morning", "Morning"), group.MorningShiftEmployees, groupColor, group.MorningForemanName, group.MorningForemanPhotoPath, group.MorningShiftStatusCards);
+                Grid.SetRow(morningBorder, currentRow);
+                shiftsGrid.Children.Add(morningBorder);
+                currentRow++;
+            }
 
             // Afternoon Shift (Middle)
-            var afternoonBorder = CreateShiftPanel(ResourceManager.GetString("shift_afternoon", "Afternoon"), group.AfternoonShiftEmployees, groupColor, group.AfternoonForemanName, group.AfternoonShiftStatusCards);
-            Grid.SetRow(afternoonBorder, 1);
-            shiftsGrid.Children.Add(afternoonBorder);
+            if (group.AfternoonCapacity > 0)
+            {
+                shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
+                var afternoonBorder = CreateShiftPanel(ResourceManager.GetString("shift_afternoon", "Afternoon"), group.AfternoonShiftEmployees, groupColor, group.AfternoonForemanName, group.AfternoonForemanPhotoPath, group.AfternoonShiftStatusCards);
+                Grid.SetRow(afternoonBorder, currentRow);
+                shiftsGrid.Children.Add(afternoonBorder);
+                currentRow++;
+            }
             
             // Night Shift (Bottom)
-            var nightBorder = CreateShiftPanel(ResourceManager.GetString("shift_night", "Night"), group.NightShiftEmployees, groupColor, group.NightForemanName, group.NightShiftStatusCards);
-            Grid.SetRow(nightBorder, 2);
-            shiftsGrid.Children.Add(nightBorder);
+            if (group.NightCapacity > 0)
+            {
+                shiftsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
+                var nightBorder = CreateShiftPanel(ResourceManager.GetString("shift_night", "Night"), group.NightShiftEmployees, groupColor, group.NightForemanName, group.NightForemanPhotoPath, group.NightShiftStatusCards);
+                Grid.SetRow(nightBorder, currentRow);
+                shiftsGrid.Children.Add(nightBorder);
+                currentRow++;
+            }
             
             Grid.SetRow(shiftsGrid, 1);
             groupGrid.Children.Add(shiftsGrid);
@@ -911,25 +987,25 @@ namespace DisplayApp
             return groupBorder;
         }
         
-        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color, string foremanName = "", List<DisplayApp.Models.StatusCardDisplayModel>? statusCards = null)
+        private Border CreateShiftPanel(string shiftTitle, List<DisplayApp.Models.EmployeeDisplayModel> employees, string color, string foremanName = "", string foremanPhotoPath = "", List<DisplayApp.Models.StatusCardDisplayModel>? statusCards = null)
         {
             var shiftBorder = new Border
             {
                 Style = Application.Current.FindResource("CardStyle") as Style,
-                Margin = new Thickness(2),
+                Margin = new Thickness(1), // Reduced margin
                 BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color)),
-                BorderThickness = new Thickness(2)
+                BorderThickness = new Thickness(1)
             };
             
             var shiftGrid = new Grid();
             shiftGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            shiftGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            shiftGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
             
             // Shift title with foreman
             var titleStackPanel = new StackPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5)
+                Margin = new Thickness(0, 2, 0, 2)
             };
             
             var titleText = new TextBlock
@@ -941,19 +1017,64 @@ namespace DisplayApp
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             
-            // Foreman name
-            if (!string.IsNullOrEmpty(foremanName))
+            // Foreman info (Photo + Name)
+            if (!string.IsNullOrEmpty(foremanName) || !string.IsNullOrEmpty(foremanPhotoPath))
             {
-                var foremanText = new TextBlock
+                var foremanStack = new StackPanel
                 {
-                    Text = string.Format(ResourceManager.GetString("display_foreman", "Foreman: {0}"), foremanName),
-                    Style = Application.Current.FindResource("BodyTextStyle") as Style,
-                    FontSize = 10,
-                    Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 2, 0, 0)
+                    Margin = new Thickness(0, 0, 0, 4)
                 };
-                titleStackPanel.Children.Add(foremanText);
+
+                // Foreman photo
+                var foremanImage = new Image
+                {
+                    Width = 45,
+                    Height = 45,
+                    Stretch = Stretch.UniformToFill,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                };
+
+                var resolvedForemanPhoto = Employee.ResolvePhotoPath(foremanPhotoPath);
+                if (!string.IsNullOrEmpty(resolvedForemanPhoto))
+                {
+                    try
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = new Uri(resolvedForemanPhoto, UriKind.Absolute);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        foremanImage.Source = bitmap;
+                    }
+                    catch
+                    {
+                        foremanImage.Source = CreateEmployeePlaceholderImage(45);
+                    }
+                }
+                else
+                {
+                    foremanImage.Source = CreateEmployeePlaceholderImage(45);
+                }
+
+                foremanStack.Children.Add(foremanImage);
+
+                if (!string.IsNullOrEmpty(foremanName))
+                {
+                    var foremanText = new TextBlock
+                    {
+                        Text = string.Format(ResourceManager.GetString("display_foreman", "Foreman: {0}"), foremanName),
+                        Style = Application.Current.FindResource("BodyTextStyle") as Style,
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Margin = new Thickness(0, 2, 0, 0)
+                    };
+                    foremanStack.Children.Add(foremanText);
+                }
+                
+                titleStackPanel.Children.Add(foremanStack);
             }
             
             titleStackPanel.Children.Add(titleText);
@@ -1092,9 +1213,10 @@ namespace DisplayApp
                 employeeData.GetValueOrDefault("employee_id", "").ToString());
             
             // Badge dimensions
-            double badgeWidth = 80;
-            double badgeHeight = 100;
-            double borderThickness = 4; // Thick border
+            // Badge dimensions
+            double badgeWidth = _badgeWidth;
+            double badgeHeight = _badgeHeight;
+            double borderThickness = 1; // Thick border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
 
@@ -1109,7 +1231,7 @@ namespace DisplayApp
                 BorderBrush = borderBrush,
                 BorderThickness = new Thickness(borderThickness),
                 CornerRadius = new CornerRadius(4),
-                Margin = new Thickness(3),
+                Margin = new Thickness(1), // Reduced margin
                 Width = badgeWidth,
                 Height = badgeHeight,
                 ClipToBounds = true,
@@ -1193,10 +1315,20 @@ namespace DisplayApp
                     HorizontalAlignment = HorizontalAlignment.Center,
                     TextAlignment = TextAlignment.Center,
                     TextWrapping = TextWrapping.NoWrap,
-                    TextTrimming = TextTrimming.CharacterEllipsis
+                    TextTrimming = TextTrimming.None
                 };
 
-                phoneOverlay.Child = phoneTextBlock;
+                var viewBox = new Viewbox
+                {
+                    Child = phoneTextBlock,
+                    Stretch = Stretch.Uniform,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    MaxHeight = largeRectHeight * 0.15,
+                    MaxWidth = badgeWidth - 4
+                };
+
+                phoneOverlay.Child = viewBox;
                 photoContainer.Children.Add(phoneOverlay);
                 // Above the photo, but below stickers / medals / labels (which use higher Z-indices)
                 Panel.SetZIndex(phoneOverlay, 80);
@@ -1279,7 +1411,7 @@ namespace DisplayApp
                     };
                     
                     // Add each sticker image
-                    double stickerSize = badgeWidth * 0.15; // Sticker size
+                    double stickerSize = badgeWidth * 0.30; // Increased sticker size
                     foreach (var stickerPath in stickerPaths)
                     {
                         try
@@ -1335,7 +1467,7 @@ namespace DisplayApp
                         bitmap.Freeze();
                         
                         // Medal/badge size
-                        double medalSize = badgeWidth * 0.25; // 25% of badge width
+                        double medalSize = badgeWidth * 0.40; // Increased medal size
                         
                         var medalImage = new Image
                         {
@@ -1511,8 +1643,9 @@ namespace DisplayApp
             }
             
             // Badge dimensions (same as employee cards)
-            double badgeWidth = 80;
-            double badgeHeight = 100;
+            // Badge dimensions
+            double badgeWidth = _badgeWidth;
+            double badgeHeight = _badgeHeight;
             double borderThickness = 4;
             
             // Create main card container
@@ -2255,7 +2388,10 @@ namespace DisplayApp
                     GroupDescription = groupDescription,
                     Color = groupColor,
                     SupervisorId = supervisorId ?? "",
-                    SupervisorName = supervisorName
+                    SupervisorName = supervisorName,
+                    MorningCapacity = GetIntFromGroupData(groupData, "morning_capacity", "MorningCapacity", 15),
+                    AfternoonCapacity = GetIntFromGroupData(groupData, "afternoon_capacity", "AfternoonCapacity", 15),
+                    NightCapacity = GetIntFromGroupData(groupData, "night_capacity", "NightCapacity", 15)
                 };
                 // Prefer supervisor_photo_path from group data (report); fall back to employee lookup
                 groupModel.SupervisorPhotoPath = groupData.GetValueOrDefault("supervisor_photo_path", "")?.ToString() ?? groupData.GetValueOrDefault("SupervisorPhotoPath", "")?.ToString() ?? "";
@@ -2300,6 +2436,7 @@ namespace DisplayApp
                                     if (!string.IsNullOrEmpty(foremanId))
                                     {
                                         groupModel.MorningForemanName = GetEmployeeNameById(foremanId, morningEmpList);
+                                        groupModel.MorningForemanPhotoPath = GetEmployeePhotoPathById(foremanId, morningEmpList);
                                     }
                                 }
                             }
@@ -2341,6 +2478,7 @@ namespace DisplayApp
                                     if (!string.IsNullOrEmpty(foremanId))
                                     {
                                         groupModel.AfternoonForemanName = GetEmployeeNameById(foremanId, afternoonEmpList);
+                                        groupModel.AfternoonForemanPhotoPath = GetEmployeePhotoPathById(foremanId, afternoonEmpList);
                                     }
                                 }
                             }
@@ -2382,6 +2520,7 @@ namespace DisplayApp
                                     if (!string.IsNullOrEmpty(foremanId))
                                     {
                                         groupModel.NightForemanName = GetEmployeeNameById(foremanId, nightEmpList);
+                                        groupModel.NightForemanPhotoPath = GetEmployeePhotoPathById(foremanId, nightEmpList);
                                     }
                                 }
                             }
@@ -2419,7 +2558,10 @@ namespace DisplayApp
                     GroupDescription = groupDescription,
                     Color = groupColor,
                     SupervisorId = supervisorId ?? "",
-                    SupervisorName = supervisorName
+                    SupervisorName = supervisorName,
+                    MorningCapacity = GetIntFromGroupData(groupData, "MorningCapacity", "morning_capacity", 15),
+                    AfternoonCapacity = GetIntFromGroupData(groupData, "AfternoonCapacity", "afternoon_capacity", 15),
+                    NightCapacity = GetIntFromGroupData(groupData, "NightCapacity", "night_capacity", 15)
                 };
                 // Prefer supervisor_photo_path from group data (report); fall back to employee lookup
                 groupModel.SupervisorPhotoPath = groupData.GetValueOrDefault("SupervisorPhotoPath", "")?.ToString() ?? groupData.GetValueOrDefault("supervisor_photo_path", "")?.ToString() ?? "";
@@ -2509,6 +2651,7 @@ namespace DisplayApp
                                             var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
                                             var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
                                             groupModel.MorningForemanName = $"{firstName} {lastName}".Trim();
+                                            groupModel.MorningForemanPhotoPath = foremanData.GetValueOrDefault("photo_path", "")?.ToString() ?? foremanData.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
                                         }
                                     }
                                 }
@@ -2588,6 +2731,7 @@ namespace DisplayApp
                                                 var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
                                                 var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
                                                 groupModel.AfternoonForemanName = $"{firstName} {lastName}".Trim();
+                                                groupModel.AfternoonForemanPhotoPath = foremanData.GetValueOrDefault("photo_path", "")?.ToString() ?? foremanData.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
                                             }
                                         }
                                     }
@@ -2645,6 +2789,7 @@ namespace DisplayApp
                                                 var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
                                                 var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
                                                 groupModel.AfternoonForemanName = $"{firstName} {lastName}".Trim();
+                                                groupModel.AfternoonForemanPhotoPath = foremanData.GetValueOrDefault("photo_path", "")?.ToString() ?? foremanData.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
                                             }
                                         }
                                     }
@@ -2707,6 +2852,7 @@ namespace DisplayApp
                                                 var firstName = foremanData.GetValueOrDefault("first_name", "")?.ToString() ?? "";
                                                 var lastName = foremanData.GetValueOrDefault("last_name", "")?.ToString() ?? "";
                                                 groupModel.NightForemanName = $"{firstName} {lastName}".Trim();
+                                                groupModel.NightForemanPhotoPath = foremanData.GetValueOrDefault("photo_path", "")?.ToString() ?? foremanData.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
                                             }
                                         }
                                     }
@@ -2780,6 +2926,39 @@ namespace DisplayApp
             
             _logger.LogInformation("Returning {Count} employees", employees.Count);
             return employees;
+        }
+
+        private string GetEmployeePhotoPathById(string employeeId, List<object> employeeList)
+        {
+            try
+            {
+                foreach (var empObj in employeeList)
+                {
+                    Dictionary<string, object>? empData = null;
+                    if (empObj is Dictionary<string, object> empDict)
+                    {
+                        empData = empDict;
+                    }
+                    else if (empObj is JObject empJObject)
+                    {
+                        empData = ConvertJObjectToDictionary(empJObject);
+                    }
+                    
+                    if (empData != null)
+                    {
+                        var empId = empData.GetValueOrDefault("employee_id", "")?.ToString() ?? "";
+                        if (empId == employeeId)
+                        {
+                            return empData.GetValueOrDefault("photo_path", "")?.ToString() ?? empData.GetValueOrDefault("PhotoPath", "")?.ToString() ?? "";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting employee photo path by ID: {EmployeeId}", employeeId);
+            }
+            return "";
         }
 
         private string GetEmployeeNameById(string employeeId, List<object> employeeList)
@@ -2995,6 +3174,19 @@ namespace DisplayApp
             return employeeModels;
         }
 
+
+        private int GetIntFromGroupData(Dictionary<string, object> data, string key, string altKey, int defaultValue)
+        {
+            if (data.TryGetValue(key, out var val) || data.TryGetValue(altKey, out val))
+            {
+                if (val is int i) return i;
+                if (val is long l) return (int)l;
+                if (val is double d) return (int)d;
+                if (val is System.Text.Json.JsonElement je && je.ValueKind == System.Text.Json.JsonValueKind.Number && je.TryGetInt32(out var jeInt)) return jeInt;
+                if (int.TryParse(val?.ToString(), out var parsed)) return parsed;
+            }
+            return defaultValue;
+        }
 
         protected override void OnClosed(EventArgs e)
         {

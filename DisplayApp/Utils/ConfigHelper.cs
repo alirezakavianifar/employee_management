@@ -143,7 +143,8 @@ namespace DisplayApp.Utils
                         { "backgroundColor", "#1a1a1a" },
                         // Visibility settings for Display sections
                         { "showPerformanceChart", true },
-                        { "showAiRecommendation", true }
+                        { "showAiRecommendation", true },
+                        { "displayProfile", "Standard" }
                     }
                 },
                 {
@@ -249,6 +250,7 @@ namespace DisplayApp.Utils
         public string GetBackgroundColor() => GetValue<string>("display", "backgroundColor", "#1a1a1a");
         public bool GetShowPerformanceChart() => GetValue<bool>("display", "showPerformanceChart", true);
         public bool GetShowAiRecommendation() => GetValue<bool>("display", "showAiRecommendation", true);
+        public string GetDisplayProfile() => GetValue<string>("display", "displayProfile", "Standard");
 
         public void SetRefreshInterval(int value) => SetValue("display", "refreshInterval", value);
         public void SetFullscreen(bool value) => SetValue("display", "fullscreen", value);
@@ -258,6 +260,7 @@ namespace DisplayApp.Utils
         public void SetBackgroundColor(string value) => SetValue("display", "backgroundColor", value);
         public void SetShowPerformanceChart(bool value) => SetValue("display", "showPerformanceChart", value);
         public void SetShowAiRecommendation(bool value) => SetValue("display", "showAiRecommendation", value);
+        public void SetDisplayProfile(string value) => SetValue("display", "displayProfile", value);
         public void SetDataPath(string value) => SetValue("data", "dataPath", value);
         public void SetSyncInterval(int value) => SetValue("data", "syncInterval", value);
         public void SetAutoBackup(bool value) => SetValue("data", "autoBackup", value);

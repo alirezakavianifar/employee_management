@@ -1191,6 +1191,14 @@
                                             Width="120"/>
                                 </StackPanel>
 
+                                <Label Content="Display Profile" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <ComboBox x:Name="DisplayProfileComboBox" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Standard" Tag="Standard"/>
+                                    <ComboBoxItem Content="UltraWide 34&quot;" Tag="UltraWide34"/>
+                                    <ComboBoxItem Content="UltraWide 38&quot;" Tag="UltraWide38"/>
+                                    <ComboBoxItem Content="UltraWide 43&quot;" Tag="UltraWide43"/>
+                                </ComboBox>
+
                                 <Label Content="{converters:Res label_display_content}" FontWeight="Bold" Margin="0,10,0,5"/>
                                 <StackPanel Orientation="Vertical" Margin="0,0,0,10">
                                     <CheckBox x:Name="ShowPerformanceChartCheckBox"
@@ -1218,6 +1226,9 @@
                                             Width="60" 
                                             Text="30"/>
                                 </StackPanel>
+
+                                <Label Content="Admin Password" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <TextBox x:Name="AdminPasswordTextBox" Width="200" HorizontalAlignment="Left" Margin="0,0,0,10"/>
 
                                 <Separator Margin="0,20,0,10"/>
 

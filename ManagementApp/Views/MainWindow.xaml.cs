@@ -85,6 +85,9 @@ namespace ManagementApp.Views
         
         // Collection for Table Layout binding
         public System.Collections.ObjectModel.ObservableCollection<ShiftGroup> ShiftGroups { get; } = new System.Collections.ObjectModel.ObservableCollection<ShiftGroup>();
+        
+        private int _lastTabIndex = 0;
+        private bool _isInternalSelectionChange = false;
 
         public MainWindow()
         {
@@ -1581,8 +1584,41 @@ namespace ManagementApp.Views
 
         private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_isInternalSelectionChange) return;
+
             try
             {
+                // When settings tab is selected, check password
+                if (MainTabControl.SelectedItem == SettingsTabItem)
+                {
+                    var passwordDialog = new PasswordDialog();
+                    // Set owner to center it over main window
+                    passwordDialog.Owner = this;
+                    
+                    if (passwordDialog.ShowDialog() == true)
+                    {
+                        var expectedPassword = AppConfigHelper.Config.AdminPassword;
+                        if (passwordDialog.Password != expectedPassword)
+                        {
+                            MessageBox.Show("Invalid password. Access denied.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            _isInternalSelectionChange = true;
+                            MainTabControl.SelectedIndex = _lastTabIndex;
+                            _isInternalSelectionChange = false;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // Cancelled
+                        _isInternalSelectionChange = true;
+                        MainTabControl.SelectedIndex = _lastTabIndex;
+                        _isInternalSelectionChange = false;
+                        return;
+                    }
+                }
+
+                _lastTabIndex = MainTabControl.SelectedIndex;
+
                 // When Employee Management tab (index 0) is selected, load absence lists
                 if (MainTabControl.SelectedIndex == 0) // Employee management tab
                 {
@@ -5569,9 +5605,16 @@ namespace ManagementApp.Views
                     var displayConfigHelper = new DisplayApp.Utils.ConfigHelper(displayConfigPath);
                     var showChart = ShowPerformanceChartCheckBox.IsChecked ?? true;
                     var showAi = ShowAiRecommendationCheckBox.IsChecked ?? true;
+                    var selectedProfile = (DisplayProfileComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Standard";
                     displayConfigHelper.SetShowPerformanceChart(showChart);
                     displayConfigHelper.SetShowAiRecommendation(showAi);
+                    displayConfigHelper.SetDisplayProfile(selectedProfile);
                     displayConfigHelper.SaveConfig();
+
+                    // Save Admin Password to AppConfig
+                    var config = AppConfigHelper.Config;
+                    config.AdminPassword = AdminPasswordTextBox.Text;
+                    AppConfigHelper.SaveConfig(config);
 
                     var message = copyExistingData 
                         ? "Settings saved successfully and existing data was moved." 
@@ -5661,6 +5704,7 @@ namespace ManagementApp.Views
                     CurrentDataDirectoryTextBlock.Text = defaultPath;
                     DefaultShiftCapacityTextBox.Text = "15";
                     SyncIntervalTextBox.Text = "30";
+                    AdminPasswordTextBox.Text = "admin123";
                     
                     // Reset display background color to default
                     var displayConfigPath = GetDisplayConfigPath();
@@ -5670,10 +5714,19 @@ namespace ManagementApp.Views
                         displayConfigHelper.SetBackgroundColor("#1a1a1a");
                         displayConfigHelper.SetShowPerformanceChart(true);
                         displayConfigHelper.SetShowAiRecommendation(true);
+                        displayConfigHelper.SetDisplayProfile("Standard");
                         displayConfigHelper.SaveConfig();
                         UpdateDisplayColorPreview("#1a1a1a");
                         ShowPerformanceChartCheckBox.IsChecked = true;
                         ShowAiRecommendationCheckBox.IsChecked = true;
+                        foreach (ComboBoxItem item in DisplayProfileComboBox.Items)
+                        {
+                            if (item.Tag?.ToString() == "Standard")
+                            {
+                                DisplayProfileComboBox.SelectedItem = item;
+                                break;
+                            }
+                        }
                     }
                     
                     MessageBox.Show("Settings have been reset to default.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -5980,13 +6033,26 @@ namespace ManagementApp.Views
                     // Load display visibility settings
                     ShowPerformanceChartCheckBox.IsChecked = displayConfigHelper.GetShowPerformanceChart();
                     ShowAiRecommendationCheckBox.IsChecked = displayConfigHelper.GetShowAiRecommendation();
+
+                    var profile = displayConfigHelper.GetDisplayProfile();
+                    foreach (ComboBoxItem item in DisplayProfileComboBox.Items)
+                    {
+                        if (item.Tag?.ToString() == profile)
+                        {
+                            DisplayProfileComboBox.SelectedItem = item;
+                            break;
+                        }
+                    }
                 }
                 else
                 {
                     UpdateDisplayColorPreview("#1a1a1a");
                     ShowPerformanceChartCheckBox.IsChecked = true;
                     ShowAiRecommendationCheckBox.IsChecked = true;
+                    DisplayProfileComboBox.SelectedIndex = 0;
                 }
+
+                AdminPasswordTextBox.Text = config.AdminPassword;
                 
                 // Update sync status
                 SyncStatusTextBlock.Text = config.SyncEnabled ? "On" : "Off";
