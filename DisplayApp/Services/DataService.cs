@@ -134,6 +134,7 @@ namespace DisplayApp.Services
                                         { "role", employeeObj.GetValueOrDefault("Role", "") },
                                         { "photo_path", employeeObj.GetValueOrDefault("PhotoPath", "") },
                                         { "is_manager", employeeObj.GetValueOrDefault("IsManager", false) },
+                                        { "personnel_id", employeeObj.GetValueOrDefault("PersonnelId", employeeObj.GetValueOrDefault("personnel_id", "")) },
                                         { "created_at", employeeObj.GetValueOrDefault("CreatedAt", "") },
                                         { "updated_at", employeeObj.GetValueOrDefault("UpdatedAt", "") },
                                         // Phone fields (for legacy/old-format employees that were serialized as JSON strings)
@@ -478,6 +479,7 @@ namespace DisplayApp.Services
                                                     { "category", absenceObj.GetValueOrDefault("Category", "") },
                                                     { "date", absenceObj.GetValueOrDefault("Date", "") },
                                                     { "notes", absenceObj.GetValueOrDefault("Notes", "") },
+                                                    { "personnel_id", absenceObj.GetValueOrDefault("PersonnelId", absenceObj.GetValueOrDefault("personnel_id", "")) },
                                                     { "photo_path", absenceObj.GetValueOrDefault("PhotoPath", "") },
                                                     { "created_at", absenceObj.GetValueOrDefault("CreatedAt", "") },
                                                     { "updated_at", absenceObj.GetValueOrDefault("UpdatedAt", "") },

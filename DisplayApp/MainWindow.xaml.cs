@@ -60,6 +60,9 @@ namespace DisplayApp
         {
             InitializeComponent();
             
+            // Set initial managers section height based on default badge height (55 -> 70 ratio)
+            ManagersScrollViewer.MaxHeight = _badgeHeight + 10;
+            
             // Initialize logging
             _logger = LoggingService.CreateLogger<MainWindow>();
             _logger.LogInformation("DisplayApp MainWindow initialized");
@@ -159,6 +162,9 @@ namespace DisplayApp
             // Re-calculate proportional height depending on slider value (55 -> 70 ratio approx)
             _badgeWidth = e.NewValue;
             _badgeHeight = e.NewValue * (70.0 / 55.0);
+            
+            // Elastically adjust the managers section height to fit exactly one row of badges
+            ManagersScrollViewer.MaxHeight = _badgeHeight + 10;
             
             if (_lastReportData != null)
                 UpdateUI(_lastReportData);
@@ -742,33 +748,57 @@ namespace DisplayApp
             var lastName = managerData.GetValueOrDefault("last_name", "").ToString();
             var fullName = $"{firstName} {lastName}".Trim();
             
-            // Display name with personnel ID if available
-            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
             var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25)) * _fontSizeMultiplier;
+            var nameColor = new SolidColorBrush(Color.FromRgb(0, 100, 200)); // Same blue as employee cards
             
-            // White text with strong black outline for visibility on white background (same as regular employees)
+            // Build vertical StackPanel: name on top line, personnel ID strictly below
+            var nameStack = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            
             var nameText = new TextBlock
             {
-                Text = displayName,
-                Foreground = Brushes.White,
+                Text = fullName,
+                Foreground = nameColor,
                 FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Tahoma"),
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0), // No margin to ensure proper centering
-                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                TextWrapping = TextWrapping.NoWrap
+            };
+            nameStack.Children.Add(nameText);
+            
+            if (!string.IsNullOrEmpty(personnelId))
+            {
+                var idText = new TextBlock
                 {
-                    Color = Colors.Black,
-                    BlurRadius = 4,
-                    ShadowDepth = 0,
-                    Opacity = 1.0
-                } // Strong black outline effect (ShadowDepth=0 creates outline, not shadow)
+                    Text = personnelId,
+                    Foreground = nameColor,
+                    FontSize = fontSize,
+                    FontWeight = FontWeights.Bold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap
+                };
+                nameStack.Children.Add(idText);
+            }
+            
+            // Wrap in Viewbox so the stack always fits the name area, shrinking automatically
+            var nameViewbox = new Viewbox
+            {
+                Child = nameStack,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = badgeWidth - 4,
+                Height = smallRectHeight - 2
             };
             
-            nameContainer.Children.Add(nameText);
+            nameContainer.Children.Add(nameViewbox);
             Grid.SetRow(nameContainer, 1);
             badgeGrid.Children.Add(nameContainer);
             
@@ -1394,32 +1424,54 @@ namespace DisplayApp
             var fontSize = Math.Max(8, Math.Min(12, smallRectHeight * 0.25)) * _fontSizeMultiplier;
             var nameColor = showShield ? GetShieldColorBrush(shieldColorName) : new SolidColorBrush(Color.FromRgb(0, 100, 200));
             
-            // Create StackPanel for name and personnel ID on separate lines
-            var textStack = new StackPanel
+            // Build a vertical StackPanel: name on top line, personnel ID on line below
+            var nameStack = new StackPanel
             {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Orientation = Orientation.Vertical
+                Orientation = Orientation.Vertical,
+                HorizontalAlignment = HorizontalAlignment.Center
             };
-            
-            // Name TextBlock
-            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
             
             var nameText = new TextBlock
             {
-                Text = displayName,
+                Text = fullName,
                 Foreground = nameColor,
                 FontSize = fontSize,
                 FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Tahoma"),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.NoWrap
+            };
+            nameStack.Children.Add(nameText);
+            
+            if (!string.IsNullOrEmpty(personnelId))
+            {
+                var idText = new TextBlock
+                {
+                    Text = personnelId,
+                    Foreground = nameColor,
+                    FontSize = fontSize,
+                    FontWeight = FontWeights.Bold,
+                    FontFamily = new FontFamily("Tahoma"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.NoWrap
+                };
+                nameStack.Children.Add(idText);
+            }
+            
+            // Wrap in Viewbox so the stack always fits the name area, shrinking automatically
+            var nameViewbox = new Viewbox
+            {
+                Child = nameStack,
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = badgeWidth - 4,
+                Height = smallRectHeight - 2
             };
             
-            textStack.Children.Add(nameText);
-            
-            nameContainer.Children.Add(textStack);
+            nameContainer.Children.Add(nameViewbox);
             Grid.SetRow(nameContainer, 1);
             badgeGrid.Children.Add(nameContainer);
             
@@ -1800,121 +1852,24 @@ namespace DisplayApp
         
         private Border CreateAbsenceCard(Dictionary<string, object> absenceData, string category)
         {
-            _logger.LogInformation("Creating absence card with data keys: {Keys}", string.Join(", ", absenceData.Keys));
-            
-            // Get employee information
-            var firstName = absenceData.GetValueOrDefault("first_name", "").ToString();
-            var lastName = absenceData.GetValueOrDefault("last_name", "").ToString();
-            var fullName = $"{firstName} {lastName}".Trim();
-            var personnelId = absenceData.GetValueOrDefault("personnel_id", "").ToString() ?? "";
-            var employeeId = absenceData.GetValueOrDefault("employee_id", "").ToString();
-            var photoPathRaw = absenceData.GetValueOrDefault("photo_path", "").ToString();
-            var photoPath = Employee.ResolvePhotoPath(photoPathRaw) ?? photoPathRaw;
-            var phone = absenceData.GetValueOrDefault("phone", "").ToString() ?? "";
-            var showPhone = ParseShowPhone(absenceData, true);
-            
-            // Display name with personnel ID if available
-            var displayName = string.IsNullOrEmpty(personnelId) ? fullName : $"{fullName} {personnelId}";
-            
-            _logger.LogInformation("Employee first_name: '{FirstName}', employee_id: '{EmployeeId}'", firstName, employeeId);
-            _logger.LogInformation("Using full name: '{FullName}'", fullName);
-            
-            // Create a simple card with photo and name
-            var card = new Border
+            _logger.LogInformation("Creating absence card for category: {Category}, keys: {Keys}",
+                category, string.Join(", ", absenceData.Keys));
+
+            // Ensure all fields CreateEmployeeCard expects are present with sensible defaults
+            var normalised = new Dictionary<string, object>(absenceData)
             {
-                Width = 60,
-                Height = 80,
-                Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                CornerRadius = new CornerRadius(5),
-                Padding = new Thickness(3),
-                Margin = new Thickness(2),
-                BorderBrush = Brushes.Transparent,
-                BorderThickness = new Thickness(0)
-            };
-            
-            var stackPanel = new StackPanel
-            {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            
-            // Add image with optional phone overlay at the bottom (inside the image)
-            var imageContainer = new Grid
-            {
-                Width = 45,
-                Height = 45,
-                ClipToBounds = true
+                ["role"]             = absenceData.GetValueOrDefault("role", ""),
+                ["shield_color"]     = absenceData.GetValueOrDefault("shield_color", "Blue"),
+                ["show_shield"]      = absenceData.GetValueOrDefault("show_shield", false),
+                ["show_phone"]       = absenceData.GetValueOrDefault("show_phone", true),
+                ["sticker_paths"]    = absenceData.GetValueOrDefault("sticker_paths", new List<string>()),
+                ["medal_badge_path"] = absenceData.GetValueOrDefault("medal_badge_path", ""),
+                ["labels"]           = absenceData.GetValueOrDefault("labels", new List<object>()),
+                ["personnel_id"]     = absenceData.GetValueOrDefault("personnel_id", ""),
             };
 
-            var image = new Image
-            {
-                Stretch = Stretch.UniformToFill
-            };
-            
-            if (!string.IsNullOrEmpty(photoPath) && File.Exists(photoPath))
-            {
-                try
-                {
-                    image.Source = new BitmapImage(new Uri(photoPath, UriKind.Absolute));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to load image from {PhotoPath}", photoPath);
-                    image.Source = CreateEmployeePlaceholderImage(45);
-                }
-            }
-            else
-            {
-                image.Source = CreateEmployeePlaceholderImage(45);
-            }
-            
-            imageContainer.Children.Add(image);
-
-            if (showPhone && !string.IsNullOrWhiteSpace(phone))
-            {
-                var phoneOverlay = new Border
-                {
-                    Background = new SolidColorBrush(Color.FromArgb(160, 0, 0, 0)),
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    VerticalAlignment = VerticalAlignment.Bottom,
-                    Padding = new Thickness(1, 0, 1, 0)
-                };
-
-                var phoneText = new TextBlock
-                {
-                    Text = phone,
-                    Foreground = Brushes.White,
-                    FontSize = 7 * _fontSizeMultiplier,
-                    FontWeight = FontWeights.SemiBold,
-                    FontFamily = new FontFamily("Tahoma"),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    TextAlignment = TextAlignment.Center,
-                    TextWrapping = TextWrapping.NoWrap,
-                    TextTrimming = TextTrimming.CharacterEllipsis
-                };
-
-                phoneOverlay.Child = phoneText;
-                imageContainer.Children.Add(phoneOverlay);
-                Panel.SetZIndex(phoneOverlay, 10);
-            }
-
-            stackPanel.Children.Add(imageContainer);
-            
-            // Add name below photo
-            var nameText = new TextBlock
-            {
-                Text = displayName,
-                Foreground = Brushes.White,
-                FontSize = 9 * _fontSizeMultiplier,
-                FontWeight = FontWeights.Bold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 3, 0, 0)
-            };
-            stackPanel.Children.Add(nameText);
-            
-            card.Child = stackPanel;
-            return card;
+            // Reuse the exact same badge as the employee section
+            return CreateEmployeeCard(normalised, "");
         }
         
         private int GetAbsenceCount(Dictionary<string, object> absences, string category)
