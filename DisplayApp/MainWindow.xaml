@@ -47,6 +47,21 @@
                 </StackPanel>
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <!-- Custom Zoom Controls -->
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Badge Size" Foreground="White" FontSize="10" Width="60"/>
+                            <Slider x:Name="BadgeSizeSlider" Width="80" Minimum="30" Maximum="120" Value="55" 
+                                    ValueChanged="BadgeSizeSlider_ValueChanged"
+                                    TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="Group Size" Foreground="White" FontSize="10" Width="60"/>
+                            <Slider x:Name="GroupSizeSlider" Width="80" Minimum="0.5" Maximum="2.5" Value="1.0" 
+                                    ValueChanged="GroupSizeSlider_ValueChanged"
+                                    TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
                     <TextBlock x:Name="LastUpdateText" Text="{converters:Res display_last_update_label}" 
                               Style="{StaticResource BodyTextStyle}" Margin="10,0"/>
                     <TextBlock x:Name="CountdownText" Text="{converters:Res display_next_update_label}" 

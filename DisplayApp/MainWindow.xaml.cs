@@ -47,6 +47,10 @@ namespace DisplayApp
         private double _badgeWidth = 55;
         private double _badgeHeight = 70;
         private double _fontSizeMultiplier = 1.0;
+        private double _groupWidthScale = 1.0;
+        
+        // Caching last report data
+        private Dictionary<string, object> _lastReportData;
         
         // Chart data
         public SeriesCollection SeriesCollection { get; set; }
@@ -146,6 +150,28 @@ namespace DisplayApp
                 MessageBox.Show(ResourceManager.GetString("msg_error", "Error") + ": " + ex.Message,
                     ResourceManager.GetString("msg_error", "Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void BadgeSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded) return;
+            
+            // Re-calculate proportional height depending on slider value (55 -> 70 ratio approx)
+            _badgeWidth = e.NewValue;
+            _badgeHeight = e.NewValue * (70.0 / 55.0);
+            
+            if (_lastReportData != null)
+                UpdateUI(_lastReportData);
+        }
+
+        private void GroupSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!IsLoaded) return;
+            
+            _groupWidthScale = e.NewValue;
+            
+            if (_lastReportData != null)
+                UpdateUI(_lastReportData);
         }
 
         private string GetDisplayConfigPath()
@@ -429,6 +455,7 @@ namespace DisplayApp
                 var reportData = await _dataService.GetLatestReportAsync();
                 if (reportData != null)
                 {
+                    _lastReportData = reportData;
                     _logger.LogInformation("Report data loaded successfully. Keys: {Keys}", 
                         string.Join(", ", reportData.Keys));
                     
@@ -832,12 +859,15 @@ namespace DisplayApp
         private Border CreateGroupPanel(DisplayApp.Models.GroupDisplayModel group)
         {
             // Create the main border for the group
+            double minW = 160 * _groupWidthScale;
+            double maxW = 220 * _groupWidthScale;
+            
             var groupBorder = new Border
             {
                 Style = Application.Current.FindResource("CardStyle") as Style,
                 Margin = new Thickness(1), // Reduced margin
-                MinWidth = 160, // Reduced width since it's now vertical stack
-                MaxWidth = 220,
+                MinWidth = minW, 
+                MaxWidth = maxW,
                 VerticalAlignment = VerticalAlignment.Top // Prevent stretching to fill height
             };
             
