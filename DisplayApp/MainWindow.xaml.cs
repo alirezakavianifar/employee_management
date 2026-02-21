@@ -180,15 +180,7 @@ namespace DisplayApp
                 UpdateUI(_lastReportData);
         }
 
-        private void FontSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!IsLoaded) return;
-            
-            _fontSizeMultiplier = e.NewValue;
-            
-            if (_lastReportData != null)
-                UpdateUI(_lastReportData);
-        }
+
 
         private string GetDisplayConfigPath()
         {

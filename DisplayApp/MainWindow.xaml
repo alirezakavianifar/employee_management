@@ -48,25 +48,20 @@
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <!-- Custom Zoom Controls -->
-                    <StackPanel Orientation="Vertical" Margin="0,0,15,0" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Badge Size" Foreground="White" FontSize="10" Width="60"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,15,0" VerticalAlignment="Center">
+                        <StackPanel Orientation="Vertical" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <TextBlock Text="Badge Size" Foreground="White" FontSize="9" HorizontalAlignment="Center"/>
                             <Slider x:Name="BadgeSizeSlider" Width="80" Minimum="30" Maximum="120" Value="55" 
                                     ValueChanged="BadgeSizeSlider_ValueChanged"
                                     TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBlock Text="Group Size" Foreground="White" FontSize="10" Width="60"/>
+                        <StackPanel Orientation="Vertical" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <TextBlock Text="Group Size" Foreground="White" FontSize="9" HorizontalAlignment="Center"/>
                             <Slider x:Name="GroupSizeSlider" Width="80" Minimum="0.5" Maximum="2.5" Value="1.0" 
                                     ValueChanged="GroupSizeSlider_ValueChanged"
                                     TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBlock Text="Font Size" Foreground="White" FontSize="10" Width="60"/>
-                            <Slider x:Name="FontSizeSlider" Width="80" Minimum="0.4" Maximum="2.0" Value="1.0" 
-                                    ValueChanged="FontSizeSlider_ValueChanged"
-                                    TickFrequency="0.1" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
-                        </StackPanel>
+
                     </StackPanel>
                     <TextBlock x:Name="LastUpdateText" Text="{converters:Res display_last_update_label}" 
                               Style="{StaticResource BodyTextStyle}" Margin="10,0"/>
@@ -87,7 +82,7 @@
              <Border Grid.Row="0" Style="{StaticResource MainPanelStyle}" Margin="0,0,0,5">
                  <StackPanel>
                      <TextBlock Text="Managers" Style="{StaticResource SubtitleTextStyle}" Margin="0,0,0,2"/>
-                     <ScrollViewer Height="80" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                     <ScrollViewer x:Name="ManagersScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                          <Grid x:Name="ManagersGrid">
                              <Grid.ColumnDefinitions>
                                  <ColumnDefinition Width="*"/>
