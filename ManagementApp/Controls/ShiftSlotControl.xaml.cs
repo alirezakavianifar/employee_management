@@ -67,6 +67,15 @@ namespace ManagementApp.Controls
             set { SetValue(SlotIndexProperty, value); }
         }
 
+        public static readonly DependencyProperty BadgeSizeProperty =
+            DependencyProperty.Register("BadgeSize", typeof(double), typeof(ShiftSlotControl), new PropertyMetadata(250.0));
+
+        public double BadgeSize
+        {
+            get { return (double)GetValue(BadgeSizeProperty); }
+            set { SetValue(BadgeSizeProperty, value); }
+        }
+
         public ShiftSlotControl()
         {
             InitializeComponent();

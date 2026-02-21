@@ -88,6 +88,8 @@
     <string key="label_priority">Priority:</string>
     <string key="label_estimated_hours">Estimated Hours:</string>
     <string key="label_target_date">Target Date:</string>
+    <string key="label_badge_size">Badge Size:</string>
+    <string key="label_group_size">Group Size:</string>
     
     <!-- Buttons -->
     <string key="btn_add_employee">Add Employee</string>

@@ -1,4 +1,5 @@
 <Window x:Class="ManagementApp.Views.MainWindow"
+        x:Name="WindowRoot"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -508,6 +509,19 @@
                                         </Button>
                                     </StackPanel>
                                 </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Label Content="{converters:Res label_badge_size}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <Slider x:Name="BadgeSizeSlider" Minimum="50" Maximum="500" 
+                                            Value="{Binding BadgeSize, ElementName=WindowRoot, Mode=TwoWay}" 
+                                            Width="100" VerticalAlignment="Center" ValueChanged="BadgeSizeSlider_ValueChanged"/>
+                                    <TextBlock Text="{Binding Value, ElementName=BadgeSizeSlider, StringFormat=N0}" VerticalAlignment="Center" Margin="5,0,0,0" Width="30"/>
+
+                                    <Label Content="{converters:Res label_group_size}" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                                    <Slider x:Name="GroupSizeSlider" Minimum="200" Maximum="800" 
+                                            Value="{Binding GroupSize, ElementName=WindowRoot, Mode=TwoWay}" 
+                                            Width="100" VerticalAlignment="Center" ValueChanged="GroupSizeSlider_ValueChanged"/>
+                                    <TextBlock Text="{Binding Value, ElementName=GroupSizeSlider, StringFormat=N0}" VerticalAlignment="Center" Margin="5,0,0,0" Width="30"/>
+                                </StackPanel>
                                 <StackPanel Orientation="Vertical">
                                     <StackPanel Orientation="Horizontal">
                                         <CheckBox x:Name="AutoRotateCheckBox" 
@@ -566,12 +580,14 @@
                                 <ItemsControl x:Name="ShiftGroupsItemsControl">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
+                                            <WrapPanel Orientation="Horizontal"/>
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <controls:ShiftGroupControl Width="300" Margin="5"/>
+                                            <controls:ShiftGroupControl GroupWidth="{Binding GroupSize, ElementName=WindowRoot}" 
+                                                                        BadgeSize="{Binding BadgeSize, ElementName=WindowRoot}" 
+                                                                        Margin="5"/>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>

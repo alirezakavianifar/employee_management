@@ -14,6 +14,24 @@ namespace ManagementApp.Controls
             InitializeComponent();
         }
 
+        public static readonly DependencyProperty GroupWidthProperty =
+            DependencyProperty.Register("GroupWidth", typeof(double), typeof(ShiftGroupControl), new PropertyMetadata(300.0));
+
+        public double GroupWidth
+        {
+            get { return (double)GetValue(GroupWidthProperty); }
+            set { SetValue(GroupWidthProperty, value); }
+        }
+
+        public static readonly DependencyProperty BadgeSizeProperty =
+            DependencyProperty.Register("BadgeSize", typeof(double), typeof(ShiftGroupControl), new PropertyMetadata(250.0));
+
+        public double BadgeSize
+        {
+            get { return (double)GetValue(BadgeSizeProperty); }
+            set { SetValue(BadgeSizeProperty, value); }
+        }
+
         private void ShiftSlot_ItemDropped(object sender, ShiftDropEventArgs e)
         {
             if (DataContext is not ShiftGroup group) return;

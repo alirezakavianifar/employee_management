@@ -89,6 +89,24 @@ namespace ManagementApp.Views
         private int _lastTabIndex = 0;
         private bool _isInternalSelectionChange = false;
 
+        public static readonly DependencyProperty BadgeSizeProperty =
+            DependencyProperty.Register("BadgeSize", typeof(double), typeof(MainWindow), new PropertyMetadata(250.0));
+
+        public double BadgeSize
+        {
+            get => (double)GetValue(BadgeSizeProperty);
+            set => SetValue(BadgeSizeProperty, value);
+        }
+
+        public static readonly DependencyProperty GroupSizeProperty =
+            DependencyProperty.Register("GroupSize", typeof(double), typeof(MainWindow), new PropertyMetadata(300.0));
+
+        public double GroupSize
+        {
+            get => (double)GetValue(GroupSizeProperty);
+            set => SetValue(GroupSizeProperty, value);
+        }
+
         public MainWindow()
         {
             // Initialize logger first (before InitializeComponent to catch any XAML errors)
@@ -6486,6 +6504,16 @@ namespace ManagementApp.Views
             {
                 _logger.LogError(ex, "Error in ShiftGroupComboBox_SelectionChanged");
             }
+        }
+
+        private void BadgeSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // Binding in XAML handles live updates
+        }
+
+        private void GroupSizeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // Binding in XAML handles live updates
         }
     }
 }
