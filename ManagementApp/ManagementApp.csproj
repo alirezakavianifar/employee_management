@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <AssemblyTitle>Employee Shift Management System</AssemblyTitle>
     <AssemblyDescription>A WPF application for managing employee shifts with Persian/Arabic language support</AssemblyDescription>
     <AssemblyCompany>Management Systems</AssemblyCompany>
