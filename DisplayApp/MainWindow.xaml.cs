@@ -650,10 +650,10 @@ namespace DisplayApp
             // Manager photo - properly centered (same as regular employees)
             var image = new Image
             {
-                Stretch = Stretch.UniformToFill, // Fill and crop to center
+                Stretch = Stretch.UniformToFill, // Fill and crop
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0) // No margin to ensure proper centering
+                VerticalAlignment = VerticalAlignment.Top, // Align to top so heads are not cropped
+                Margin = new Thickness(0, -largeRectHeight * 0.10, 0, 0) // Shift up slightly to show more of the bottom
             };
             
             var managerPhotoPath = managerData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
@@ -1323,10 +1323,10 @@ namespace DisplayApp
             // Employee photo - properly centered
             var image = new Image
             {
-                Stretch = Stretch.UniformToFill, // Fill and crop to center
+                Stretch = Stretch.UniformToFill, // Fill and crop
                 HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0) // No margin to ensure proper centering
+                VerticalAlignment = VerticalAlignment.Top, // Align to top so heads are not cropped
+                Margin = new Thickness(0, -largeRectHeight * 0.10, 0, 0) // Shift up slightly to show more of the bottom
             };
             
             var rawPhotoPath = employeeData.TryGetValue("photo_path", out var photoPath) ? photoPath?.ToString() : null;
