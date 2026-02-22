@@ -1289,10 +1289,11 @@ namespace DisplayApp
             // Create main badge container
             var card = new Border
             {
-                Background = Brushes.White,
+                Background = Brushes.Transparent,
                 BorderBrush = borderBrush,
                 BorderThickness = new Thickness(borderThickness),
-                CornerRadius = new CornerRadius(4),
+                CornerRadius = new CornerRadius(0),
+                Padding = new Thickness(0),
                 Margin = new Thickness(1), // Reduced margin
                 Width = badgeWidth,
                 Height = badgeHeight,
@@ -1459,8 +1460,8 @@ namespace DisplayApp
                 Stretch = Stretch.Uniform,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Width = badgeWidth - 4,
-                Height = smallRectHeight - 2
+                Width = badgeWidth - 2,
+                Height = smallRectHeight
             };
             
             nameContainer.Children.Add(nameViewbox);
