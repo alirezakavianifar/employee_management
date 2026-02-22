@@ -20,6 +20,7 @@ namespace ManagementApp
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            Views.SplashWindow? splash = null;
             try
             {
                 // Setup Georgian culture and LTR support
@@ -41,8 +42,16 @@ namespace ManagementApp
                 DispatcherUnhandledException += OnDispatcherUnhandledException;
                 
                 base.OnStartup(e);
+
+                // Show splash screen immediately so users see loading feedback
+                splash = new Views.SplashWindow();
+                splash.Show();
+                Logger.LogInformation("Splash screen shown");
+
+                // Force the splash to render before blocking the UI thread with MainWindow init
+                Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
                 
-                // Explicitly create and show MainWindow for better error handling
+                // Create and show MainWindow (heavy initialization)
                 try
                 {
                     var mainWindow = new Views.MainWindow();
@@ -61,11 +70,17 @@ namespace ManagementApp
                     Shutdown(1);
                     return;
                 }
+                finally
+                {
+                    // Always close splash when done (success or error)
+                    splash?.Close();
+                }
                 
                 Logger.LogInformation("Management Application started successfully");
             }
             catch (Exception ex)
             {
+                splash?.Close();
                 Logger?.LogError(ex, "Failed to start Management Application");
                 var errorMessage = $"Error starting application:\n\n{ex.Message}\n\nDetails:\n{ex}";
                 MessageBox.Show(errorMessage, "Error", 

@@ -88,6 +88,7 @@ namespace ManagementApp.Views
         
         private int _lastTabIndex = 0;
         private bool _isInternalSelectionChange = false;
+        private bool _settingsPasswordVerified = false;
 
         public static readonly DependencyProperty BadgeSizeProperty =
             DependencyProperty.Register("BadgeSize", typeof(double), typeof(MainWindow), new PropertyMetadata(250.0));
@@ -1606,8 +1607,8 @@ namespace ManagementApp.Views
 
             try
             {
-                // When settings tab is selected, check password
-                if (MainTabControl.SelectedItem == SettingsTabItem)
+                // When settings tab is selected, check password (only once per session)
+                if (MainTabControl.SelectedItem == SettingsTabItem && !_settingsPasswordVerified)
                 {
                     var passwordDialog = new PasswordDialog();
                     // Set owner to center it over main window
@@ -1624,6 +1625,8 @@ namespace ManagementApp.Views
                             _isInternalSelectionChange = false;
                             return;
                         }
+                        // Password verified — remember for the rest of this session
+                        _settingsPasswordVerified = true;
                     }
                     else
                     {
