@@ -610,17 +610,15 @@ namespace DisplayApp
             // Badge dimensions 
             double badgeWidth = _badgeWidth;
             double badgeHeight = _badgeHeight;
-            double borderThickness = 1; // Thick blue border
+            double borderThickness = 2; // Thick blue border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
             
-            // Create main badge container with blue border (same as regular employees)
+            var managerBorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)); // Blue border
+            // Create main badge container (no border - individual sections get their own frames)
             var card = new Border
             {
-                Background = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(0, 100, 200)), // Blue border
-                BorderThickness = new Thickness(borderThickness),
-                CornerRadius = new CornerRadius(4),
+                Background = Brushes.Transparent,
                 Margin = new Thickness(1), // Reduced margin
                 Width = badgeWidth,
                 Height = badgeHeight,
@@ -723,8 +721,16 @@ namespace DisplayApp
                 Panel.SetZIndex(phoneOverlay, 80);
             }
 
-            Grid.SetRow(photoContainer, 0);
-            badgeGrid.Children.Add(photoContainer);
+            // Wrap photo in its own blue-bordered frame
+            var photoBorder = new Border
+            {
+                BorderBrush = managerBorderBrush,
+                BorderThickness = new Thickness(borderThickness),
+                ClipToBounds = true
+            };
+            photoBorder.Child = photoContainer;
+            Grid.SetRow(photoBorder, 0);
+            badgeGrid.Children.Add(photoBorder);
             
             // Small rectangle (bottom 1/3) - Name area (white background)
             var nameContainer = new Grid
@@ -791,8 +797,16 @@ namespace DisplayApp
             };
             
             nameContainer.Children.Add(nameViewbox);
-            Grid.SetRow(nameContainer, 1);
-            badgeGrid.Children.Add(nameContainer);
+            // Wrap name in its own blue-bordered frame
+            var nameBorder = new Border
+            {
+                BorderBrush = managerBorderBrush,
+                BorderThickness = new Thickness(borderThickness),
+                ClipToBounds = true
+            };
+            nameBorder.Child = nameContainer;
+            Grid.SetRow(nameBorder, 1);
+            badgeGrid.Children.Add(nameBorder);
             
             card.Child = badgeGrid;
             return card;
@@ -1278,7 +1292,7 @@ namespace DisplayApp
             // Badge dimensions
             double badgeWidth = _badgeWidth;
             double badgeHeight = _badgeHeight;
-            double borderThickness = 1; // Thick border
+            double borderThickness = 2; // Thick border
             double largeRectHeight = badgeHeight * 2.0 / 3.0; // Top 2/3 for photo
             double smallRectHeight = badgeHeight / 3.0; // Bottom 1/3 for name
 
@@ -1286,14 +1300,10 @@ namespace DisplayApp
             var shieldColorName = employeeData.GetValueOrDefault("shield_color", "Blue")?.ToString() ?? "Blue";
             var borderBrush = showShield ? GetShieldColorBrush(shieldColorName) : new SolidColorBrush(Color.FromRgb(0, 100, 200));
 
-            // Create main badge container
+            // Create main badge container (no border - individual sections get their own frames)
             var card = new Border
             {
                 Background = Brushes.Transparent,
-                BorderBrush = borderBrush,
-                BorderThickness = new Thickness(borderThickness),
-                CornerRadius = new CornerRadius(0),
-                Padding = new Thickness(0),
                 Margin = new Thickness(1), // Reduced margin
                 Width = badgeWidth,
                 Height = badgeHeight,
@@ -1397,8 +1407,16 @@ namespace DisplayApp
                 Panel.SetZIndex(phoneOverlay, 80);
             }
 
-            Grid.SetRow(photoContainer, 0);
-            badgeGrid.Children.Add(photoContainer);
+            // Wrap photo in its own blue-bordered frame
+            var photoBorder = new Border
+            {
+                BorderBrush = borderBrush,
+                BorderThickness = new Thickness(borderThickness),
+                ClipToBounds = true
+            };
+            photoBorder.Child = photoContainer;
+            Grid.SetRow(photoBorder, 0);
+            badgeGrid.Children.Add(photoBorder);
             
             // Small rectangle (bottom 1/3) - Name area (white background)
             var nameContainer = new Grid
@@ -1465,8 +1483,16 @@ namespace DisplayApp
             };
             
             nameContainer.Children.Add(nameViewbox);
-            Grid.SetRow(nameContainer, 1);
-            badgeGrid.Children.Add(nameContainer);
+            // Wrap name in its own blue-bordered frame
+            var nameBorder = new Border
+            {
+                BorderBrush = borderBrush,
+                BorderThickness = new Thickness(borderThickness),
+                ClipToBounds = true
+            };
+            nameBorder.Child = nameContainer;
+            Grid.SetRow(nameBorder, 1);
+            badgeGrid.Children.Add(nameBorder);
             
             // Add stickers on the right side of the photo (inside the image frame, displayed vertically)
             if (employeeData.TryGetValue("sticker_paths", out var stickerPathsObj) && stickerPathsObj != null)
