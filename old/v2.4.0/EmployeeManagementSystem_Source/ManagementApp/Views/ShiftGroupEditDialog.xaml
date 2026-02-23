@@ -1,0 +1,123 @@
+<Window x:Class="ManagementApp.Views.ShiftGroupEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:ManagementApp.Converters"
+        xmlns:utils="clr-namespace:Shared.Utils;assembly=Shared"
+        Title="{converters:Res dialog_add_shift_group}" Height="750" Width="580"
+        MinHeight="600" MinWidth="500"
+        FlowDirection="{Binding FlowDirection, Source={x:Static utils:ResourceBridge.Instance}}"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <StackPanel>
+                <!-- Group Name -->
+                <StackPanel Margin="0,0,0,15">
+                    <Label Content="{converters:Res label_group_name}" FontWeight="Bold"/>
+                    <TextBox x:Name="NameTextBox" Height="30" VerticalContentAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Description -->
+                <StackPanel Margin="0,0,0,15">
+                    <Label Content="{converters:Res label_description}" FontWeight="Bold"/>
+                    <TextBox x:Name="DescriptionTextBox" Height="80" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+
+                <!-- Color -->
+                <StackPanel Margin="0,0,0,15">
+                    <Label Content="{converters:Res label_group_color}" FontWeight="Bold"/>
+                    <Button x:Name="ColorPickerButton" Height="35" Click="ColorPickerButton_Click" HorizontalContentAlignment="Stretch">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="ColorPreviewBorder" Grid.Column="0" Width="45" Height="25" 
+                                    BorderBrush="Gray" BorderThickness="1" Margin="5,0,10,0" 
+                                    Background="#4CAF50"/>
+                            <TextBlock x:Name="ColorHexTextBlock" Grid.Column="1" Text="#4CAF50" 
+                                       VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                       Margin="0,0,10,0"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+
+                <!-- Capacity -->
+                <StackPanel Margin="0,0,0,15">
+                    <Label Content="{converters:Res label_shift_capacity}" FontWeight="Bold"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <Label Content="{converters:Res shift_morning}" FontSize="11"/>
+                            <TextBox x:Name="MorningCapacityTextBox" Text="15" Height="30" VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,5,0">
+                            <Label Content="{converters:Res shift_afternoon}" FontSize="11"/>
+                            <TextBox x:Name="AfternoonCapacityTextBox" Text="15" Height="30" VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="5,0,0,0">
+                            <Label Content="{converters:Res shift_night}" FontSize="11"/>
+                            <TextBox x:Name="NightCapacityTextBox" Text="15" Height="30" VerticalContentAlignment="Center" PreviewTextInput="NumberValidationTextBox"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Foreman Selection -->
+                <StackPanel Margin="0,0,0,15">
+                    <Label Content="{converters:Res label_shift_supervisors}" FontWeight="Bold" Margin="0,0,0,10"/>
+                    
+                    <!-- Morning Shift Foreman -->
+                    <StackPanel Margin="0,0,0,12">
+                        <Label Content="{converters:Res label_morning_supervisor}" FontSize="12"/>
+                        <ComboBox x:Name="MorningForemanComboBox" Height="32" VerticalContentAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FullName}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    
+                    <!-- Afternoon Shift Foreman -->
+                    <StackPanel Margin="0,0,0,12">
+                        <Label Content="{converters:Res label_afternoon_supervisor}" FontSize="12"/>
+                        <ComboBox x:Name="AfternoonForemanComboBox" Height="32" VerticalContentAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FullName}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    
+                    <!-- Night Shift Foreman -->
+                    <StackPanel Margin="0,0,0,10">
+                        <Label Content="{converters:Res label_night_supervisor}" FontSize="12"/>
+                        <ComboBox x:Name="NightForemanComboBox" Height="32" VerticalContentAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding FullName}" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="OkButton" Content="{converters:Res btn_ok}" Width="100" Height="35" Margin="0,0,10,0" Click="OkButton_Click" IsDefault="True"/>
+            <Button x:Name="CancelButton" Content="{converters:Res btn_cancel}" Width="100" Height="35" Click="CancelButton_Click" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

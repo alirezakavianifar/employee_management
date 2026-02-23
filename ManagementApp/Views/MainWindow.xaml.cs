@@ -88,7 +88,8 @@ namespace ManagementApp.Views
         
         private int _lastTabIndex = 0;
         private bool _isInternalSelectionChange = false;
-        private bool _settingsPasswordVerified = false;
+        // Password is verified once at startup (see App.xaml.cs), so this is always true at runtime.
+        private bool _settingsPasswordVerified = true;
 
         public static readonly DependencyProperty BadgeSizeProperty =
             DependencyProperty.Register("BadgeSize", typeof(double), typeof(MainWindow), new PropertyMetadata(250.0));
@@ -1607,37 +1608,6 @@ namespace ManagementApp.Views
 
             try
             {
-                // When settings tab is selected, check password (only once per session)
-                if (MainTabControl.SelectedItem == SettingsTabItem && !_settingsPasswordVerified)
-                {
-                    var passwordDialog = new PasswordDialog();
-                    // Set owner to center it over main window
-                    passwordDialog.Owner = this;
-                    
-                    if (passwordDialog.ShowDialog() == true)
-                    {
-                        var expectedPassword = AppConfigHelper.Config.AdminPassword;
-                        if (passwordDialog.Password != expectedPassword)
-                        {
-                            MessageBox.Show("Invalid password. Access denied.", "Access Denied", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            _isInternalSelectionChange = true;
-                            MainTabControl.SelectedIndex = _lastTabIndex;
-                            _isInternalSelectionChange = false;
-                            return;
-                        }
-                        // Password verified — remember for the rest of this session
-                        _settingsPasswordVerified = true;
-                    }
-                    else
-                    {
-                        // Cancelled
-                        _isInternalSelectionChange = true;
-                        MainTabControl.SelectedIndex = _lastTabIndex;
-                        _isInternalSelectionChange = false;
-                        return;
-                    }
-                }
-
                 _lastTabIndex = MainTabControl.SelectedIndex;
 
                 // When Employee Management tab (index 0) is selected, load absence lists

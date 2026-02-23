@@ -43,6 +43,13 @@ namespace ManagementApp
                 
                 base.OnStartup(e);
 
+                // Require password before showing the application
+                if (!VerifyStartupPassword())
+                {
+                    Shutdown(0);
+                    return;
+                }
+
                 // Show splash screen immediately so users see loading feedback
                 splash = new Views.SplashWindow();
                 splash.Show();
@@ -107,6 +114,39 @@ namespace ManagementApp
                 // Logging not configured yet, so just continue
                 // Error will be logged after ConfigureLogging is called
             }
+        }
+
+        /// <summary>
+        /// Shows the password dialog at startup. Returns true if the correct password
+        /// was entered, false if the user cancelled (in which case the app should exit).
+        /// Re-prompts on wrong password until cancelled or correct.
+        /// </summary>
+        private bool VerifyStartupPassword()
+        {
+            var expectedPassword = Shared.Utils.AppConfigHelper.Config.AdminPassword;
+
+            // If no password is configured, skip the prompt
+            if (string.IsNullOrEmpty(expectedPassword))
+                return true;
+
+            // Prevent WPF from shutting down when the dialog window closes
+            // (default ShutdownMode=OnLastWindowClose would trigger shutdown after first dialog)
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            var dialog = new Views.PasswordDialog(expectedPassword);
+            var result = dialog.ShowDialog();
+
+            // Restore normal shutdown behaviour now that the main window will open
+            ShutdownMode = ShutdownMode.OnLastWindowClose;
+
+            if (result == true)
+            {
+                Logger.LogInformation("Startup password verified successfully");
+                return true;
+            }
+
+            // User cancelled
+            return false;
         }
 
         protected override void OnExit(ExitEventArgs e)

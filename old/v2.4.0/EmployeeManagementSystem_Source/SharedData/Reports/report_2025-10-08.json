@@ -1,0 +1,346 @@
+﻿{
+  "date": "2025-10-08",
+  "employees": [
+    {
+      "employee_id": "emp_0_1758802432",
+      "first_name": "محمد",
+      "last_name": "معصومی",
+      "role": "supervisor",
+      "role_id": "supervisor",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-25T15:43:52",
+      "updated_at": "2025-09-25T16:14:07"
+    },
+    {
+      "employee_id": "emp_2_1758859588",
+      "first_name": "محمود",
+      "last_name": "عفزی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "group_1758859097",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\3.png",
+      "is_manager": false,
+      "created_at": "2025-09-26T07:36:28",
+      "updated_at": "2025-09-26T13:37:05"
+    },
+    {
+      "employee_id": "emp_4_1758880570",
+      "first_name": "محد",
+      "last_name": "بقال",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:26:10",
+      "updated_at": "2025-09-26T13:26:10"
+    },
+    {
+      "employee_id": "emp_5_1758880580",
+      "first_name": "حسین",
+      "last_name": "بهروزی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:26:20",
+      "updated_at": "2025-09-26T13:26:20"
+    },
+    {
+      "employee_id": "emp_6_1758880589",
+      "first_name": "عثمان",
+      "last_name": "دمبله",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:26:29",
+      "updated_at": "2025-09-26T13:26:29"
+    },
+    {
+      "employee_id": "emp_7_1758880600",
+      "first_name": "سحر",
+      "last_name": "خسروی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\1-after.png",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:26:40",
+      "updated_at": "2025-10-08T11:21:52"
+    },
+    {
+      "employee_id": "emp_8_1758880610",
+      "first_name": "زانیار",
+      "last_name": "منصوری",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:26:50",
+      "updated_at": "2025-09-26T13:26:50"
+    },
+    {
+      "employee_id": "emp_10_1758880757",
+      "first_name": "زینب",
+      "last_name": "کاویانی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:29:17",
+      "updated_at": "2025-09-26T13:29:17"
+    },
+    {
+      "employee_id": "emp_11_1758880769",
+      "first_name": "زهره",
+      "last_name": "رحیمی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:29:29",
+      "updated_at": "2025-09-26T13:29:29"
+    },
+    {
+      "employee_id": "emp_12_1758880779",
+      "first_name": "مهران",
+      "last_name": "حسینی",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:29:39",
+      "updated_at": "2025-09-26T13:29:39"
+    },
+    {
+      "employee_id": "emp_13_1758880793",
+      "first_name": "حسن",
+      "last_name": "بهراد",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:29:53",
+      "updated_at": "2025-09-26T13:29:53"
+    },
+    {
+      "employee_id": "emp_14_1758880806",
+      "first_name": "سجاد",
+      "last_name": "نیسکرشت",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:30:06",
+      "updated_at": "2025-09-26T13:30:06"
+    },
+    {
+      "employee_id": "emp_15_1758880826",
+      "first_name": "عبدالزهرا",
+      "last_name": "بیت حردان",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "2025-09-26T13:30:26",
+      "updated_at": "2025-09-26T13:30:26"
+    }
+  ],
+  "managers": [
+    {
+      "employee_id": "emp_3_1758870434",
+      "first_name": "احسان",
+      "last_name": "منصوری",
+      "role": "employee",
+      "role_id": "employee",
+      "shift_group_id": "default",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\Screenshot 2025-09-18 at 21-51-55 داشبورد آنالیتیک - نمونه کار محمد حسین بیرانوند.jpg",
+      "is_manager": true,
+      "created_at": "2025-09-26T10:37:14",
+      "updated_at": "2025-10-08T11:22:49"
+    },
+    {
+      "employee_id": "emp_1_1758802482",
+      "first_name": "الهام",
+      "last_name": "کریمی",
+      "role": "contractor",
+      "role_id": "contractor",
+      "shift_group_id": "default",
+      "photo_path": "",
+      "is_manager": true,
+      "created_at": "2025-09-25T15:44:42",
+      "updated_at": "2025-10-03T19:40:01"
+    },
+    {
+      "employee_id": "emp_9_1758880622",
+      "first_name": "محبوبه",
+      "last_name": "حبیبی",
+      "role": "manager",
+      "role_id": "manager",
+      "shift_group_id": "default",
+      "photo_path": "C:\\Users\\Administrator\\Downloads\\2.png",
+      "is_manager": true,
+      "created_at": "2025-09-26T13:27:02",
+      "updated_at": "2025-09-26T13:27:35"
+    }
+  ],
+  "roles": {
+    "roles": [
+      {
+        "role_id": "manager",
+        "name": "مدیر",
+        "description": "مدیر سیستم",
+        "color": "#FF5722",
+        "priority": 100,
+        "is_active": true,
+        "created_at": "2025-10-08T11:20:57",
+        "updated_at": "2025-10-08T11:20:57"
+      },
+      {
+        "role_id": "supervisor",
+        "name": "سرپرست",
+        "description": "سرپرست تیم",
+        "color": "#FF9800",
+        "priority": 80,
+        "is_active": true,
+        "created_at": "2025-10-08T11:20:57",
+        "updated_at": "2025-10-08T11:20:57"
+      },
+      {
+        "role_id": "employee",
+        "name": "کارمند",
+        "description": "کارمند عادی",
+        "color": "#4CAF50",
+        "priority": 50,
+        "is_active": true,
+        "created_at": "2025-10-08T11:20:57",
+        "updated_at": "2025-10-08T11:20:57"
+      },
+      {
+        "role_id": "intern",
+        "name": "کارآموز",
+        "description": "کارآموز",
+        "color": "#2196F3",
+        "priority": 30,
+        "is_active": true,
+        "created_at": "2025-10-08T11:20:57",
+        "updated_at": "2025-10-08T11:20:57"
+      },
+      {
+        "role_id": "contractor",
+        "name": "پیمانکار",
+        "description": "پیمانکار",
+        "color": "#9C27B0",
+        "priority": 20,
+        "is_active": true,
+        "created_at": "2025-10-08T11:20:57",
+        "updated_at": "2025-10-08T11:20:57"
+      }
+    ],
+    "last_modified": "2025-10-08T11:22:49"
+  },
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 5,
+      "assigned_employees": []
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 5,
+      "assigned_employees": []
+    },
+    "selected_group": {
+      "group_id": "default",
+      "name": "گروه پیش‌فرض",
+      "description": "گروه پیش‌فرض برای سازگاری با نسخه‌های قبلی",
+      "color": "#4CAF50",
+      "is_active": true,
+      "morning_capacity": 15,
+      "evening_capacity": 15,
+      "morning_shift": {
+        "shift_type": "morning",
+        "capacity": 15,
+        "assigned_employees": [
+          {
+            "employee_id": "emp_2_1758859588",
+            "first_name": "محمود",
+            "last_name": "عفزی",
+            "role": "employee",
+            "role_id": "employee",
+            "shift_group_id": "group_1758859097",
+            "photo_path": "C:\\Users\\Administrator\\Downloads\\3.png",
+            "is_manager": false,
+            "created_at": "2025-09-26T07:36:28",
+            "updated_at": "2025-09-26T13:37:05"
+          }
+        ]
+      },
+      "evening_shift": {
+        "shift_type": "evening",
+        "capacity": 15,
+        "assigned_employees": [
+          {
+            "employee_id": "emp_5_1758880580",
+            "first_name": "حسین",
+            "last_name": "بهروزی",
+            "role": "employee",
+            "role_id": "employee",
+            "shift_group_id": "default",
+            "photo_path": "",
+            "is_manager": false,
+            "created_at": "2025-09-26T13:26:20",
+            "updated_at": "2025-09-26T13:26:20"
+          }
+        ]
+      }
+    }
+  },
+  "shift_groups": {
+    "DefaultGroupId": "default",
+    "ShiftGroups": {
+      "default": "{\r\n  \"GroupId\": \"default\",\r\n  \"Name\": \"گروه پیش‌فرض\",\r\n  \"Description\": \"گروه پیش‌فرض برای سازگاری با نسخه‌های قبلی\",\r\n  \"Color\": \"#4CAF50\",\r\n  \"MorningCapacity\": 15,\r\n  \"EveningCapacity\": 15,\r\n  \"IsActive\": true,\r\n  \"CreatedAt\": \"2025-10-08T11:16:54.3053896+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:16:54.3054305+03:30\",\r\n  \"MorningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"morning\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_2_1758859588\\\",\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-10-08T11:16:54.3055461+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-10-08T11:22:38.8106054+03:30\\\"\\r\\n}\",\r\n  \"EveningShift\": \"{\\r\\n  \\\"ShiftType\\\": \\\"evening\\\",\\r\\n  \\\"Capacity\\\": 15,\\r\\n  \\\"AssignedEmployeeIds\\\": [\\r\\n    \\\"emp_5_1758880580\\\",\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null,\\r\\n    null\\r\\n  ],\\r\\n  \\\"CreatedAt\\\": \\\"2025-10-08T11:16:54.3056316+03:30\\\",\\r\\n  \\\"UpdatedAt\\\": \\\"2025-10-08T11:17:10.5647048+03:30\\\"\\r\\n}\"\r\n}"
+    }
+  },
+  "absences": {
+    "مرخصی": [
+      "{\r\n  \"EmployeeId\": \"emp_7_1758880600\",\r\n  \"FirstName\": \"سحر\",\r\n  \"LastName\": \"خسروی\",\r\n  \"EmployeeName\": \"سحر خسروی\",\r\n  \"PhotoPath\": \"C:\\\\Users\\\\Administrator\\\\Downloads\\\\1-after.png\",\r\n  \"Category\": \"مرخصی\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:21:41.5681298+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:21:41.5682269+03:30\"\r\n}",
+      "{\r\n  \"EmployeeId\": \"emp_12_1758880779\",\r\n  \"FirstName\": \"مهران\",\r\n  \"LastName\": \"حسینی\",\r\n  \"EmployeeName\": \"مهران حسینی\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"مرخصی\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:21:59.2276496+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:21:59.2276628+03:30\"\r\n}"
+    ],
+    "بیمار": [
+      "{\r\n  \"EmployeeId\": \"emp_6_1758880589\",\r\n  \"FirstName\": \"عثمان\",\r\n  \"LastName\": \"دمبله\",\r\n  \"EmployeeName\": \"عثمان دمبله\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"بیمار\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:22:08.0268266+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:22:08.0268347+03:30\"\r\n}"
+    ],
+    "غایب": [
+      "{\r\n  \"EmployeeId\": \"emp_14_1758880806\",\r\n  \"FirstName\": \"سجاد\",\r\n  \"LastName\": \"نیسکرشت\",\r\n  \"EmployeeName\": \"سجاد نیسکرشت\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"غایب\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:22:17.9164422+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:22:17.916449+03:30\"\r\n}",
+      "{\r\n  \"EmployeeId\": \"emp_1_1758802482\",\r\n  \"FirstName\": \"الهام\",\r\n  \"LastName\": \"کریمی\",\r\n  \"EmployeeName\": \"الهام کریمی\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"غایب\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:22:21.3753422+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:22:21.3753487+03:30\"\r\n}",
+      "{\r\n  \"EmployeeId\": \"emp_9_1758880622\",\r\n  \"FirstName\": \"محبوبه\",\r\n  \"LastName\": \"حبیبی\",\r\n  \"EmployeeName\": \"محبوبه حبیبی\",\r\n  \"PhotoPath\": \"C:\\\\Users\\\\Administrator\\\\Downloads\\\\2.png\",\r\n  \"Category\": \"غایب\",\r\n  \"Date\": \"2025/10/08\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-10-08T11:22:24.7720165+03:30\",\r\n  \"UpdatedAt\": \"2025-10-08T11:22:24.772024+03:30\"\r\n}"
+    ]
+  },
+  "tasks": {
+    "Tasks": {
+      "TASK_0001": "{\r\n  \"TaskId\": \"TASK_0001\",\r\n  \"Title\": \"weee\",\r\n  \"Description\": \"\",\r\n  \"Priority\": \"متوسط\",\r\n  \"EstimatedHours\": 1.0,\r\n  \"TargetDate\": \"1404/06/29\",\r\n  \"Status\": \"در حال انجام\",\r\n  \"AssignedEmployees\": [\r\n    \"EMP_008\"\r\n  ],\r\n  \"StartDate\": null,\r\n  \"CompletionDate\": null,\r\n  \"ActualHours\": 0.0,\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-20T21:50:03.1612413+03:30\",\r\n  \"UpdatedAt\": \"2025-09-20T21:50:12.2091706+03:30\"\r\n}"
+    },
+    "NextTaskId": 2
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "D:\\projects\\employee_management_csharp\\SharedData",
+    "managers": [],
+    "selected_display_group_id": "default"
+  },
+  "last_modified": "2025-10-08T11:22:49"
+}

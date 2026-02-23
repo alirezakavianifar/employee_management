@@ -1,0 +1,1542 @@
+<Window x:Class="ManagementApp.Views.MainWindow"
+        x:Name="WindowRoot"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ManagementApp.Views"
+        xmlns:converters="clr-namespace:ManagementApp.Converters"
+        xmlns:controls="clr-namespace:ManagementApp.Controls"
+        mc:Ignorable="d"
+        Title="{converters:Res app_title}" 
+        WindowState="Maximized"
+        FlowDirection="LeftToRight"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.Resources>
+        <converters:EmployeePhotoConverter x:Key="EmployeePhotoConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2E3440" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{converters:Res app_title}" 
+                          FontFamily="Tahoma" 
+                          FontSize="18" 
+                          FontWeight="Bold" 
+                          Foreground="White" 
+                          VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding CurrentDate}" 
+                          FontFamily="Tahoma" 
+                          FontSize="14" 
+                          Foreground="LightGray" 
+                          VerticalAlignment="Center" 
+                          Margin="20,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl x:Name="MainTabControl" Grid.Row="1" Margin="10" SelectionChanged="MainTabControl_SelectionChanged">
+            <TabItem Header="{converters:Res tab_employee_management}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Employee List -->
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_employee_list}" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Search Box -->
+                            <TextBox Grid.Row="0" 
+                                    x:Name="EmployeeSearchBox"
+                                    Text="{converters:Res label_search}" 
+                                    Foreground="Gray"
+                                    Margin="5"/>
+                            
+                            <!-- Employee List -->
+                            <ListBox Grid.Row="1" 
+                                    x:Name="EmployeeListBox"
+                                    DisplayMemberPath="FullName"
+                                    SelectionChanged="EmployeeListBox_SelectionChanged"
+                                    PreviewMouseLeftButtonDown="EmployeeListBox_PreviewMouseLeftButtonDown"
+                                    MouseMove="EmployeeListBox_MouseMove"
+                                    MouseLeftButtonUp="EmployeeListBox_MouseLeftButtonUp"
+                                    Margin="5"/>
+
+                            <!-- Employee Actions -->
+                            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
+                                <Button Content="{converters:Res btn_add_employee}" Click="AddEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_edit_employee}" Click="EditEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_delete_employee}" Click="DeleteEmployee_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_manage_roles}" Click="ManageRoles_Click" Margin="2" Background="#9C27B0" Foreground="White"/>
+                                <Button Content="{converters:Res btn_manage_shift_groups}" Click="ManageShiftGroups_Click" Margin="2" Background="#FF5722" Foreground="White"/>
+                                <Button Content="{converters:Res btn_manage_status_cards}" Click="ManageStatusCards_Click" Margin="2" Background="#2196F3" Foreground="White"/>
+                                <Button Content="{converters:Res btn_import_csv}" Click="ImportCSV_Click" Margin="2"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Splitter 1 -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Employee Details -->
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_employee_details}" Margin="5">
+                        <Grid x:Name="EmployeeDetailsGrid" Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_name}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="FirstNameTextBox" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_last_name}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="LastNameTextBox" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_position}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="RoleComboBox" Margin="5"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_manager_role}"/>
+                            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="IsManagerCheckBox" Content="{converters:Res checkbox_is_manager}" Margin="5"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="{converters:Res label_photo}"/>
+                            <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                <Button Content="{converters:Res btn_select_photo}" Click="SelectPhoto_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_save_changes}" Click="SaveEmployeeChanges_Click"/>
+                            </StackPanel>
+
+                            <!-- Employee Photo -->
+                            <Image Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
+                                  x:Name="EmployeePhoto" 
+                                  Width="200" Height="200" 
+                                  Stretch="Uniform"
+                                  Margin="10"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Splitter 2 -->
+                    <GridSplitter Grid.Column="3" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Absence Management -->
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
+                        <StackPanel Margin="10">
+                            <Label Content="{converters:Res label_absence_type}"/>
+                            <ComboBox x:Name="AbsenceTypeComboBox" Margin="0,5">
+                                <ComboBoxItem Content="{converters:Res absence_leave}"/>
+                                <ComboBoxItem Content="{converters:Res absence_sick}"/>
+                                <ComboBoxItem Content="{converters:Res absence_absent}"/>
+                            </ComboBox>
+
+                            <Label Content="{converters:Res label_absence_date}" Margin="0,10,0,5"/>
+                            <controls:GeorgianDatePicker x:Name="AbsenceDatePicker" Margin="0,0,0,10"/>
+
+                            <Label Content="{converters:Res label_notes}" Margin="0,10,0,5"/>
+                            <TextBox x:Name="AbsenceNotesTextBox" 
+                                    Height="60" 
+                                    TextWrapping="Wrap" 
+                                    AcceptsReturn="True"
+                                    Margin="0,0,0,10"/>
+
+                            <Button Content="{converters:Res btn_mark_absent}" Click="MarkAbsent_Click" Margin="0,5"/>
+                            <Button Content="{converters:Res btn_remove_absence}" Click="RemoveAbsence_Click" Margin="0,5"/>
+
+                            <!-- Absence List -->
+                            <Label Content="{converters:Res label_absence_list}" Margin="0,20,0,5"/>
+                            <ListBox x:Name="AbsenceListBox" 
+                                    Height="100" 
+                                    Margin="0,5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding CategoryDisplay}" Width="80" Margin="5,0"/>
+                                            <TextBlock Text="{Binding DateDisplay}" Width="120" Margin="5,0"/>
+                                            <TextBlock Text="{Binding Notes}" Width="100" Margin="5,0" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Categorized Absence Lists -->
+                            <Label Content="{converters:Res label_absent_employees_today}" FontWeight="Bold" Margin="0,20,0,5"/>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                <StackPanel>
+                                    <!-- Absent Employees -->
+                                    <Expander x:Name="EmployeeManagementAbsentExpander" 
+                                             Header="Absent Employees (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementAbsentListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#FFCCCC"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+
+                                    <!-- Sick Employees -->
+                                    <Expander x:Name="EmployeeManagementSickExpander" 
+                                             Header="Sick Employees (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementSickListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#FFE0B2"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+
+                                    <!-- Employees on Leave -->
+                                    <Expander x:Name="EmployeeManagementLeaveExpander" 
+                                             Header="Leave Employees (0)" 
+                                             IsExpanded="True"
+                                             Margin="0,0,0,5">
+                                        <ListBox x:Name="EmployeeManagementLeaveListBox" 
+                                                Height="120"
+                                                PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                                MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                                MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                                Margin="5">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#BBDEFB"
+                                                            BorderThickness="1"
+                                                            CornerRadius="4"
+                                                            Padding="8"
+                                                            Margin="2"
+                                                            Cursor="Hand">
+                                                        <StackPanel Orientation="Vertical"
+                                                                   HorizontalAlignment="Center">
+                                                            <Image Width="50"
+                                                                   Height="50"
+                                                                   Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                                   Stretch="UniformToFill"
+                                                                   Margin="0,0,0,5"/>
+                                                            <TextBlock Text="{Binding FullName}"
+                                                                      FontFamily="Tahoma"
+                                                                      FontSize="10"
+                                                                      TextAlignment="Center"
+                                                                      TextWrapping="Wrap"
+                                                                      MaxWidth="100"
+                                                                      Foreground="DarkBlue"
+                                                                      HorizontalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Expander>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{converters:Res tab_shift_management}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Employee List for Shift Assignment -->
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="2*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="1*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <GroupBox Grid.Row="0" Header="{converters:Res header_employees}" Margin="5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Search Box -->
+                                <TextBox Grid.Row="0"
+                                        x:Name="ShiftEmployeeSearchBox"
+                                        Text="{converters:Res label_search}" 
+                                        Foreground="Gray"
+                                        Margin="5"/>
+                                
+                                <ListBox Grid.Row="1"
+                                        x:Name="ShiftEmployeeListBox" 
+                                        AllowDrop="True"
+                                        DragOver="Employee_DragOver"
+                                        DragEnter="ShiftEmployeeListBox_DragEnter"
+                                        DragLeave="ShiftEmployeeListBox_DragLeave"
+                                        Drop="ShiftEmployeeListBox_Drop"
+                                        PreviewMouseLeftButtonDown="ShiftEmployeeListBox_PreviewMouseLeftButtonDown"
+                                        MouseMove="ShiftEmployeeListBox_MouseMove"
+                                        Margin="5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Name="EmployeeCardBorder"
+                                                Background="White"
+                                                BorderBrush="#CCCCCC"
+                                                BorderThickness="1"
+                                                CornerRadius="4"
+                                                Padding="8"
+                                                Margin="2"
+                                                Cursor="Hand">
+                                            <StackPanel Orientation="Vertical"
+                                                       HorizontalAlignment="Center">
+                                                <Image x:Name="EmployeePhotoImage"
+                                                       Width="50"
+                                                       Height="50"
+                                                       Stretch="UniformToFill"
+                                                       Margin="0,0,0,5"/>
+                                                <TextBlock Text="{Binding FullName}"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="10"
+                                                          TextAlignment="Center"
+                                                          TextWrapping="Wrap"
+                                                          MaxWidth="100"
+                                                          Foreground="DarkBlue"
+                                                          HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </GroupBox>
+                        
+                        <!-- Splitter between employees and labels -->
+                        <GridSplitter Grid.Row="1" 
+                                      Height="5"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center"
+                                      Background="#CCCCCC"
+                                      ShowsPreview="False"/>
+                        
+                        <!-- Label Creation Panel -->
+                        <!-- Tools TabControl -->
+                        <TabControl Grid.Row="2" Margin="5">
+                            <TabItem Header="{converters:Res tab_labels}">
+                                <controls:LabelCreationPanel x:Name="LabelPanel" Margin="0"/>
+                            </TabItem>
+                            <TabItem Header="{converters:Res tab_status_cards}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <ListBox x:Name="StatusCardsListBox" 
+                                             PreviewMouseLeftButtonDown="StatusCardsListBox_PreviewMouseLeftButtonDown"
+                                             MouseMove="StatusCardsListBox_MouseMove"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             BorderThickness="0">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White" 
+                                                        BorderBrush="Gray" 
+                                                        BorderThickness="1" 
+                                                        CornerRadius="3" 
+                                                        Margin="2" 
+                                                        Width="70" 
+                                                        Height="50"
+                                                        Cursor="Hand"
+                                                        ToolTip="{Binding Description}">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        
+                                                        <Border Grid.Row="0" Background="{Binding Color}" Opacity="0.7" CornerRadius="3,3,0,0"/>
+                                                        <TextBlock Grid.Row="0" Text="{Binding Name}" 
+                                                                   FontFamily="Tahoma" FontSize="10" FontWeight="Bold"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                                                                   
+                                                        <TextBlock Grid.Row="1" Text="{Binding Abbreviation}" 
+                                                                   FontFamily="Tahoma" FontSize="8" 
+                                                                   HorizontalAlignment="Center" Margin="0,2"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+
+                    <!-- Splitter 1 -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Shift Assignment -->
+                    <GroupBox x:Name="ShiftAssignmentGroupBox" Grid.Column="2" Header="{converters:Res header_shift_table}" Margin="5" SizeChanged="ShiftAssignmentGroupBox_SizeChanged">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/> <!-- Toolbar -->
+                                <RowDefinition Height="*"/>    <!-- Content -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Vertical" Margin="5">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <Label Content="{converters:Res label_shift_group}" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="ShiftGroupComboBox" Width="150" Margin="5,0" VerticalAlignment="Center" SelectionChanged="ShiftGroupComboBox_SelectionChanged"/>
+
+                                    <!-- Capacity button removed as it's fixed 1 for now, or we keep it for model updates -->
+                                    <StackPanel x:Name="ShiftToolbarButtonsPanel" Orientation="Horizontal">
+                                        <Button Content="{converters:Res btn_swap_shifts}" Click="SwapShifts_Click" Margin="5,0"/>
+                                        <Button x:Name="ClearShiftButton" Content="{converters:Res btn_clear_shift}" Click="ClearShiftButton_Click" Margin="5,0">
+                                            <Button.ContextMenu>
+                                                <ContextMenu x:Name="ClearShiftContextMenu" Placement="Bottom">
+                                                    <MenuItem Header="{converters:Res btn_clear_morning_shift}" Click="ClearShiftOption_Click" Tag="morning"/>
+                                                    <MenuItem Header="{converters:Res btn_clear_afternoon_shift}" Click="ClearShiftOption_Click" Tag="afternoon"/>
+                                                    <MenuItem Header="{converters:Res btn_clear_night_shift}" Click="ClearShiftOption_Click" Tag="night"/>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Label Content="{converters:Res label_badge_size}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <Slider x:Name="BadgeSizeSlider" Minimum="50" Maximum="500" 
+                                            Value="{Binding BadgeSize, ElementName=WindowRoot, Mode=TwoWay}" 
+                                            Width="100" VerticalAlignment="Center" ValueChanged="BadgeSizeSlider_ValueChanged"/>
+                                    <TextBlock Text="{Binding Value, ElementName=BadgeSizeSlider, StringFormat=N0}" VerticalAlignment="Center" Margin="5,0,0,0" Width="30"/>
+
+                                    <Label Content="{converters:Res label_group_size}" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                                    <Slider x:Name="GroupSizeSlider" Minimum="200" Maximum="800" 
+                                            Value="{Binding GroupSize, ElementName=WindowRoot, Mode=TwoWay}" 
+                                            Width="100" VerticalAlignment="Center" ValueChanged="GroupSizeSlider_ValueChanged"/>
+                                    <TextBlock Text="{Binding Value, ElementName=GroupSizeSlider, StringFormat=N0}" VerticalAlignment="Center" Margin="5,0,0,0" Width="30"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox x:Name="AutoRotateCheckBox" 
+                                                  Content="{converters:Res checkbox_auto_rotate}" 
+                                                  Checked="AutoRotateCheckBox_Checked" 
+                                                  Unchecked="AutoRotateCheckBox_Unchecked"
+                                                  Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Expander x:Name="RotationConfigExpander" 
+                                             Header="{converters:Res header_auto_rotation_settings}"
+                                             IsExpanded="False"
+                                             Visibility="Collapsed"
+                                             Margin="20,5,0,0">
+                                        <StackPanel Orientation="Vertical" Margin="10">
+                                            <Label Content="{converters:Res label_rotation_type}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                            <RadioButton x:Name="WeeklyRotationRadio" 
+                                                        Content="{converters:Res radio_weekly_rotation}"
+                                                        IsChecked="True"
+                                                        Checked="RotationTypeRadio_Checked"
+                                                        Margin="0,0,0,10"/>
+                                            <StackPanel Orientation="Horizontal" Margin="20,0,0,10">
+                                                <Label Content="{converters:Res label_day_of_week}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <ComboBox x:Name="RotationDayComboBox" 
+                                                         Width="150"
+                                                         SelectionChanged="RotationDayComboBox_SelectionChanged"
+                                                         VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <Border Background="#F5F5F5" 
+                                                   BorderBrush="#CCCCCC" 
+                                                   BorderThickness="1" 
+                                                   CornerRadius="5" 
+                                                   Padding="10" 
+                                                   Margin="0,10,0,0">
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock x:Name="RotationScheduleInfo" 
+                                                              TextWrapping="Wrap"
+                                                              FontFamily="Tahoma"
+                                                              FontSize="11"
+                                                              Foreground="#333"/>
+                                                    <TextBlock x:Name="NextRotationDate" 
+                                                              TextWrapping="Wrap"
+                                                              FontFamily="Tahoma"
+                                                              FontSize="11"
+                                                              FontWeight="Bold"
+                                                              Foreground="#0066CC"
+                                                              Margin="0,5,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Table Layout -->
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl x:Name="ShiftGroupsItemsControl">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <controls:ShiftGroupControl GroupWidth="{Binding GroupSize, ElementName=WindowRoot}" 
+                                                                        BadgeSize="{Binding BadgeSize, ElementName=WindowRoot}" 
+                                                                        Margin="5"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Splitter 2 -->
+                    <GridSplitter Grid.Column="3" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Absence Management -->
+                    <GroupBox Grid.Column="4" Header="{converters:Res header_absence_management}" Margin="5">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="5">
+                                <!-- Absent Employees -->
+                                <Expander x:Name="AbsentEmployeesExpander" 
+                                         Header="Absent Employees (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="AbsentEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="AbsentEmployeesListBox_DragEnter"
+                                            DragLeave="AbsentEmployeesListBox_DragLeave"
+                                            Drop="AbsentEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#FFCCCC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+
+                                <!-- Sick Employees -->
+                                <Expander x:Name="SickEmployeesExpander" 
+                                         Header="Sick Employees (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="SickEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="SickEmployeesListBox_DragEnter"
+                                            DragLeave="SickEmployeesListBox_DragLeave"
+                                            Drop="SickEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#FFE0B2"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+
+                                <!-- Employees on Leave -->
+                                <Expander x:Name="LeaveEmployeesExpander" 
+                                         Header="Leave Employees (0)" 
+                                         IsExpanded="True"
+                                         Margin="0,0,0,5">
+                                    <ListBox x:Name="LeaveEmployeesListBox" 
+                                            Height="150"
+                                            AllowDrop="True"
+                                            PreviewMouseLeftButtonDown="AbsenceEmployeeListBox_PreviewMouseLeftButtonDown"
+                                            MouseMove="AbsenceEmployeeListBox_MouseMove"
+                                            MouseLeftButtonUp="AbsenceEmployeeListBox_MouseLeftButtonUp"
+                                            DragEnter="LeaveEmployeesListBox_DragEnter"
+                                            DragLeave="LeaveEmployeesListBox_DragLeave"
+                                            Drop="LeaveEmployeesListBox_Drop"
+                                            Margin="5">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White"
+                                                        BorderBrush="#BBDEFB"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Padding="8"
+                                                        Margin="2"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Vertical"
+                                                               HorizontalAlignment="Center">
+                                                        <Image Width="50"
+                                                               Height="50"
+                                                               Source="{Binding Converter={StaticResource EmployeePhotoConverter}}"
+                                                               Stretch="UniformToFill"
+                                                               Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding FullName}"
+                                                                  FontFamily="Tahoma"
+                                                                  FontSize="10"
+                                                                  TextAlignment="Center"
+                                                                  TextWrapping="Wrap"
+                                                                  MaxWidth="100"
+                                                                  Foreground="DarkBlue"
+                                                                  HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Expander>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{converters:Res tab_task_management}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Task List -->
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_task_list}" Margin="5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Task Filter -->
+                            <ComboBox Grid.Row="0" x:Name="TaskFilterComboBox" Margin="5">
+                                <ComboBoxItem Content="{converters:Res filter_all_tasks}"/>
+                                <ComboBoxItem Content="{converters:Res filter_pending}"/>
+                                <ComboBoxItem Content="{converters:Res filter_in_progress}"/>
+                                <ComboBoxItem Content="{converters:Res filter_completed}"/>
+                            </ComboBox>
+
+                            <!-- Task List -->
+                            <ListBox Grid.Row="1" 
+                                    x:Name="TaskListBox"
+                                    DisplayMemberPath="Title"
+                                    SelectionChanged="TaskListBox_SelectionChanged"
+                                    Margin="5"/>
+
+                            <!-- Task Actions -->
+                            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
+                                <Button Content="{converters:Res btn_add_task}" Click="AddTask_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_edit_task}" Click="EditTask_Click" Margin="2"/>
+                                <Button Content="{converters:Res btn_delete_task}" Click="DeleteTask_Click" Margin="2"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Task Details -->
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_task_details}" Margin="5">
+                        <Grid x:Name="TaskDetailsGrid" Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_title}"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="TaskTitleTextBox" Margin="5"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_description}"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TaskDescriptionTextBox" 
+                                    Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="5"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_priority}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="TaskPriorityComboBox" Margin="5">
+                                <ComboBoxItem Content="{converters:Res priority_low}"/>
+                                <ComboBoxItem Content="{converters:Res priority_medium}" IsSelected="True"/>
+                                <ComboBoxItem Content="{converters:Res priority_high}"/>
+                                <ComboBoxItem Content="{converters:Res priority_urgent}"/>
+                            </ComboBox>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_estimated_hours}"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" x:Name="TaskEstimatedHoursTextBox" Text="8.0" Margin="5"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="{converters:Res label_target_date}"/>
+                            <controls:GeorgianDatePicker Grid.Row="4" Grid.Column="1" x:Name="TaskTargetDatePicker" Margin="5"/>
+
+                            <Label Grid.Row="5" Grid.Column="0" Content="{converters:Res label_status}"/>
+                            <ComboBox Grid.Row="5" Grid.Column="1" x:Name="TaskStatusComboBox" Margin="5">
+                                <ComboBoxItem Content="{converters:Res filter_pending}"/>
+                                <ComboBoxItem Content="{converters:Res filter_in_progress}"/>
+                                <ComboBoxItem Content="{converters:Res filter_completed}"/>
+                            </ComboBox>
+
+                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" 
+                                       Orientation="Horizontal" Margin="5">
+                                <Button Content="{converters:Res btn_save_changes}" Click="SaveTaskChanges_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_start_task}" Click="StartTask_Click" Margin="0,0,5,0"/>
+                                <Button Content="{converters:Res btn_complete_task}" Click="CompleteTask_Click" Margin="0,0,5,0"/>
+                            </StackPanel>
+
+                            <!-- Task Assignment -->
+                            <GroupBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_employee_assignment}" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_assigned_employees}"/>
+                                    <ListBox Grid.Row="1" Grid.Column="0" x:Name="AssignedEmployeesListBox" 
+                                            Height="80" Margin="0,5,5,0">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding DisplayText}" Width="200" Margin="5,0"/>
+                                                    <Button Content="{converters:Res btn_remove}" Width="50" Height="20" FontSize="10"
+                                                            Click="RemoveEmployeeFromTask_Click" Tag="{Binding EmployeeId}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" Margin="5,5,0,0">
+                                        <Button Content="{converters:Res btn_assign_new_employee}" Click="AddEmployeeToTask_Click" 
+                                                Width="140" Height="30" Margin="0,0,0,5"/>
+                                        <Button Content="{converters:Res btn_view_employee_tasks}" Click="ViewEmployeeTasks_Click" 
+                                                Width="140" Height="30"/>
+                                    </StackPanel>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- Task Progress -->
+                            <GroupBox Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_task_progress}" Margin="5">
+                                <StackPanel Margin="10">
+                                    <Label Content="{converters:Res label_actual_hours}"/>
+                                    <TextBox x:Name="TaskActualHoursTextBox" Margin="0,5"/>
+                                    <Label Content="{converters:Res label_notes}"/>
+                                    <TextBox x:Name="TaskNotesTextBox" 
+                                            Height="60" 
+                                            TextWrapping="Wrap" 
+                                            AcceptsReturn="True"
+                                            Margin="0,5"/>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <!-- Daily Progress Entry -->
+                            <GroupBox Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_daily_progress}" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_shift_group}"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DailyProgressGroupComboBox" 
+                                             Margin="5"
+                                             SelectionChanged="DailyProgressGroupComboBox_SelectionChanged"/>
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_shift_type}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="DailyProgressShiftTypeComboBox" Margin="5"
+                                             SelectionChanged="DailyProgressShiftTypeComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="{converters:Res shift_morning}" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
+                                    </ComboBox>
+
+                                    <Label Grid.Row="2" Grid.Column="0" Content="{converters:Res label_date}"/>
+                                    <controls:GeorgianDatePicker Grid.Row="2" Grid.Column="1" 
+                                                                 x:Name="DailyProgressDatePicker" Margin="5"/>
+
+                                    <Label Grid.Row="3" Grid.Column="0" Content="{converters:Res label_number_of_boxes}"/>
+                                    <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="5">
+                                        <TextBox x:Name="DailyProgressBoxesTextBox" Width="100" 
+                                                PreviewTextInput="DailyProgressBoxesTextBox_PreviewTextInput"/>
+                                        <Label Content="(Daily target: 100)" Margin="10,0,0,0" Foreground="Gray"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
+                                           Content="{converters:Res btn_record}" x:Name="RecordDailyProgressButton" 
+                                           Click="RecordDailyProgress_Click" 
+                                           Width="100" Height="30" Margin="5" HorizontalAlignment="Left"/>
+
+                                    <!-- Status Display -->
+                                    <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
+                                        <Label Content="{converters:Res label_status}" FontWeight="Bold"/>
+                                        <TextBlock x:Name="DailyProgressStatusTextBlock" Margin="5,5,5,0" 
+                                                  TextWrapping="Wrap" FontSize="12"/>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_completed}"/>
+                                            <TextBlock x:Name="DailyProgressCompletedTextBlock" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_of}" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="DailyProgressTargetTextBlock" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_percentage}"/>
+                                            <TextBlock x:Name="DailyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="%" Margin="5,0,10,0"/>
+                                            <Label Content="{converters:Res label_difference}" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="DailyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </GroupBox>
+
+                            <!-- Weekly Progress View -->
+                            <GroupBox Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Header="{converters:Res header_weekly_progress}" Margin="5">
+                                <Grid Margin="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Label Grid.Row="0" Grid.Column="0" Content="{converters:Res label_shift_group}"/>
+                                    <ComboBox Grid.Row="0" Grid.Column="1" x:Name="WeeklyProgressGroupComboBox" 
+                                             Margin="5"
+                                             SelectionChanged="WeeklyProgressGroupComboBox_SelectionChanged"/>
+
+                                    <Label Grid.Row="1" Grid.Column="0" Content="{converters:Res label_shift_type}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1" x:Name="WeeklyProgressShiftTypeComboBox" Margin="5"
+                                             SelectionChanged="WeeklyProgressShiftTypeComboBox_SelectionChanged">
+                                        <ComboBoxItem Content="{converters:Res shift_morning}" Tag="morning"/>
+                                        <ComboBoxItem Content="{converters:Res shift_afternoon}" Tag="afternoon"/>
+                                    </ComboBox>
+
+                                    <!-- Weekly Summary -->
+                                    <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="5,10,5,5">
+                                        <Label Content="{converters:Res label_weekly_summary}" FontWeight="Bold"/>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_week_start_date}"/>
+                                            <TextBlock x:Name="WeeklyProgressWeekStartTextBlock" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_completed}"/>
+                                            <TextBlock x:Name="WeeklyProgressTotalCompletedTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="{converters:Res label_of}" Margin="10,0,0,0"/>
+                                            <TextBlock Text="1000" Margin="5,0"/>
+                                            <Label Content="{converters:Res label_weekly_target}" Margin="5,0"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_status}"/>
+                                            <TextBlock x:Name="WeeklyProgressStatusTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="5,5,5,0">
+                                            <Label Content="{converters:Res label_percentage}"/>
+                                            <TextBlock x:Name="WeeklyProgressPercentageTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="%" Margin="5,0,10,0"/>
+                                            <Label Content="{converters:Res label_difference}" Margin="10,0,0,0"/>
+                                            <TextBlock x:Name="WeeklyProgressDifferenceTextBlock" Margin="5,0" FontWeight="Bold"/>
+                                            <Label Content="{converters:Res label_boxes}" Margin="5,0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Daily Breakdown -->
+                                    <DataGrid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
+                                             x:Name="WeeklyProgressDataGrid" 
+                                             AutoGenerateColumns="False" 
+                                             HeadersVisibility="Column"
+                                             IsReadOnly="True"
+                                             Margin="5,10,5,5"
+                                             MaxHeight="200">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Date" Binding="{Binding DateDisplay}" Width="*"/>
+                                            <DataGridTextColumn Header="Completed boxes" Binding="{Binding CompletedBoxes}" Width="*"/>
+                                            <DataGridTextColumn Header="Target" Binding="{Binding DailyTarget}" Width="*"/>
+                                            <DataGridTextColumn Header="Percentage" Binding="{Binding Percentage}" Width="*"/>
+                                            <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </GroupBox>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{converters:Res tab_reports}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Report Options -->
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_report_options}" Margin="5">
+                        <StackPanel Margin="10">
+                            <Label Content="{converters:Res label_report_type}"/>
+                            <ComboBox x:Name="ReportTypeComboBox" Margin="0,5">
+                                <ComboBoxItem Content="{converters:Res report_daily}"/>
+                                <ComboBoxItem Content="{converters:Res report_weekly}"/>
+                                <ComboBoxItem Content="{converters:Res report_monthly}"/>
+                            </ComboBox>
+
+                            <Label Content="{converters:Res label_start_date}" Margin="0,10,0,5"/>
+                            <controls:GeorgianDatePicker x:Name="ReportStartDatePicker" Margin="0,0,0,10"/>
+
+                            <Label Content="{converters:Res label_end_date}" Margin="0,0,0,5"/>
+                            <controls:GeorgianDatePicker x:Name="ReportEndDatePicker" Margin="0,0,0,10"/>
+
+                            <Label Content="{converters:Res label_report_author}" Margin="0,10,0,5"/>
+                            <ComboBox x:Name="ReportAssignedToComboBox" Margin="0,0,0,10"/>
+
+                            <Button Content="{converters:Res btn_generate_report}" Click="GenerateReport_Click" Margin="0,10"/>
+                            <Button Content="{converters:Res btn_print}" 
+                                   Click="PrintReport_Click" 
+                                   Width="100" 
+                                   Height="35" 
+                                   FontSize="14" 
+                                   Background="#4CAF50" 
+                                   Foreground="White" 
+                                   FontWeight="Bold" 
+                                   Margin="0,10"/>
+                            
+                            <!-- Performance Calculation Formula Tooltip -->
+                            <Border Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" 
+                                    CornerRadius="5" Margin="0,15,0,0" Padding="8">
+                                <StackPanel>
+                                    <TextBlock Text="{converters:Res label_performance_formula}" 
+                                               FontWeight="Bold" FontSize="11" 
+                                               Foreground="#333" Margin="0,0,0,5"/>
+                                    <TextBlock Text="{converters:Res label_formula_description}" 
+                                               FontSize="10" Foreground="#666" 
+                                               TextWrapping="Wrap" LineHeight="16"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Report Preview -->
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_report_preview}" Margin="5">
+                        <ScrollViewer>
+                            <TextBlock x:Name="ReportPreviewTextBlock" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="12" 
+                                      TextWrapping="Wrap" 
+                                      Margin="10"/>
+                        </ScrollViewer>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem x:Name="SettingsTabItem" Header="{converters:Res tab_settings}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Settings Options -->
+                    <GroupBox Grid.Column="0" Header="{converters:Res header_system_settings}" Margin="5">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="10">
+                                <!-- Language selection hidden as per user request -->
+                                <StackPanel Visibility="Collapsed">
+                                    <Label Content="{converters:Res label_language}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                    <ComboBox x:Name="LanguageComboBox" Margin="0,0,0,10" SelectionChanged="LanguageComboBox_SelectionChanged">
+                                        <ComboBoxItem x:Name="LanguageEnglishItem" Content="{converters:Res language_english}" Tag="en"/>
+                                        <ComboBoxItem x:Name="LanguagePersianItem" Content="{converters:Res language_persian}" Tag="fa"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <Label Content="{converters:Res label_data_folder_path}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBox x:Name="DataDirectoryTextBox" 
+                                            Width="300" 
+                                            IsReadOnly="True"
+                                            Margin="0,0,5,0"/>
+                                    <Button Content="{converters:Res btn_select_folder}" 
+                                            Click="SelectDataDirectory_Click" 
+                                            Width="100"/>
+                                </StackPanel>
+
+                                <Label Content="{converters:Res label_current_path}" Margin="0,0,0,5"/>
+                                <TextBlock x:Name="CurrentDataDirectoryTextBlock" 
+                                          TextWrapping="Wrap" 
+                                          Foreground="Gray" 
+                                          Margin="0,0,0,10"/>
+
+                                <CheckBox x:Name="CopyExistingDataCheckBox" 
+                                         Content="{converters:Res checkbox_move_existing_data}" 
+                                         IsChecked="True"
+                                         Margin="0,0,0,10"/>
+
+                                <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,0,0,10">
+                                    <Label Content="{converters:Res label_transferring_data}" FontWeight="Bold"/>
+                                    <ProgressBar x:Name="DataCopyProgressBar" 
+                                                Height="20" 
+                                                IsIndeterminate="True"/>
+                                </StackPanel>
+
+                                <Button Content="{converters:Res btn_save_settings}" 
+                                        Click="SaveSettings_Click" 
+                                        Background="#4CAF50" 
+                                        Foreground="White" 
+                                        FontWeight="Bold"
+                                        Margin="0,10"/>
+                                
+                                <Button Content="{converters:Res btn_reset_to_default}" 
+                                        Click="ResetSettings_Click" 
+                                        Background="#FF9800" 
+                                        Foreground="White" 
+                                        Margin="0,5"/>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <Label Content="{converters:Res label_display_bg_color}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border x:Name="DisplayColorPreview" 
+                                            Width="50" Height="30" 
+                                            BorderBrush="Black" BorderThickness="2" 
+                                            Background="#1a1a1a" Margin="0,0,10,0"/>
+                                    <Button x:Name="SelectDisplayColorButton" 
+                                            Content="{converters:Res btn_select_color}" 
+                                            Click="SelectDisplayColorButton_Click" 
+                                            Width="120"/>
+                                </StackPanel>
+
+                                <Label Content="Display Profile" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <ComboBox x:Name="DisplayProfileComboBox" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Standard" Tag="Standard"/>
+                                    <ComboBoxItem Content="UltraWide 34&quot;" Tag="UltraWide34"/>
+                                    <ComboBoxItem Content="UltraWide 38&quot;" Tag="UltraWide38"/>
+                                    <ComboBoxItem Content="UltraWide 43&quot;" Tag="UltraWide43"/>
+                                </ComboBox>
+
+                                <Label Content="{converters:Res label_display_content}" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+                                    <CheckBox x:Name="ShowPerformanceChartCheckBox"
+                                              Content="{converters:Res checkbox_show_performance_chart}"
+                                              IsChecked="True"
+                                              Margin="0,0,0,5"/>
+                                    <CheckBox x:Name="ShowAiRecommendationCheckBox"
+                                              Content="{converters:Res checkbox_show_ai_recommendation}"
+                                              IsChecked="True"/>
+                                </StackPanel>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <Label Content="{converters:Res label_shift_settings}" FontWeight="Bold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <Label Content="{converters:Res label_default_capacity}" Width="120"/>
+                                    <TextBox x:Name="DefaultShiftCapacityTextBox" 
+                                            Width="60" 
+                                            Text="15"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Label Content="{converters:Res label_sync_interval}" Width="120"/>
+                                    <TextBox x:Name="SyncIntervalTextBox" 
+                                            Width="60" 
+                                            Text="30"/>
+                                </StackPanel>
+
+                                <Label Content="Admin Password" FontWeight="Bold" Margin="0,10,0,5"/>
+                                <TextBox x:Name="AdminPasswordTextBox" Width="200" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+
+                                <Separator Margin="0,20,0,10"/>
+
+                                <!-- Text Customization Section -->
+                                <Label Content="{converters:Res header_text_customization}" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                    <Label Content="{converters:Res label_search_keys}" Width="140"/>
+                                    <TextBox x:Name="TextCustomizationSearchBox" 
+                                            Width="200" 
+                                            TextChanged="TextCustomizationSearchBox_TextChanged"/>
+                                </StackPanel>
+
+                                <!-- Resource Overrides DataGrid -->
+                                <DataGrid x:Name="TextCustomizationDataGrid"
+                                          Height="200"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          SelectionMode="Single"
+                                          SelectionUnit="Cell"
+                                          IsReadOnly="False"
+                                          Margin="0,5,0,10">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="150" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Default" Binding="{Binding DefaultValue}" Width="180" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Custom" Binding="{Binding CustomValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" IsReadOnly="False"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <Button x:Name="ApplyOverrideButton"
+                                            Content="{converters:Res btn_apply_override}" 
+                                            Click="ApplyOverride_Click" 
+                                            Width="80"
+                                            Background="#4CAF50" 
+                                            Foreground="White"
+                                            Margin="0,0,5,0"/>
+                                    <Button x:Name="ClearOverrideButton"
+                                            Content="{converters:Res btn_clear_override}" 
+                                            Click="ClearOverride_Click" 
+                                            Width="80"
+                                            Margin="0,0,5,0"/>
+                                    <Button x:Name="ResetAllOverridesButton"
+                                            Content="{converters:Res btn_reset_all_overrides}" 
+                                            Click="ResetAllOverrides_Click" 
+                                            Background="#FF9800" 
+                                            Foreground="White"
+                                            Margin="0,0,5,0"/>
+                                </StackPanel>
+
+                                <Border Background="#E3F2FD" BorderBrush="#2196F3" BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{converters:Res hint_supervisor_preset}" 
+                                                  FontWeight="SemiBold" 
+                                                  Margin="0,0,0,5"/>
+                                        <Button x:Name="ApplySupervisorPresetButton"
+                                                Content="{converters:Res btn_apply_preset}" 
+                                                Click="ApplySupervisorPreset_Click" 
+                                                Width="120"
+                                                Background="#2196F3" 
+                                                Foreground="White"
+                                                HorizontalAlignment="Left"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </GroupBox>
+
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 ResizeDirection="Columns"
+                                 Width="5"
+                                 Background="#CCCCCC"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 ShowsPreview="False"
+                                 Margin="0"/>
+
+                    <!-- Settings Information -->
+                    <GroupBox Grid.Column="2" Header="{converters:Res header_system_info}" Margin="5">
+                        <StackPanel Margin="10">
+                            <Label Content="{converters:Res label_sync_status}" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="SyncStatusTextBlock" 
+                                      Text="Active" 
+                                      Foreground="Green" 
+                                      Margin="0,0,0,20"/>
+
+                            <Label Content="{converters:Res label_last_update}" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="LastUpdateTextBlock" 
+                                      Text="--" 
+                                      Margin="0,0,0,20"/>
+
+                            <Label Content="{converters:Res label_available_report_files}" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <ListBox x:Name="ReportFilesListBox" 
+                                    Height="150" 
+                                    Margin="0,0,0,20"/>
+
+                            <Label Content="{converters:Res label_system_logs}" FontWeight="Bold" Margin="0,0,0,5"/>
+                            <ScrollViewer Height="200" VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="SystemLogsTextBlock" 
+                                          FontFamily="Consolas" 
+                                          FontSize="10" 
+                                          TextWrapping="Wrap"/>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="{converters:Res tab_daily_preview}">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Header with Date -->
+                    <Border Grid.Row="0" Background="#2E3440" Padding="15" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{converters:Res label_daily_summary}" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="18" 
+                                      FontWeight="Bold" 
+                                      Foreground="White"/>
+                            <TextBlock x:Name="DailyPreviewDateText" 
+                                      Text="" 
+                                      FontFamily="Tahoma" 
+                                      FontSize="14" 
+                                      Foreground="LightGray" 
+                                      Margin="20,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <!-- Statistics Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="10">
+                            <!-- Absence Statistics -->
+                            <GroupBox Header="{converters:Res header_absence_stats}" Margin="0,0,0,15">
+                                <Grid Margin="15">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Sick Employees -->
+                                    <Border Grid.Row="0" Grid.Column="0" 
+                                           Background="#FFF3E0" 
+                                           BorderBrush="#FF9800" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="{converters:Res label_sick_employees}" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="SickCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#E65100" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Employees on Leave -->
+                                    <Border Grid.Row="0" Grid.Column="1" 
+                                           Background="#E3F2FD" 
+                                           BorderBrush="#2196F3" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="{converters:Res label_leave_employees}" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="LeaveCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#1565C0" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Absent Employees -->
+                                    <Border Grid.Row="0" Grid.Column="2" 
+                                           Background="#FFEBEE" 
+                                           BorderBrush="#F44336" 
+                                           BorderThickness="2" 
+                                           CornerRadius="5" 
+                                           Padding="15" 
+                                           Margin="5">
+                                        <StackPanel>
+                                            <TextBlock Text="{converters:Res label_absent_employees}" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="14" 
+                                                      FontWeight="Bold" 
+                                                      Margin="0,0,0,5"/>
+                                            <TextBlock x:Name="AbsentCountText" 
+                                                      Text="0" 
+                                                      FontFamily="Tahoma" 
+                                                      FontSize="32" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#C62828" 
+                                                      HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </GroupBox>
+                            
+                            <!-- Group Statistics -->
+                            <GroupBox Header="{converters:Res header_shift_group_stats}" Margin="0,0,0,15">
+                                <ItemsControl x:Name="GroupStatsItemsControl" Margin="15">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" 
+                                                   BorderBrush="#CCCCCC" 
+                                                   BorderThickness="1" 
+                                                   CornerRadius="5" 
+                                                   Padding="15" 
+                                                   Margin="0,0,0,10">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding GroupName}" 
+                                                                  FontFamily="Tahoma" 
+                                                                  FontSize="14" 
+                                                                  FontWeight="Bold" 
+                                                                  Margin="0,0,0,5"/>
+                                                        <TextBlock Text="{Binding Description}" 
+                                                                  FontFamily="Tahoma" 
+                                                                  FontSize="11" 
+                                                                  Foreground="Gray"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" 
+                                                              Text="{Binding EmployeeCount}" 
+                                                              FontFamily="Tahoma" 
+                                                              FontSize="24" 
+                                                              FontWeight="Bold" 
+                                                              Foreground="#4CAF50" 
+                                                              VerticalAlignment="Center" 
+                                                              Margin="20,0,0,0"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- Print Button -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="Print" 
+                               Click="PrintDailyPreview_Click" 
+                               Width="100" 
+                               Height="35" 
+                               FontSize="14" 
+                               Background="#4CAF50" 
+                               Foreground="White" 
+                               FontWeight="Bold" 
+                               Margin="5,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2" Background="#ECEFF4">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusTextBlock" Text="Ready" FontFamily="Tahoma"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding CurrentTime}" FontFamily="Tahoma"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

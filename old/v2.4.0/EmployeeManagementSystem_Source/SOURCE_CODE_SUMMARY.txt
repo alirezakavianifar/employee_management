@@ -1,0 +1,145 @@
+Employee Management System - Source Code Package Summary
+========================================================
+
+Package Size: ~50 MB (Complete source code with all dependencies)
+Created: January 21, 2025
+Updated: February 12, 2026 (Latest sync)
+Version: v2.4.0 - Status Cards and Employee Labels
+
+CONTENTS:
+---------
+✅ ManagementApp/          - Complete source code for management application
+✅ DisplayApp/             - Complete source code for display application  
+✅ Shared/                 - Shared components and utilities
+✅ ManagementApp.sln       - Visual Studio solution file
+✅ README.md               - Comprehensive development documentation
+
+SOURCE CODE INCLUDED:
+--------------------
+1. ManagementApp/          - WPF application with Georgian calendar support
+   - Controllers/          - Business logic and data management
+   - Views/               - User interface (XAML and code-behind; StatusCardDialog, StatusCardEditDialog, etc.)
+   - Controls/            - Custom controls (GeorgianDatePicker, NavigationMenu, LabelCreationPanel, ShiftGroupControl, ShiftSlotControl)
+   - Services/            - Application services (PDF, BadgeGenerator, ShiftGroup, etc.)
+   - Converters/          - Value converters (EmployeePhotoConverter, ResourceExtension, StringToVisibilityConverter)
+   - Resources/           - XAML resources and styling
+   - Config/              - Configuration files
+
+2. DisplayApp/             - WPF display application
+   - Services/            - Data and chart services
+   - Utils/               - Utility classes and helpers
+   - Config/              - Configuration files
+   - MainWindow.xaml      - Main display interface
+
+3. Shared/                 - Shared components
+   - Models/              - Data models (Employee, EmployeeLabel, Task, Absence, Shift, ShiftGroup, StatusCard, DailyTaskProgress)
+   - Services/            - Shared services (JsonHandler, LabelService, StatusCardService, Logging, SyncManager)
+   - Utils/               - Utility classes (GeorgianDateHelper, AppConfigHelper, ResourceManager, etc.)
+
+KEY FEATURES IN SOURCE:
+-----------------------
+✅ Georgian calendar support (replaced Persian calendar)
+✅ Performance calculation formula tooltip
+✅ Custom GeorgianDatePicker control
+✅ Updated date formatting and validation
+✅ Georgian culture and localization
+✅ Left-to-right UI layout
+✅ Complete WPF application architecture
+✅ Group separation display in DisplayApp (v2.2.0)
+✅ Horizontal group layout with visual separation
+✅ Employee extended properties (ShieldColor, ShowShield, StickerPaths, MedalBadgePath, PersonnelId)
+✅ Badge generation service
+✅ Navigation menu with categorized settings
+✅ Color palette popup for shield color selection
+✅ Chart improvements with empty state handling
+✅ Category-based absence display (Leave, Sick, Absent)
+✅ Daily task progress tracking (v2.3.0)
+✅ Progress status management with weekly and daily tracking
+✅ Status card management (v2.4.0) - StatusCard model and StatusCardService
+✅ Employee label system - EmployeeLabel model and LabelService
+✅ LabelCreationPanel, ShiftGroupControl, ShiftSlotControl - New shift management controls
+✅ StatusCardDialog and StatusCardEditDialog - Status card configuration dialogs
+✅ ResourceManager utility for resource loading
+
+DEVELOPMENT REQUIREMENTS:
+-------------------------
+- Visual Studio 2022 or Visual Studio Code
+- .NET 8.0 SDK
+- Windows 10/11 (for WPF applications)
+
+BUILD INSTRUCTIONS:
+-------------------
+1. Open ManagementApp.sln in Visual Studio
+2. Build the solution (Ctrl+Shift+B)
+3. Run applications from Visual Studio or command line
+
+Command Line:
+- dotnet build ManagementApp.sln
+- dotnet run --project ManagementApp/ManagementApp.csproj
+- dotnet run --project DisplayApp/DisplayApp.csproj
+
+RECENT CHANGES (v2.4.0):
+------------------------
+✅ Status Card Management - StatusCard model and StatusCardService for status card configuration
+✅ Employee Labels - EmployeeLabel model and LabelService for custom employee labels
+✅ Shift Management Controls - LabelCreationPanel, ShiftGroupControl, ShiftSlotControl for shift configuration
+✅ StatusCardDialog and StatusCardEditDialog - Dialogs for managing status cards
+✅ ResourceManager - Utility class for loading resources from resources.xml
+✅ ResourceExtension and StringToVisibilityConverter - New XAML converters
+
+PREVIOUS CHANGES (v2.3.0):
+--------------------------
+✅ Daily Task Progress Tracking - New DailyTaskProgress model for tracking daily task completion
+✅ Progress Status Management - ProgressStatus and WeeklyProgressStatus classes for progress analysis
+✅ DailyTaskProgressManager - Manager class for handling progress records with JSON serialization
+✅ Group and shift-based progress tracking - Track progress by group, shift type, and date
+✅ Weekly progress calculation - Calculate weekly progress from daily records
+
+PREVIOUS CHANGES (v2.2.0):
+--------------------------
+✅ Group separation display - Complete redesign of shift display to show each group separately
+✅ Horizontal group layout - Groups displayed side by side with clear visual separation
+✅ Individual group panels - Each group shows its own morning and evening shifts in dedicated sections
+✅ Visual group headers - Clear group identification with bordered sections
+✅ Improved employee cards - Smaller, more compact employee cards (70x90px) optimized for group display
+✅ Responsive design - Horizontal scrolling enabled for multiple groups display
+
+PREVIOUS CHANGES (v2.1.0):
+--------------------------
+✅ Fixed chart data issue - Chart no longer shows false data when there are no employees
+✅ Empty state handling - Chart displays appropriate message when no employee data is available
+✅ Reorganized absence section - Category-based layout (Leave, Sick, Absent) with color coding
+
+PREVIOUS CHANGES (v1.1.0):
+--------------------------
+✅ Created GeorgianDateHelper utility class
+✅ Replaced ShamsiDatePicker with GeorgianDatePicker
+✅ Updated all models to use Georgian dates
+✅ Modified controllers for Georgian date validation
+✅ Changed culture settings from Persian to Georgian
+✅ Updated UI flow direction from RTL to LTR
+✅ Added performance formula tooltip in ManagementApp
+
+FILE STRUCTURE:
+---------------
+- 3 main projects (ManagementApp, DisplayApp, Shared)
+- Complete source code with all dependencies
+- Configuration files for both applications
+- Build artifacts and project files
+- Comprehensive documentation
+
+DEVELOPMENT NOTES:
+------------------
+- All date handling now uses Georgian calendar
+- Historical Persian dates remain readable
+- No data migration required
+- Both applications can run simultaneously
+- Data synchronization preserved between apps
+
+This source code package contains everything needed to:
+- Build and run both applications
+- Modify and extend functionality
+- Understand the complete system architecture
+- Deploy to different environments
+
+Ready for development and customization!

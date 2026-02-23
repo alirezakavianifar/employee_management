@@ -4,5 +4,6 @@
   "ImagesDirectory": "../../../../SharedData/Images",
   "LogsDirectory": "../../../../SharedData/Logs",
   "SyncEnabled": true,
-  "SyncIntervalSeconds": 30
+  "SyncIntervalSeconds": 30,
+  "AdminPassword": "admin123"
 }

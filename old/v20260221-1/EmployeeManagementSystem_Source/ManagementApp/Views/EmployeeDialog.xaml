@@ -1,0 +1,97 @@
+<Window x:Class="ManagementApp.Views.EmployeeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Employee Management" 
+        Height="600" Width="500"
+        FlowDirection="LeftToRight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Row="0" Content="First name:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <TextBox Grid.Row="1" x:Name="FirstNameTextBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="2" Content="Last name:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <TextBox Grid.Row="3" x:Name="LastNameTextBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="4" Content="Personnel ID:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <TextBox Grid.Row="5" x:Name="PersonnelIdTextBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="6" Content="Phone:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <TextBox Grid.Row="7" x:Name="PhoneTextBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <CheckBox Grid.Row="8" x:Name="ShowPhoneCheckBox" Content="Show phone on display" FontFamily="Tahoma" FontSize="12" Margin="0,5" IsChecked="True"/>
+
+            <Label Grid.Row="9" Content="Role:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <ComboBox Grid.Row="10" x:Name="RoleComboBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="11" Content="Shift group:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <ComboBox Grid.Row="12" x:Name="ShiftGroupComboBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="13" Content="Photo:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <StackPanel Grid.Row="14" Orientation="Horizontal" Margin="0,5">
+                <Button Content="Remove photo" x:Name="RemovePhotoButton" Click="RemovePhotoButton_Click" Margin="0,0,5,0"/>
+                <Button Content="Select photo" x:Name="SelectPhotoButton" Click="SelectPhotoButton_Click" />
+            </StackPanel>
+            <Image Grid.Row="15" x:Name="PhotoPreview" Width="150" Height="150" Margin="0,5" Stretch="Uniform"/>
+
+            <Label Grid.Row="16" Content="Shield color:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <ComboBox Grid.Row="17" x:Name="ShieldColorComboBox" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <CheckBox Grid.Row="18" x:Name="ShowShieldCheckBox" Content="Show shield" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <Label Grid.Row="19" Content="Stickers:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <StackPanel Grid.Row="20" Orientation="Horizontal" Margin="0,5">
+                <Button Content="Add sticker" x:Name="AddStickerButton" Click="AddStickerButton_Click" Margin="0,0,5,0"/>
+                <Button Content="Remove sticker" x:Name="RemoveStickerButton" Click="RemoveStickerButton_Click" />
+            </StackPanel>
+            <ListBox Grid.Row="21" x:Name="StickersListBox" Height="80" Margin="0,5"/>
+
+            <Label Grid.Row="22" Content="Medal / badge:" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+            <StackPanel Grid.Row="23" Orientation="Horizontal" Margin="0,5">
+                <Button Content="Select medal" x:Name="SelectMedalButton" Click="SelectMedalButton_Click" Margin="0,0,5,0"/>
+                <Button Content="Remove medal" x:Name="RemoveMedalButton" Click="RemoveMedalButton_Click" />
+            </StackPanel>
+            <TextBox Grid.Row="24" x:Name="MedalBadgePathTextBox" FontFamily="Tahoma" FontSize="12" Margin="0,5" IsReadOnly="True"/>
+
+            <CheckBox Grid.Row="25" x:Name="IsManagerCheckBox" Content="This employee is a manager" FontFamily="Tahoma" FontSize="12" Margin="0,5"/>
+
+            <StackPanel Grid.Row="26" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,20,0,0">
+                <Button Content="OK" x:Name="OkButton" Click="OkButton_Click" 
+                       Width="80" Height="30" Margin="0,0,10,0" IsDefault="True"/>
+                <Button Content="Cancel" x:Name="CancelButton" Click="CancelButton_Click" 
+                       Width="80" Height="30" IsCancel="True"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Window>
