@@ -914,12 +914,12 @@ namespace DisplayApp
                 Margin = new Thickness(1), // Reduced margin
                 MinWidth = minW, 
                 MaxWidth = maxW,
-                VerticalAlignment = VerticalAlignment.Top // Prevent stretching to fill height
+                VerticalAlignment = VerticalAlignment.Stretch // Stretch to match tallest column in the same WrapPanel row
             };
             
             var groupGrid = new Grid();
             groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            groupGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Changed from Star to Auto
+            groupGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); // Star so shifts fill remaining height
             
             // Group header: head worker (photo + name) above group number/name; team can exist without head worker
             var headerBorder = new Border
@@ -1011,7 +1011,8 @@ namespace DisplayApp
             // Shifts container (Vertical stack: Morning, Afternoon, Night)
             var shiftsGrid = new Grid
             {
-                Margin = new Thickness(1)
+                Margin = new Thickness(1),
+                VerticalAlignment = VerticalAlignment.Top // Align content to top inside the stretched column
             };
             
             // Convert group color to WPF format (add FF prefix for alpha if not present)
