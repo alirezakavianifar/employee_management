@@ -1560,7 +1560,7 @@ namespace DisplayApp
                 }
             }
             
-            // Add medal/badge above the image, on the right side, with sufficient spacing
+            // Add medal/badge on the left side of the image (sticker is on the right, so medal goes left to avoid overlap)
             if (employeeData.TryGetValue("medal_badge_path", out var medalBadgePathObj) && 
                 !string.IsNullOrEmpty(medalBadgePathObj?.ToString()))
             {
@@ -1586,12 +1586,12 @@ namespace DisplayApp
                             Width = medalSize,
                             Height = medalSize,
                             Stretch = Stretch.Uniform, // Maintain aspect ratio
-                            HorizontalAlignment = HorizontalAlignment.Right,
+                            HorizontalAlignment = HorizontalAlignment.Left,
                             VerticalAlignment = VerticalAlignment.Top,
-                            // Position: above the image, on the right side, with spacing from worker's face/body
+                            // Position: left side of the image so it never overlaps the sticker (which sits on the right)
                             // Top margin: small spacing from top edge
-                            // Right margin: small spacing from right edge
-                            Margin = new Thickness(0, largeRectHeight * 0.1, badgeWidth * 0.05, 0), // 10% from top, 5% from right
+                            // Left margin: small spacing from left edge
+                            Margin = new Thickness(badgeWidth * 0.05, largeRectHeight * 0.1, 0, 0), // 10% from top, 5% from left
                             RenderTransformOrigin = new System.Windows.Point(0.5, 0.5)
                         };
                         
