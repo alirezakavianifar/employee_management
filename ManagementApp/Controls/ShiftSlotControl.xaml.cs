@@ -173,6 +173,16 @@ namespace ManagementApp.Controls
                 // Render Employee
                 EmployeeNameText.Text = employee.FullName;
                 EmployeeIdText.Text = employee.PersonnelId;
+                ShieldTypeText.Text = employee.ShowShield ? "Shield: Visible" : "Shield: Hidden";
+                ShieldColorText.Text = $"Color: {employee.ShieldColor}";
+                ShieldColorChip.Background = GetShieldColorBrush(employee.ShieldColor);
+
+                var stickerCount = employee.StickerPaths?.Count ?? 0;
+                StickerInfoText.Text = $"Stickers: {stickerCount}";
+
+                var hasMedal = !string.IsNullOrWhiteSpace(employee.MedalBadgePath);
+                MedalInfoText.Text = hasMedal ? "Medal: Set" : "Medal: None";
+                MedalInfoText.ToolTip = hasMedal ? System.IO.Path.GetFileName(employee.MedalBadgePath) : null;
                 
                 // Photo
                 // Using the converter logic manually or binding if possible? 
@@ -206,6 +216,34 @@ namespace ManagementApp.Controls
                 EmployeeCard.Visibility = Visibility.Visible;
                 EmptyState.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private Brush GetShieldColorBrush(string shieldColor)
+        {
+            if (string.IsNullOrWhiteSpace(shieldColor))
+                return Brushes.SteelBlue;
+
+            try
+            {
+                var converted = new BrushConverter().ConvertFromString(shieldColor);
+                if (converted is Brush brush)
+                    return brush;
+            }
+            catch
+            {
+            }
+
+            return shieldColor.Trim().ToLowerInvariant() switch
+            {
+                "red" => Brushes.IndianRed,
+                "blue" => Brushes.SteelBlue,
+                "yellow" => Brushes.Goldenrod,
+                "black" => Brushes.Black,
+                "orange" => Brushes.DarkOrange,
+                "green" => Brushes.ForestGreen,
+                "gray" => Brushes.Gray,
+                _ => Brushes.SteelBlue
+            };
         }
 
         private void Border_DragOver(object sender, DragEventArgs e)

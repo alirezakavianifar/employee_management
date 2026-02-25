@@ -15,6 +15,7 @@
     
     <Window.Resources>
         <converters:EmployeePhotoConverter x:Key="EmployeePhotoConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -398,6 +399,44 @@
                                                           MaxWidth="100"
                                                           Foreground="DarkBlue"
                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding ShieldColor, StringFormat=Shield Color: {0}}"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="9"
+                                                          Foreground="#555"
+                                                          Margin="0,3,0,0"
+                                                          HorizontalAlignment="Center"/>
+                                                <TextBlock FontFamily="Tahoma"
+                                                          FontSize="9"
+                                                          Foreground="#555"
+                                                          HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="Shield Type: Hidden"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding ShowShield}" Value="True">
+                                                                    <Setter Property="Text" Value="Shield Type: Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding StickerPaths.Count, StringFormat=Stickers: {0}}"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="9"
+                                                          Foreground="#555"
+                                                          HorizontalAlignment="Center"/>
+                                                <TextBlock Text="Medal: Set"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="9"
+                                                          Foreground="#555"
+                                                          HorizontalAlignment="Center"
+                                                          Visibility="{Binding MedalBadgePath, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                <TextBlock Text="Medal: None"
+                                                          FontFamily="Tahoma"
+                                                          FontSize="9"
+                                                          Foreground="#555"
+                                                          HorizontalAlignment="Center"
+                                                          Visibility="{Binding MedalBadgePath, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=inverse}"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>

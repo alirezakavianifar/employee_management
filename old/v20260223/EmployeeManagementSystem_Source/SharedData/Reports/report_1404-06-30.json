@@ -1,0 +1,184 @@
+﻿{
+  "date": "2025-09-21",
+  "employees": [
+    {
+      "employee_id": "EMP_001",
+      "first_name": "احمد",
+      "last_name": "محمدی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_002",
+      "first_name": "فاطمه",
+      "last_name": "احمدی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_003",
+      "first_name": "علی",
+      "last_name": "حسینی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_004",
+      "first_name": "مریم",
+      "last_name": "کریمی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_005",
+      "first_name": "حسن",
+      "last_name": "رضایی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_006",
+      "first_name": "زهرا",
+      "last_name": "موسوی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_007",
+      "first_name": "محمد",
+      "last_name": "نوری",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_008",
+      "first_name": "نرگس",
+      "last_name": "صادقی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_009",
+      "first_name": "رضا",
+      "last_name": "جعفری",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_010",
+      "first_name": "سارا",
+      "last_name": "کاظمی",
+      "role": "کارگر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    }
+  ],
+  "managers": [
+    {
+      "employee_id": "EMP_011",
+      "first_name": "محمدرضا",
+      "last_name": "علیزاده",
+      "role": "مدیر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    },
+    {
+      "employee_id": "EMP_012",
+      "first_name": "ناهید",
+      "last_name": "فرهادی",
+      "role": "مدیر",
+      "photo_path": "",
+      "is_manager": false,
+      "created_at": "1404-06-29T21:28:18",
+      "updated_at": "1404-06-29T21:28:18"
+    }
+  ],
+  "shifts": {
+    "morning": {
+      "shift_type": "morning",
+      "capacity": 15,
+      "assigned_employees": [
+        {
+          "employee_id": "EMP_001",
+          "first_name": "احمد",
+          "last_name": "محمدی",
+          "role": "کارگر",
+          "photo_path": "",
+          "is_manager": false,
+          "created_at": "1404-06-29T21:28:18",
+          "updated_at": "1404-06-29T21:28:18"
+        }
+      ]
+    },
+    "evening": {
+      "shift_type": "evening",
+      "capacity": 15,
+      "assigned_employees": [
+        {
+          "employee_id": "EMP_003",
+          "first_name": "علی",
+          "last_name": "حسینی",
+          "role": "کارگر",
+          "photo_path": "",
+          "is_manager": false,
+          "created_at": "1404-06-29T21:28:18",
+          "updated_at": "1404-06-29T21:28:18"
+        }
+      ]
+    }
+  },
+  "absences": {
+    "مرخصی": [
+      "{\r\n  \"EmployeeId\": \"EMP_008\",\r\n  \"FirstName\": \"نرگس\",\r\n  \"LastName\": \"صادقی\",\r\n  \"EmployeeName\": \"نرگس صادقی\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"مرخصی\",\r\n  \"Date\": \"2025/09/21\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-21T18:56:56.16136+03:30\",\r\n  \"UpdatedAt\": \"2025-09-21T18:56:56.1613674+03:30\"\r\n}"
+    ],
+    "بیمار": [],
+    "غایب": [
+      "{\r\n  \"EmployeeId\": \"EMP_010\",\r\n  \"FirstName\": \"سارا\",\r\n  \"LastName\": \"کاظمی\",\r\n  \"EmployeeName\": \"سارا کاظمی\",\r\n  \"PhotoPath\": \"\",\r\n  \"Category\": \"غایب\",\r\n  \"Date\": \"1404/06/30\",\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-21T12:05:02.7419838+03:30\",\r\n  \"UpdatedAt\": \"2025-09-21T12:05:02.7420514+03:30\"\r\n}"
+    ]
+  },
+  "tasks": {
+    "Tasks": {
+      "TASK_0001": "{\r\n  \"TaskId\": \"TASK_0001\",\r\n  \"Title\": \"weee\",\r\n  \"Description\": \"\",\r\n  \"Priority\": \"متوسط\",\r\n  \"EstimatedHours\": 1.0,\r\n  \"TargetDate\": \"1404/06/29\",\r\n  \"Status\": \"در حال انجام\",\r\n  \"AssignedEmployees\": [\r\n    \"EMP_008\"\r\n  ],\r\n  \"StartDate\": null,\r\n  \"CompletionDate\": null,\r\n  \"ActualHours\": 0.0,\r\n  \"Notes\": \"\",\r\n  \"CreatedAt\": \"2025-09-20T21:50:03.1612413+03:30\",\r\n  \"UpdatedAt\": \"2025-09-20T21:50:12.2091706+03:30\"\r\n}"
+    },
+    "NextTaskId": 2
+  },
+  "settings": {
+    "shift_capacity": 5,
+    "morning_capacity": 5,
+    "evening_capacity": 5,
+    "shared_folder_path": "D:\\projects\\employee_management_csharp\\SharedData",
+    "managers": []
+  },
+  "last_modified": "2025-09-21T18:56:56"
+}
