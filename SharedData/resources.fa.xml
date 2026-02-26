@@ -137,6 +137,11 @@
     <string key="filter_completed">انجام شده</string>
 
     <!-- Role Names -->
+    <string key="role_manager">مدیر</string>
+    <string key="role_supervisor">سرپرست</string>
+    <string key="role_employee">کارمند</string>
+    <string key="role_intern">کارآموز</string>
+    <string key="role_contractor">پیمانکار</string>
     <string key="role_none">هیچکدام</string>
     <string key="role_ceo">مدیر عامل</string>
     <string key="role_hr_manager">مدیر منابع انسانی</string>

@@ -147,6 +147,11 @@
     <string key="filter_completed">Completed</string>
     
     <!-- Role Names -->
+    <string key="role_manager">Manager</string>
+    <string key="role_supervisor">Supervisor</string>
+    <string key="role_employee">Employee</string>
+    <string key="role_intern">Intern</string>
+    <string key="role_contractor">Contractor</string>
     <string key="role_none">None</string>
     <string key="role_ceo">CEO</string>
     <string key="role_hr_manager">HR Manager</string>

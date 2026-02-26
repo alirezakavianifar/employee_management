@@ -118,9 +118,10 @@ namespace ManagementApp.Views
                     
                     foreach (var role in roles)
                     {
+                        var localizedRoleName = ResourceManager.GetString("role_" + role.RoleId, role.Name);
                         var item = new ComboBoxItem
                         {
-                            Content = role.Name,
+                            Content = localizedRoleName,
                             Tag = role.RoleId,
                             ToolTip = role.Description
                         };
