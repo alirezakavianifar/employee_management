@@ -316,10 +316,50 @@ namespace ManagementApp.Controls
             }
         }
 
+        private Point _dragStartPoint;
+
         private void Element_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-             // TODO: Implement Drag Start (Reverse drag)
-             // For now we focus on Drop.
+             _dragStartPoint = e.GetPosition(null);
+        }
+
+        private void Element_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && ShiftData != null)
+            {
+                var currentPoint = e.GetPosition(null);
+                var diff = _dragStartPoint - currentPoint;
+
+                if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    var employee = ShiftData.GetEmployeeAtSlot(SlotIndex);
+                    if (employee != null)
+                    {
+                        var dragData = new DataObject(typeof(Employee), employee);
+                        dragData.SetData("ShiftType", this.ShiftType);
+                        DragDrop.DoDragDrop((DependencyObject)sender, dragData, DragDropEffects.Move);
+                    }
+                    else
+                    {
+                        var statusCardId = ShiftData.GetStatusCardAtSlot(SlotIndex);
+                        if (!string.IsNullOrEmpty(statusCardId))
+                        {
+                            StatusCard card = null;
+                            if (MainWindow.Instance?.Controller?.StatusCards != null)
+                            {
+                                MainWindow.Instance.Controller.StatusCards.TryGetValue(statusCardId, out card);
+                            }
+                            if (card != null)
+                            {
+                                var dragData = new DataObject(typeof(StatusCard), card);
+                                dragData.SetData("ShiftType", this.ShiftType);
+                                DragDrop.DoDragDrop((DependencyObject)sender, dragData, DragDropEffects.Move);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void LabelRemove_Click(object sender, RoutedEventArgs e)
