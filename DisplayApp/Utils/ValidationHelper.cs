@@ -235,7 +235,8 @@ namespace DisplayApp.Utils
             }
 
             var trimmed = phone.Trim();
-            var phonePattern = @"^[0-9+\-\s()]{6,20}$";
+            // Relaxed constraints: allow any characters, length up to 50
+            var phonePattern = @"^.{1,50}$";
             return Regex.IsMatch(trimmed, phonePattern);
         }
 

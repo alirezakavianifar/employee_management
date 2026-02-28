@@ -508,10 +508,11 @@ namespace ManagementApp.Views
             var phoneInput = PhoneTextBox.Text.Trim();
             if (!string.IsNullOrEmpty(phoneInput))
             {
-                var phonePattern = @"^[0-9+\-\s()]{6,20}$";
+                // Relaxed constraints: allow any characters, length up to 50
+                var phonePattern = @"^.{1,50}$";
                 if (!Regex.IsMatch(phoneInput, phonePattern))
                 {
-                    MessageBox.Show(ResourceManager.GetString("msg_invalid_phone", "Please enter a valid phone number (digits, +, -, spaces, parentheses)."), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(ResourceManager.GetString("msg_invalid_phone", "Please enter a valid phone number (1 to 50 characters)."), ResourceManager.GetString("msg_warning", "Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
             }
